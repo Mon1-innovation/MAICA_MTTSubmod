@@ -19,20 +19,20 @@ MAICA-MTTS生成音频的接口位于https://maicadev.monika.love/mtts/generate.
 strategy可为L, M, H, 分别代表家用机/边缘服务器, 工作站/个人服务器, 大型服务器. 前端应当遵循告示的负载能力发送请求.
  """
 
-class NothingLogger:
+class PrintLogger:
     def debug(self, msg):
-        pass
+        print(msg)
     def info(self, msg):
-        pass
+        print(msg)
     def warning(self, msg):
-        pass
+        print(msg)
     def error(self, msg):
-        pass
+        print(msg)
     def critical(self, msg):
-        pass
+        print(msg)
 
 
-logger = NothingLogger()
+logger = PrintLogger()
 
 class MTTS:
     def __init__(self, url = "https://maicadev.monika.love/", token = "", cache_path = ""):
@@ -43,7 +43,12 @@ class MTTS:
     def generate(self, text):
         req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text})
         if req.status_code == 200:
-            return req.content
+            try:
+                req.json()
+                logger.error("MTTS:generate failed because {}".format(req.json()))
+                raise Exception(req)
+            except Exception as e:
+                return req.content
         else:
             raise Exception(f"{req.status_code} {req.reason}")
     
