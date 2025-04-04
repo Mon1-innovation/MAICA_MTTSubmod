@@ -93,3 +93,36 @@ class MTTS:
             import traceback
             logger.error("MTTS:_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
             return {"success":False, "exception": "MTTS:_verify_token failed"}
+        
+import threading
+
+class AsyncTask(object):
+    def __init__(self, func, args):
+        self._func = func
+        self._args = args
+        
+        self.result = None
+        self.exception = None
+        self.is_finished = False
+        self.is_success = False
+        
+        self._thread = threading.Thread(target=self._run)
+        self._thread.start()
+
+    def _run(self):
+        try:
+            self.result = self._func(*self._args)
+            self.is_success = True
+        except Exception as e:
+            self.exception = e
+            self.is_success = False
+        finally:
+            self.is_finished = True
+
+    @property
+    def is_alive(self):
+        return self._thread.is_alive()
+
+    def wait(self, timeout=None):
+        """等待任务完成（可选超时时间）"""
+        self._thread.join(timeout=timeout)
