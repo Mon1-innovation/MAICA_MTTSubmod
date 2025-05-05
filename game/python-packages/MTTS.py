@@ -50,7 +50,7 @@ class MTTS:
             except Exception as e:
                 return req.content
         else:
-            raise Exception(f"{req.status_code} {req.reason}")
+            raise Exception("{} {}".format(req.status_code, req.reason))
     
     def save_audio(self, audio, filename):
         with open(os.path.join(self.cache_path,  filename), "wb") as f:
@@ -65,7 +65,7 @@ class MTTS:
         if req.status_code == 200:
             return req.json()
         else:
-            raise Exception(f"{req.status_code} {req.reason}")
+            raise Exception("{} {}".format(req.status_code, req.reason))
         
     def _verify_token(self):
         """
