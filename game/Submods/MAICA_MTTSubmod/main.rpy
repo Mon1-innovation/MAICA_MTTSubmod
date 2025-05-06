@@ -7,6 +7,7 @@ init -100 python in mtts:
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
+    AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
     
 init python:
@@ -14,9 +15,20 @@ init python:
     store.mtts = mtts
     def mtts_say(who, what, interact=True, *args, **kwargs):
         renpy.notify("正在生成语音，请稍等...")
-        res = mtts.mtts.generate(what)
-        mtts.mtts.save_audio(res, "test.wav")
-        renpy.play("test.wav", channel="voice")
+        #res = mtts.mtts.generate(what)
+        res = mtts.AsyncTask(mtts.mtts.generate, text=what)
+        while not res.is_finished:
+            old_renpysay(who, "{w=1.0}{nw}", interact, *args, **kwargs)
+        if res.is_success:
+            res = res.result
+            if res.is_success():
+                mtts.mtts.save_audio(res.data, "test.wav")
+                renpy.play("test.wav")
+            else:
+                renpy.notify("语音生成失败2")
+        else:
+            renpy.notify("语音生成失败 {}".format(res.exception))
+
         old_renpysay(who, what, interact, *args, **kwargs)
 
     renpy.say = mtts_say

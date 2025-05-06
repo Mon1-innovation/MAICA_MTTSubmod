@@ -34,6 +34,13 @@ class PrintLogger:
 
 logger = PrintLogger()
 
+class MTTSAudio:
+    def __init__(self, data):
+        self.data = data
+    
+    def is_success(self):
+        return not (self.data[-1] == "}" and self.data[0] == "{")
+
 class MTTS:
     def __init__(self, url = "https://maicadev.monika.love/", token = "", cache_path = ""):
         self.baseurl = url
@@ -48,7 +55,7 @@ class MTTS:
                 logger.error("MTTS:generate failed because {}".format(req.json()))
                 raise Exception(req)
             except Exception as e:
-                return req.content
+                return MTTSAudio(req.content)
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
     
@@ -97,10 +104,10 @@ class MTTS:
 import threading
 
 class AsyncTask(object):
-    def __init__(self, func, args):
+    def __init__(self, func, *args, **kwargs):
         self._func = func
         self._args = args
-        
+        self._kwargs = kwargs
         self.result = None
         self.exception = None
         self.is_finished = False
@@ -111,7 +118,7 @@ class AsyncTask(object):
 
     def _run(self):
         try:
-            self.result = self._func(*self._args)
+            self.result = self._func(*self._args, **self._kwargs)
             self.is_success = True
         except Exception as e:
             self.exception = e
