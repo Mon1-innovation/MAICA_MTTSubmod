@@ -16,15 +16,15 @@ init python:
     def mtts_say(who, what, interact=True, *args, **kwargs):
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
-        res = mtts.AsyncTask(mtts.mtts.generate, text=what)
+        res = mtts.AsyncTask(mtts.mtts.generate, text=renpy.substitute(what))
         while not res.is_finished:
-            old_renpysay(who, "{w=1.0}{nw}", interact, *args, **kwargs)
+            old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
         if res.is_success:
             res = res.result
             if res.is_success():
                 mtts.mtts.save_audio(res.data, "test.ogg")
                 renpy.music.play(
-                    os.path.join(mtts.mtts.cache_path, "test.ogg"),
+                    store.AudioData(res.data, "test.ogg"),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
                     channel="voice",
                 )
             else:

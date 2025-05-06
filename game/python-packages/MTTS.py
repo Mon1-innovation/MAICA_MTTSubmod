@@ -46,9 +46,10 @@ class MTTS:
         self.baseurl = url
         self.token = token
         self.cache_path = cache_path
+        self.target_lang = "zh"
 
-    def generate(self, text):
-        req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text})
+    def generate(self, text, emotion=u"微笑", cache_policy = True):
+        req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text, "target_lang": self.target_lang, "cache_policy": cache_policy, "emotion": emotion})
         if req.status_code == 200:
             try:
                 req.json()
