@@ -22,8 +22,11 @@ init python:
         if res.is_success:
             res = res.result
             if res.is_success():
-                mtts.mtts.save_audio(res.data, "test.wav")
-                renpy.play("test.wav")
+                mtts.mtts.save_audio(res.data, "test.ogg")
+                renpy.music.play(
+                    os.path.join(mtts.mtts.cache_path, "test.ogg"),
+                    channel="voice",
+                )
             else:
                 renpy.notify("语音生成失败2")
         else:
