@@ -40,6 +40,31 @@ class MTTSAudio:
     
     def is_success(self):
         return not (self.data[-1] == "}" and self.data[0] == "{")
+    
+class DataCache:
+    def __init__(self, cache_path):
+        self.cache_path = cache_path
+        if not os.path.exists(cache_path):
+            os.makedirs(cache_path)
+    
+    def save(self, filename, data):
+        with open(os.path.join(self.cache_path, filename), "wb") as f:
+            f.write(data)
+    
+    def load(self, filename):
+        with open(os.path.join(self.cache_path, filename), "rb") as f:
+            return f.read()
+    
+    def get_cachename(self, labelname, text):
+        # 生成text的hash值
+        import hashlib
+        hash_object = hashlib.md5(text.encode())
+        return labelname + "_" + hash_object.hexdigest()[:8]
+
+    def is_cached(self, labelname, text):
+        # 检查缓存是否存在
+        filename = self.get_cachename(labelname, text)
+        return os.path.exists(os.path.join(self.cache_path, filename))
 
 class MTTS:
     def __init__(self, url = "https://maicadev.monika.love/", token = "", cache_path = ""):
@@ -47,8 +72,18 @@ class MTTS:
         self.token = token
         self.cache_path = cache_path
         self.target_lang = "zh"
+        self.cache = DataCache(cache_path)
 
-    def generate(self, text, emotion=u"微笑", cache_policy = True):
+    def generate(self, text, emotion=u"微笑", cache_policy = True, label_name):
+        if self.cache.is_cached(label_name, text) and cache_policy:
+            class FakeReqData:
+                def __init__(self, data):
+                    self.data = data
+                def status_code(self):
+                    return 200
+                def reason(self):
+                    return "OK"
+            return FakeReqData(self.cache.load(self.cache.get_cachename(label_name, text)))
         req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text, "target_lang": self.target_lang, "cache_policy": cache_policy, "emotion": emotion})
         if req.status_code == 200:
             try:
@@ -56,6 +91,7 @@ class MTTS:
                 logger.error("MTTS:generate failed because {}".format(req.json()))
                 raise Exception(req)
             except Exception as e:
+                self.cache.save(self.cache.get_cachename("mtts", text), req.content)
                 return MTTSAudio(req.content)
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
@@ -134,3 +170,5 @@ class AsyncTask(object):
     def wait(self, timeout=None):
         """等待任务完成（可选超时时间）"""
         self._thread.join(timeout=timeout)
+
+
