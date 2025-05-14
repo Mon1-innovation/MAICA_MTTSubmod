@@ -1,16 +1,16 @@
-init -100 python in mtts:
+init -990 python:
     mtts_defaultsettings = {
         "enabled": True,
         "_chat_installed": False,
         "volume": 1.0,
     }
-    if persistent.mtts:
-        import copy
-        setting = copy.deepcopy(persistent.mtts)
-        setting.update(mtts_settings)
-        persistent.mtts = setting
-    else:
-        persistent.mtts_settings = mtts_defaultsettings
+    if persistent.mtts is None:
+        persistent.mtts = mtts_defaultsettings
+    import copy
+    setting = copy.deepcopy(mtts_defaultsettings)
+    setting.update(persistent.mtts)
+    persistent.mtts = setting
+init -100 python in mtts:
     import MTTS, store, os
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MTTSubmod"))
     if not store.mas_hasAPIKey("Maica_Token"):
@@ -21,6 +21,8 @@ init -100 python in mtts:
     )
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
+
+init -100 python:
     try:
         import json_exporter
         persistent.mtts["_chat_installed"] = True
@@ -38,22 +40,22 @@ init python:
     store.mtts = mtts
     def mtts_say(who, what, interact=True, *args, **kwargs):
         if not persistent.mtts["enabled"]:
-            old_renpysay(who, what, interact, *args, **kwargs)
+            return old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
-        exp = store.mas_getCurrentMoniExp()
+        exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         res = mtts.AsyncTask(mtts.mtts.generate, text=renpy.substitute(what), label_name=store.mas_submod_utils.current_label, emotion=exp)
-        name = mtts.cache.get_cachename(text = renpy.substitute(what), label_name=store.mas_submod_utils.current_label)
+        name = mtts.mtts.cache.get_cachename(text = renpy.substitute(what), label_name=store.mas_submod_utils.current_label)
         
         while not res.is_finished:
             old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
         if res.is_success:
             res = res.result
             if res.is_success():
+                renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
                 renpy.music.play(
                     store.AudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
                     channel="voice",
-                    relative_volume = persistent.mtts["volume"],
                 )
             else:
                 renpy.notify("语音生成失败2")

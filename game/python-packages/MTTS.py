@@ -55,15 +55,15 @@ class DataCache:
         with open(os.path.join(self.cache_path, filename), "rb") as f:
             return f.read()
     
-    def get_cachename(self, labelname, text):
+    def get_cachename(self, label_name, text):
         # 生成text的hash值
         import hashlib
         hash_object = hashlib.md5(text.encode())
-        return labelname + "_" + hash_object.hexdigest()[:8]
+        return label_name + "_" + hash_object.hexdigest()[:8]
 
-    def is_cached(self, labelname, text):
+    def is_cached(self, label_name, text):
         # 检查缓存是否存在
-        filename = self.get_cachename(labelname, text)
+        filename = self.get_cachename(label_name, text)
         return os.path.exists(os.path.join(self.cache_path, filename))
 
 class MTTS:
@@ -74,7 +74,7 @@ class MTTS:
         self.target_lang = "zh"
         self.cache = DataCache(cache_path)
 
-    def generate(self, text, emotion=u"微笑", cache_policy = True, label_name):
+    def generate(self, text, emotion=u"微笑", cache_policy = True, label_name="none"):
         if self.cache.is_cached(label_name, text) and cache_policy:
             class FakeReqData:
                 def __init__(self, data):
@@ -91,7 +91,7 @@ class MTTS:
                 logger.error("MTTS:generate failed because {}".format(req.json()))
                 raise Exception(req)
             except Exception as e:
-                self.cache.save(self.cache.get_cachename("mtts", text), req.content)
+                self.cache.save(self.cache.get_cachename(label_name, text), req.content)
                 return MTTSAudio(req.content)
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
