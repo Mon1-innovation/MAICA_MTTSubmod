@@ -37,6 +37,8 @@ init python:
     old_renpysay = renpy.say
     store.mtts = mtts
     def mtts_say(who, what, interact=True, *args, **kwargs):
+        if not persistent.mtts["enabled"]:
+            old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
         exp = store.mas_getCurrentMoniExp()
