@@ -74,6 +74,7 @@ class DataCache:
                 fp = os.path.join(dirpath, f)
                 total_size += os.path.getsize(fp)
         return total_size / (1024 * 1024)
+        
 
     def clear_cache(self):
         # 清空缓存目录
@@ -93,9 +94,12 @@ class MTTS:
         self.cache_path = cache_path
         self.target_lang = "zh"
         self.cache = DataCache(cache_path)
+        self.conversion = True
+        self.local_cache = True
+        self.remote_cache = True
 
-    def generate(self, text, emotion=u"微笑", cache_policy = True, label_name="none"):
-        if self.cache.is_cached(label_name, text) and cache_policy:
+    def generate(self, text, emotion=u"微笑", label_name="none"):
+        if self.cache.is_cached(label_name, text) and self.local_cache:
             class FakeReqData:
                 def __init__(self, data):
                     self.data = data
@@ -106,7 +110,7 @@ class MTTS:
                 def reason(self):
                     return "OK"
             return FakeReqData(self.cache.load(self.cache.get_cachename(label_name, text)))
-        req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text, "target_lang": self.target_lang, "cache_policy": cache_policy, "emotion": emotion})
+        req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text, "target_lang": self.target_lang, "cache_policy": self.remote_cache, "emotion": emotion, "conversion": self.conversion})
         if req.status_code == 200:
             try:
                 req.json()
