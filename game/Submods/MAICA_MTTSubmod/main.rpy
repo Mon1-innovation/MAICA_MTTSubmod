@@ -24,7 +24,7 @@ init -100 python in mtts:
     MTTS.logger = store.mas_submod_utils.submod_log
 
     def apply_settings():
-        mtts.conversion = persistent.mtts["conversion"]
+        mtts.conversion = store.persistent.mtts["conversion"]
 
 init -100 python:
     try:
@@ -60,6 +60,7 @@ init python:
         
         while not res.is_finished:
             old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
+            _history_list.pop()
         if res.is_success:
             res = res.result
             if res.is_success():
