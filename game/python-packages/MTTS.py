@@ -65,6 +65,26 @@ class DataCache:
         # 检查缓存是否存在
         filename = self.get_cachename(label_name, text)
         return os.path.exists(os.path.join(self.cache_path, filename))
+    
+    def get_total_cache_size_mb(self):
+        # 获取缓存目录的总大小
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(self.cache_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+        return total_size / (1024 * 1024)
+
+    def clear_cache(self):
+        # 清空缓存目录
+        for dirpath, dirnames, filenames in os.walk(self.cache_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                try:
+                    os.remove(fp)
+                except OSError:
+                    logger.warning("Failed to delete file: {}".format(fp))
+        logger.info("Cache cleared.")
 
 class MTTS:
     def __init__(self, url = "https://maicadev.monika.love/", token = "", cache_path = ""):
