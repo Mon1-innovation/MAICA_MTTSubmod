@@ -79,6 +79,8 @@ class MTTS:
             class FakeReqData:
                 def __init__(self, data):
                     self.data = data
+                def is_success(self):
+                    return True
                 def status_code(self):
                     return 200
                 def reason(self):
