@@ -131,9 +131,13 @@ class MTTS:
         return self.baseurl + endpoint
     
     def get_strategy(self):
+        # 请求服务器负载能力 L/M/H
+        # L: 家用机/边缘服务器 / 强制本地+远程
+        # M: 工作站/个人服务器 / 强制远程缓存
+        # H: 大型服务器
         req = requests.post(self.api_url("mtts/strategy"), json={})
         if req.status_code == 200:
-            return req.json()
+            return req.json()["strategy"]
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
         

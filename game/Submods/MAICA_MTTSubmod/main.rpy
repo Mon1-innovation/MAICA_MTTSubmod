@@ -3,6 +3,7 @@ init -990 python:
         "enabled": True,
         "_chat_installed": False,
         "volume": 1.0,
+        "conversion": True
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -21,6 +22,9 @@ init -100 python in mtts:
     )
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
+
+    def apply_settings():
+        mtts.conversion = persistent.mtts["conversion"]
 
 init -100 python:
     try:
