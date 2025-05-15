@@ -45,7 +45,7 @@ init python:
             srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
-        if not persistent.mtts["enabled"]:
+        if not persistent.mtts["enabled"] or not persistent.mtts["_chat_installed"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
@@ -65,7 +65,7 @@ init python:
                     channel="voice",
                 )
             else:
-                renpy.notify("语音生成失败2")
+                renpy.notify("语音生成失败, 可能是服务器返回错误")
         else:
             renpy.notify("语音生成失败 {}".format(res.exception))
 
