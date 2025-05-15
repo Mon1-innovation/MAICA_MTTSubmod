@@ -39,13 +39,20 @@ init python:
     old_renpysay = renpy.say
     store.mtts = mtts
     def mtts_say(who, what, interact=True, *args, **kwargs):
+        def process_str(srt):
+            import re
+            # \{fast\}.*?\{fast\} , \{.*?\} 将匹配的str替换为空字符串
+            srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
+            srt = re.sub(r"\{.*?\}", "", srt)
+            return srt
         if not persistent.mtts["enabled"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
-        res = mtts.AsyncTask(mtts.mtts.generate, text=renpy.substitute(what), label_name=store.mas_submod_utils.current_label, emotion=exp)
-        name = mtts.mtts.cache.get_cachename(text = renpy.substitute(what), label_name=store.mas_submod_utils.current_label)
+        text = process_str(renpy.substitute(what))
+        res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp)
+        name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
         
         while not res.is_finished:
             old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
