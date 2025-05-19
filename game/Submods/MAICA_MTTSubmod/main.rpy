@@ -34,7 +34,7 @@ init -100 python:
             try:
                 for mood, keywords in emotion_selector.items():  # 遍历情绪和关键词字典
                     for key in keywords:  # 遍历当前情绪的所有关键词
-                        if key in emote:  # 检查关键词是否存在于输入字符串
+                        if emote in key:  # 检查关键词是否存在于输入字符串
                             return mood
             except Exception as e:
                 pass
