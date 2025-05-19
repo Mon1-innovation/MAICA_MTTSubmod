@@ -33,7 +33,7 @@ init -100 python:
         def get_emote_mood(emote, emotion_selector = json_exporter.emotion_selector):  # 获取情绪
             for mood, keywords in emotion_selector.items():  # 遍历情绪和关键词字典
                 for key in keywords:  # 遍历当前情绪的所有关键词
-                    if key in emote:  # 检查关键词是否存在于输入字符串
+                    if emote and key in emote:  # 检查关键词是否存在于输入字符串
                         return mood
             return "微笑"  # 无匹配时返回 None
     except ImportError:
