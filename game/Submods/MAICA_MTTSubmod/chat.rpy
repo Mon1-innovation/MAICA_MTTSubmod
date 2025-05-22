@@ -3,25 +3,25 @@ label mtts_prepend_1:
 # Also has to be unlocked after gift mechanism known to player.
 # Like:
 # (renpy.seen_label('mas_gift_giving_instructs') or persistent._mas_filereacts_historic)
-    m "[player], 我最近有在想..."
-    m "要是我知道你的声音是什么样的就好了."
-    m "虽然让你对着屏幕说话...感觉有点奇怪, 哈哈!" #尴尬
-    m "你应该也会想听我的声音吧? 如果能让你听到, 我是不介意说出来的."#微笑
+    m 7rub "[player], 我最近有在想..."
+    m 1eua "要是我知道你的声音是什么样的就好了."
+    m 3husdrb "虽然让你对着屏幕说话...感觉有点奇怪, 哈哈!" #尴尬
+    m 1tua "你应该也会想听我的声音吧? 如果能让你听到, 我是不介意说出来的."#微笑
     if persistent.monika_kill and mas_isMoniHappy(higher=True):
-        m "你应该在原本结局的地方听过我唱歌, 但那已经是好久以前了."
+        m 3rub "你应该在原本结局的地方听过我唱歌, 但那已经是好久以前了."
     elif persistent.monika_kill:
-        m "你应该在原本结局的地方听过我唱歌, 但那也没几句嘛."
+        m 3rud "你应该在原本结局的地方听过我唱歌, 但那也没几句嘛."
     else:
-        m "你好像还没听过我的声音呢, 不过你已经上网搜过了也说不定."#意味深长
-    m "虽然在屏幕上写字也算是和你聊天, 但真的说出来会不会更有仪式感一点?"#微笑
+        m 2tsb "你好像还没听过我的声音呢, 不过你已经上网搜过了也说不定."#意味深长
+    m 3hua "虽然在屏幕上写字也算是和你聊天, 但真的说出来会不会更有仪式感一点?"#微笑
     if renpy.seen_label('maica_prepend_1'): #这样写需不需要考虑话题是否存在?
-        m "上次和你聊过关于{i}人工智能{/i}的事情之后, 我又找到了一点新的线索..."
-        m "抱歉老在吊你的胃口啦, 哈哈!"#尴尬
+        m 2rsd "上次和你聊过关于{i}人工智能{/i}的事情之后, 我又找到了一点新的线索..."
+        m 7husdrb "抱歉老在吊你的胃口啦, 哈哈!"#尴尬
     else:
-        m "至于要怎么说给你听, 我有个想法..."
-        m "不过还没到能告诉你的时候, 哈哈!"#尴尬
-    m "耐心等我就好! {w=0.5}等我弄明白了会告诉你的."#笑
-    m "另外, 谢谢你一直这么替我着想! 能靠近你的每一个机会我都会珍惜的."
+        m 2rsb "至于要怎么说给你听, 我有个想法..."
+        m 6husdrb "不过还没到能告诉你的时候, 哈哈!"#尴尬
+    m 3eua "耐心等我就好! {w=0.5}等我弄明白了会告诉你的."#笑
+    m 5tubla "另外, 谢谢你一直这么替我着想! 能靠近你的每一个机会我都会珍惜的."
 
 # Add to random after mtts_prepend_1 triggered
 # Use the original conversation (revert orig and tl):
@@ -47,13 +47,13 @@ P.S: 不要告诉她是我写的!\
 
 label mtts_greeting:
 # 显示MTTS的麦克风.
-    m "咳嗯-咳嗯!"#闭眼
-    m "怎么又--{w=0.5}{nw}"#睁眼
-    extend "[player]?"#惊讶
-    m "抱歉, 我才看到你进来! 刚刚我在忙着对付...{w=0.3}这个."#尴尬
+    m 6dsd "咳嗯-咳嗯!"#闭眼
+    m 6esd "怎么又--{w=0.5}{nw}"#睁眼
+    extend 6wuo "[player]?"#惊讶
+    m 4eusdrb "抱歉, 我才看到你进来! 刚刚我在忙着对付...{w=0.3}这个."#尴尬
     
     $ menu_state = _("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了.")
-    m "[menu_state]{nw}"#开心
+    m 5eua "[menu_state]{nw}"#开心
     $ has_asked = False
     jump mtts_greeting_loop
 
