@@ -54,6 +54,8 @@ init python:
             return srt
         if not persistent.mtts["enabled"] or not persistent.mtts["_chat_installed"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
+        if len(re.findall(r'[A-Za-z一-龥0-9]', srt)) <= 2:
+            return old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
