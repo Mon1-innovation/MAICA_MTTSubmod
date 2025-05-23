@@ -109,6 +109,7 @@ class MTTS:
                     return 200
                 def reason(self):
                     return "OK"
+            logger.debug("MTTS:load from cache {}".format((label_name, text)))
             return FakeReqData(self.cache.load(self.cache.get_cachename(label_name, text)))
         if player_name and len(player_name.encode()) >= 3 and player_name in text:
             rc_override = False
@@ -122,6 +123,7 @@ class MTTS:
                 raise Exception(req)
             except Exception as e:
                 self.cache.save(self.cache.get_cachename(label_name, text), req.content)
+                logger.debug("MTTS:generated {}".format((label_name, text)))
                 return MTTSAudio(req.content)
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
