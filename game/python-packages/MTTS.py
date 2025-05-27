@@ -19,6 +19,11 @@ MAICA-MTTS生成音频的接口位于https://maicadev.monika.love/mtts/generate.
 strategy可为L, M, H, 分别代表家用机/边缘服务器, 工作站/个人服务器, 大型服务器. 前端应当遵循告示的负载能力发送请求.
  """
 
+
+import sys
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+
 class PrintLogger:
     def debug(self, msg):
         print(msg)
