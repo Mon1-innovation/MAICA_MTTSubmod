@@ -20,6 +20,7 @@ init -100 python in mtts:
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
+    PY2, PY3 = MTTS.PY2, MTTS.PY3
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
 
@@ -45,6 +46,11 @@ init python:
     
     old_renpysay = renpy.say
     store.mtts = mtts
+    if PY2:
+        import datapy2_mtts
+        pattern_content = datapy2_mtts.pattern_content
+    else:
+        pattern_content = r'[A-Za-z一-龥0-9]'
     def mtts_say(who, what, interact=True, *args, **kwargs):
         def process_str(srt):
             import re
@@ -54,7 +60,7 @@ init python:
             return srt
         if not persistent.mtts["enabled"] or not persistent.mtts["_chat_installed"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
-        if len(re.findall(r'[A-Za-z一-龥0-9]', what)) <= 2:
+        if len(re.findall(pattern_content, what)) <= 2:
             return old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
