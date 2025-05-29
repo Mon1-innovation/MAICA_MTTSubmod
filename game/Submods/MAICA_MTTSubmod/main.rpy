@@ -20,7 +20,6 @@ init -100 python in mtts:
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
-    PY2, PY3 = MTTS.PY2, MTTS.PY3
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
 
@@ -44,8 +43,10 @@ init -100 python:
         persistent.mtts["_chat_installed"] = False
 init python:
     
+    import MTTS
     old_renpysay = renpy.say
     store.mtts = mtts
+    PY2, PY3 = MTTS.PY2, MTTS.PY3
     if PY2:
         import datapy2_mtts
         pattern_content = datapy2_mtts.pattern_content
