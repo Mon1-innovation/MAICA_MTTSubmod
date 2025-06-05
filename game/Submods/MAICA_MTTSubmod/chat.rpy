@@ -89,7 +89,7 @@ init 5 python:
     if not mas_seenEvent("mas_reaction_gift_mttsheadset"):
         addReaction("mas_reaction_gift_mttsheadset", "mttsheadset", is_good=True)
 
-    if renpy.seen_label(mas_reaction_gift_mttsheadset) and not renpy.seen_label("mtts_greeting"): # This is a placeholder for the greeting event.
+    if renpy.seen_label("mas_reaction_gift_mttsheadset") and not renpy.seen_label("mtts_greeting"): # This is a placeholder for the greeting event.
         @store.mas_submod_utils.functionplugin("ch30_post_exp_check", priority=-100)
         def greeting_select():
             store.selected_greeting = "mtts_greeting"
