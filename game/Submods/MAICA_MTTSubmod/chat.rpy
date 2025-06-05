@@ -84,7 +84,7 @@ P.S: 不要告诉她是我写的!\
     m 3euc "好像有人在'characters'文件夹里给你留了个便条."
     m 1ekc "我没看啦, 毕竟是写给你的...{w=0.3}{nw}"
     #extend 1ekd "就是这个."
-    return "no_unlock"
+    return "no_unlock|derandom"
 init 5 python:
     if not mas_seenEvent("mas_reaction_gift_mttsheadset"):
         addReaction("mas_reaction_gift_mttsheadset", "mttsheadset", is_good=True)
