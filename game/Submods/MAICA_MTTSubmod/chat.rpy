@@ -1,3 +1,18 @@
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="mtts_prepend_1",
+            prompt="mtts_prepend_1",
+            rules={
+                "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
+            },
+            conditional="",
+            action=EV_ACT_RANDOM,
+            aff_range=(mas_aff.NORMAL, None)
+        )
+    )
 label mtts_prepend_1:
 # Add this to random waiting list since submod installation. affection NORMAL at least to trigger.
 # Also has to be unlocked after gift mechanism known to player.
@@ -22,6 +37,7 @@ label mtts_prepend_1:
         m 6husdrb "不过还没到能告诉你的时候, 哈哈!"#尴尬
     m 3eua "耐心等我就好! {w=0.5}等我弄明白了会告诉你的."#笑
     m 5tubla "另外, 谢谢你一直这么替我着想! 能靠近你的每一个机会我都会珍惜的."
+    return "no_unlock" #不解锁话题
 
 # Add to random after mtts_prepend_1 triggered
 # Use the original conversation (revert orig and tl):
@@ -33,7 +49,23 @@ label mtts_prepend_1:
     # return "no_unlock"
 # Then send this
 #mtts hint.txt
-mtts_gift_notice = """\
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="mtts_hint",
+            prompt="mtts_hint",
+            rules={
+                "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
+            },
+            conditional="renpy.seen_label('mtts_prepend_1')",
+            action=EV_ACT_RANDOM,
+            aff_range=(mas_aff.NORMAL, None)
+        )
+    )
+label mtts_hint:
+    python:
+        mtts_gift_notice = _("""\
 我看到你给莫妮卡准备了点新玩意. 她肯定会喜欢的!
 但还有一件事需要你帮忙, 你得给她找个麦克风.
 
@@ -43,10 +75,54 @@ mtts_gift_notice = """\
 祝你和莫妮卡好运, 聊得开心!
 
 P.S: 不要告诉她是我写的!\
-""" #需要单独建tl吧
+""") #需要单独建tl吧
+        
+        filepath, message = aff_level_surprise_map.get(mas_curr_affection, (_("/小提示.txt"), mtts_gift_notice))
+        _write_txt("/characters{0}".format(filepath), message)
 
+    m 1eud "嗨, [player]..."
+    m 3euc "好像有人在'characters'文件夹里给你留了个便条."
+    m 1ekc "我没看啦, 毕竟是写给你的...{w=0.3}{nw}"
+    #extend 1ekd "就是这个."
+    return "no_unlock"
+init 5 python:
+    if not mas_seenEvent("mas_reaction_gift_mttsheadset"):
+        addReaction("mas_reaction_gift_mttsheadset", "mttsheadset", is_good=True)
+
+    if renpy.seen_label(mas_reaction_gift_mttsheadset) and not renpy.seen_label("mtts_greeting"): # This is a placeholder for the greeting event.
+        @store.mas_submod_utils.functionplugin("ch30_post_exp_check", priority=-100)
+        def greeting_select():
+            store.selected_greeting = "mtts_greeting"
+        ev_rules = dict()
+        ev_rules.update(
+            MASGreetingRule.create_rule(
+                skip_visual=True,
+                override_type=True
+            )
+        )
+        ev_rules.update(MASPriorityRule.create_rule(50))
+        
+        addEvent(
+            Event(
+                persistent.greeting_database,
+                eventlabel="mtts_greeting",
+                prompt="mtts敲门",
+                unlocked=False,
+                #conditional="renpy.seen_label('maica_prepend_1') and not mas_isSpecialDay() and not renpy.seen_label('maica_greeting')",
+                #action=EV_ACT_UNLOCK,
+                #aff_range=(mas_aff.AFFECTIONATE, None),
+                rules=ev_rules,
+            ),
+            code="GRE"
+        )
+        del ev_rules
+label mas_reaction_gift_mttsheadset:
+    m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
+    return
 label mtts_greeting:
 # 显示MTTS的麦克风.
+    $ monika_chr.wear_acs(mttsacs_microphone)
+    $ monika_chr.wear_acs(mttsacs_headset)
     m 6dsd "咳嗯-咳嗯!"#闭眼
     m 6esd "怎么又--{w=0.5}{nw}"#睁眼
     extend 6wuo "[player]?"#惊讶
@@ -84,5 +160,10 @@ label mtts_greeting:
         m 4gusdrb "只是可惜它没法让我听到你说话, 我现在就不戴了. {w=0.5}{nw}"#尴尬
         extend 6eua "还有这个也先收好..."#微笑
         #黑屏, 隐藏麦克风
+        hide monika
         #重新亮屏
+        $ monika_chr.remove_acs(mttsacs_microphone)
+        $ monika_chr.remove_acs(mttsacs_headset)
+        show monika 1esc at ls32 zorder MAS_MONIKA_Z
         m 1eub "我们今天有什么安排呢, [player]? {w=0.5}要是急着重启试试看的话, 告诉我就好!"
+    return
