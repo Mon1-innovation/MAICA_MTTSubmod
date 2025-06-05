@@ -43,8 +43,15 @@ init -100 python:
         persistent.mtts["_chat_installed"] = False
 init python:
     
+    import MTTS
     old_renpysay = renpy.say
     store.mtts = mtts
+    PY2, PY3 = MTTS.PY2, MTTS.PY3
+    if PY2:
+        import datapy2_mtts
+        pattern_content = datapy2_mtts.pattern_content
+    else:
+        pattern_content = r'[A-Za-z一-龥0-9]'
     def mtts_say(who, what, interact=True, *args, **kwargs):
         def process_str(srt):
             import re
@@ -54,13 +61,13 @@ init python:
             return srt
         if not persistent.mtts["enabled"] or not persistent.mtts["_chat_installed"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
-        if len(re.findall(r'[A-Za-z一-龥0-9]', what)) <= 2:
+        text = process_str(renpy.substitute(what))
+        if len(re.findall(pattern_content, text)) <= 2:
             return old_renpysay(who, what, interact, *args, **kwargs)
         renpy.notify("正在生成语音，请稍等...")
         #res = mtts.mtts.generate(what)
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         has_player = "[player]" in what
-        text = process_str(renpy.substitute(what))
         _old_remote_cache = mtts.mtts.remote_cache
         if has_player:
             mtts.mtts.remote_cache = False
