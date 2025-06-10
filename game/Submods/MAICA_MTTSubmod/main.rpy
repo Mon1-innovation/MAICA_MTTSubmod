@@ -1,6 +1,6 @@
 init -990 python:
     mtts_defaultsettings = {
-        "enabled": True,
+        "enabled": False,
         "_chat_installed": False,
         "volume": 1.0,
         "conversion": True

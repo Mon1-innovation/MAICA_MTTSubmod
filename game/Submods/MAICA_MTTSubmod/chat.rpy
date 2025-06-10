@@ -90,7 +90,7 @@ init 5 python:
 
     if renpy.seen_label("mas_reaction_gift_mttsheadset") and not renpy.seen_label("mtts_greeting"): # This is a placeholder for the greeting event.
         @store.mas_submod_utils.functionplugin("ch30_post_exp_check", priority=-100)
-        def greeting_select():
+        def mttsgreeting_select():
             store.selected_greeting = "mtts_greeting"
         ev_rules = dict()
         ev_rules.update(
@@ -116,7 +116,7 @@ init 5 python:
         )
         del ev_rules
 label mas_reaction_gift_mttsheadset:
-    m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
+    #m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
     python:
         if not renpy.seen_label("mtts_prepend_1"):
             MASEventList.queue("mtts_prepend_1")
