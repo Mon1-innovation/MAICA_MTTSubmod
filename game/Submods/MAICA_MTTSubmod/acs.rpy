@@ -1,3 +1,5 @@
+image mtts_giftbox = "mod_assets/location/spaceroom/mtts/gift.png"
+
 init -1 python:
     mttsacs_headset = MASAccessory(
         "mttsheadset",

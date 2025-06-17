@@ -120,6 +120,7 @@ label mas_reaction_gift_mttsheadset:
     python:
         if not renpy.seen_label("mtts_prepend_1"):
             MASEventList.queue("mtts_prepend_1")
+        mas_showDecoTag("mtts_giftbox", True)
     return
 label mtts_greeting:
 # 显示MTTS的麦克风.
