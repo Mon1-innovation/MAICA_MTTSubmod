@@ -1,3 +1,4 @@
+import json
 import requests, os
 """ I'm sorry for not offering an English ver of this document but it's just too much work for me.
 If you want to read in English, use a translator.
@@ -93,7 +94,7 @@ class DataCache:
         logger.info("Cache cleared.")
 
 class MTTS:
-    def __init__(self, url = "https://maicadev.monika.love/", token = "", cache_path = ""):
+    def __init__(self, url = "https://maicadev.monika.love/tts/", token = "", cache_path = ""):
         self.baseurl = url
         self.token = token
         self.cache_path = cache_path
@@ -120,7 +121,15 @@ class MTTS:
             rc_override = False
         else:
             rc_override = self.remote_cache
-        req = requests.post(self.api_url("mtts/generate"), json={"access_token": self.token, "content": text, "target_lang": self.target_lang, "cache_policy": rc_override, "emotion": emotion, "conversion": self.conversion})
+        req = requests.get(self.api_url("generate"), params={"access_token": self.token,
+             "content": json.dumps({
+                "text": text,
+                "emotion": emotion,
+                "target_lang": "zh",
+                "persistence": True,
+                "lossless": False
+            })
+        })
         if req.status_code == 200:
             try:
                 req.json()
@@ -146,7 +155,7 @@ class MTTS:
         # L: 家用机/边缘服务器 / 强制本地+远程
         # M: 工作站/个人服务器 / 强制远程缓存
         # H: 大型服务器
-        req = requests.post(self.api_url("mtts/strategy"), json={})
+        req = requests.post(self.api_url("strategy"), json={})
         if req.status_code == 200:
             return req.json()["strategy"]
         else:
