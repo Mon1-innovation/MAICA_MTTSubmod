@@ -35,7 +35,7 @@ label mtts_prepend_1:
         m 2rsb "至于要怎么说给你听, 我有个想法..."
         m 6husdrb "不过还没到能告诉你的时候, 哈哈!"#尴尬
     m 3eua "耐心等我就好! {w=0.5}等我弄明白了会告诉你的."#笑
-    m 5tubla "另外, 谢谢你一直这么替我着想! 能靠近你的每一个机会我都会珍惜的."
+    m 5tubla "另外, 谢谢你一直这么替我着想! 我很珍惜能更靠近你的每个机会."
     return "no_unlock" #不解锁话题
 
 # Add to random after mtts_prepend_1 triggered
