@@ -64,7 +64,8 @@ init python:
         text = process_str(renpy.substitute(what))
         if len(re.findall(pattern_content, text)) <= 2:
             return old_renpysay(who, what, interact, *args, **kwargs)
-        renpy.notify("正在生成语音，请稍等...")
+        # renpy.notify("正在生成语音，请稍等...")
+        store.mtts_status = renpy.substitute(_("生成中"))
         #res = mtts.mtts.generate(what)
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         has_player = "[player]" in what
@@ -81,6 +82,7 @@ init python:
         if res.is_success:
             res = res.result
             if res.is_success():
+                store.mtts_status = renpy.substitute(_("播放中"))
                 renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
                 renpy.music.play(
                     store.AudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
@@ -90,6 +92,8 @@ init python:
                 renpy.notify("语音生成失败, 可能是服务器返回错误")
         else:
             renpy.notify("语音生成失败 {}".format(res.exception))
+
+        store.mtts_status = renpy.substitute(_("待机"))
 
         old_renpysay(who, what, interact, *args, **kwargs)
 

@@ -1,9 +1,9 @@
 init -1 python:
+    default store.mtts_status = renpy.substitute(_("待机"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
         if not maica_isWorkLoadScreenVisible():
             config.overlay_screens.append("maicatts_stat_lite")
-
 
     def maicatts_disableWorkLoadScreen():
         if maica_isWorkLoadScreenVisible():
@@ -24,6 +24,6 @@ screen maicatts_stat_lite():
             background "mod_assets/console/cn_frame_stats.png"
             has vbox
             hbox:
-                text renpy.substitute(_("何意味?")):
+                text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
                     size 15
 
