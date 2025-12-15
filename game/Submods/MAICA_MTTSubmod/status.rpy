@@ -26,4 +26,6 @@ screen maicatts_stat_lite():
             hbox:
                 text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
                     size 15
+                
+                text _("当前label: [store.mas_submod_utils.current_label]")
 

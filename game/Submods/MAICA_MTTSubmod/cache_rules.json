@@ -1,0 +1,28 @@
+{
+    "cacheRules":{
+        "rules":[
+            {
+                "regex_text":".*\\[.*\\].*",
+                "regex_label":null,
+                "action":["local"],
+                "min_len":3,
+                "priority":0
+            },
+            {
+                "regex_text":null,
+                "regex_label":"^maica_talking$",
+                "action":[],
+                "min_len":3,
+                "priority":100
+            },
+            {
+                "regex_text":null,
+                "regex_label":null,
+                "action":["local", "remote"],
+                "min_len":3,
+                "priority":-100
+            }
+        ],
+        "default_action":[]
+    }
+}

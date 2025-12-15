@@ -1,5 +1,6 @@
 import json
 import requests, os
+import re
 """ I'm sorry for not offering an English ver of this document but it's just too much work for me.
 If you want to read in English, use a translator.
 
@@ -24,6 +25,105 @@ strategy可为L, M, H, 分别代表家用机/边缘服务器, 工作站/个人�
 import sys
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
+
+class CacheRuleMatcher:
+    """缓存规则匹配器，用于根据文本和标签匹配缓存规则"""
+
+    def __init__(self, rules_config_path):
+        """
+        初始化规则匹配器
+
+        Args:
+            rules_config_path: cache_rules.json 文件的路径
+        """
+        self.rules_config_path = rules_config_path
+        self.rules = []
+        self.default_action = []
+        self._load_rules()
+
+    def _load_rules(self):
+        """从配置文件加载规则"""
+        try:
+            with open(self.rules_config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                cache_rules = config.get('cacheRules', )
+                self.rules = cache_rules.get('rules', [])
+                self.default_action = cache_rules.get('default_action', [])
+        except Exception as e:
+            logger.error("Failed to load cache rules: {}".format(e))
+            self.rules = []
+            self.default_action = []
+
+    def _count_content_chars(self, text):
+        """
+        计算文本中的非符号字符数（中文、英文、数字）
+
+        Args:
+            text: 要计算的文本
+
+        Returns:
+            int: 非符号字符数
+        """
+        pattern = r'[A-Za-z一-龥0-9]'
+        return len(re.findall(pattern, text))
+
+    def match_rule(self, text, label):
+        """
+        根据文本和标签匹配规则
+
+        Args:
+            text: 要匹配的文本
+            label: 标签名称
+
+        Returns:
+            dict: 匹配到的规则，如果没有匹配则返回包含默认action的字典
+        """
+        # 按优先级排序规则（优先级高的在前）
+        sorted_rules = sorted(self.rules, key=lambda r: r.get('priority', 0), reverse=True)
+
+        for rule in sorted_rules:
+            # 检查最小长度要求（非符号字符长度）
+            min_len = rule.get('min_len', 0)
+            if self._count_content_chars(text) < min_len:
+                continue
+
+            # 尝试匹配 regex_text
+            regex_text = rule.get('regex_text')
+            if regex_text:
+                try:
+                    if re.search(regex_text, text):
+                        return rule
+                except Exception as e:
+                    logger.warning("Invalid regex_text pattern: {}".format(e))
+
+            # 尝试匹配 regex_label
+            regex_label = rule.get('regex_label')
+            if regex_label:
+                try:
+                    if re.match(regex_label, label):
+                        return rule
+                except Exception as e:
+                    logger.warning("Invalid regex_label pattern: {}".format(e))
+
+        # 如果没有匹配任何规则，返回默认action
+        return {
+            'action': self.default_action,
+            'is_default': True
+        }
+
+    def get_action(self, text, label):
+        """
+        获取匹配规则的action
+
+        Args:
+            text: 要匹配的文本
+            label: 标签名称
+
+        Returns:
+            list: action列表
+        """
+        rule = self.match_rule(text, label)
+        return rule.get('action', self.default_action)
 
 class PrintLogger:
     def debug(self, msg):
@@ -103,6 +203,13 @@ class MTTS:
         self.conversion = True
         self.local_cache = True
         self.remote_cache = True
+
+        # 初始化缓存规则匹配器
+        rules_config_path = os.path.join(cache_path, "..", "cache_rules.json")
+        if os.path.exists(rules_config_path):
+            self.rule_matcher = CacheRuleMatcher(rules_config_path)
+        else:
+            self.rule_matcher = None
 
     def generate(self, text, emotion=u"微笑", label_name="none", player_name=""):
         if self.cache.is_cached(label_name, text) and self.local_cache:
