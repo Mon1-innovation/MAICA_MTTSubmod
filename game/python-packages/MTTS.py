@@ -187,6 +187,41 @@ class MTTS:
             import traceback
             logger.error("MTTS:_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
             return {"success":False, "exception": "MTTS:_verify_token failed"}
+
+    def get_version(self):
+
+        """
+        获取版本信息。
+        
+        Returns: dict:
+            curr_version: 后端当前版本
+            legc_version: 兼容的最旧版本 
+            fe_synbrace_version: Synbrace前端的可用最旧版本
+            exception: 默认None
+            success: bool
+        
+        """
+
+        import requests
+        import traceback
+
+        try:
+            res = requests.get(self.api_url("version"))
+            if res.status_code == 200:
+                res = res.json()
+                if res.get("success", False):
+                    return res
+                else:
+                    logger.warning("MTTS: Get version failed: {}".format(res))
+                    return res
+            else:
+                logger.error("MTTS: Get version request failed: Server returned {} - {}".format(res.status_code, res.text))
+                return {"success": False, "exception": "MTTS: Get version request failed"}
+            
+        except Exception as e:
+            error_msg = traceback.format_exc()
+            logger.error("MTTS: Get version request encountered an error: {}".format(error_msg))
+            return {"success": False, "exception": "MTTS: Get version request failed"}
         
 import threading
 
