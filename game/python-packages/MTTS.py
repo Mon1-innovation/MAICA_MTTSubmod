@@ -1,25 +1,6 @@
 import json
 import requests, os
 import re
-""" I'm sorry for not offering an English ver of this document but it's just too much work for me.
-If you want to read in English, use a translator.
-
-此文档是MAICA-MTTS接口的使用文档. 文档内容和API结构可能在此后会有变化, 请开发者关注.
-
-MAICA-MTTS服务的主要功能基于http-post传输, 官方部署的连接地址是https://maicadev.monika.love/mtts.
-官方部署强制要求验证access_token, 私有部署可以关闭.
-
-MAICA-MTTS生成音频的接口位于https://maicadev.monika.love/mtts/generate. 你应当遵循以下格式, 以POST形式上传你要生成的语句:
-    {"access_token": "你的令牌", "content": "你要生成的语句"}
-若生成成功, 接口会返回一段audio/wav格式的音频.
-若生成不成功, 接口会返回形如:
-    {"success": false, "exception": "生成问题"}
-
-因部署环境可能更多样, MAICA-MTTS后端提供一个接口标记服务器负载能力, 其位于https://maicadev.monika.love/mtts/strategy. 你应当以空白的POST形式请求负载能力.
-如果成功请求, 接口会返回:
-    {"success": true, "exception": "", "strategy": "服务器负载能力"}
-strategy可为L, M, H, 分别代表家用机/边缘服务器, 工作站/个人服务器, 大型服务器. 前端应当遵循告示的负载能力发送请求.
- """
 
 
 import sys
@@ -203,6 +184,7 @@ class MTTS:
         self.conversion = True
         self.local_cache = True
         self.remote_cache = True
+        self.lossless = False
 
         # 初始化缓存规则匹配器
         rules_config_path = os.path.join(cache_path, "..", "cache_rules.json")
@@ -211,7 +193,7 @@ class MTTS:
         else:
             self.rule_matcher = None
 
-    def generate(self, text, emotion=u"微笑", label_name="none", player_name=""):
+    def generate(self, text, emotion=u"微笑", label_name="none", player_name="", target_lang="zh"):
         if self.cache.is_cached(label_name, text) and self.local_cache:
             class FakeReqData:
                 def __init__(self, data):
@@ -232,9 +214,9 @@ class MTTS:
              "content": json.dumps({
                 "text": text,
                 "emotion": emotion,
-                "target_lang": "zh",
-                "persistence": True,
-                "lossless": False
+                "target_lang": target_lang,
+                "persistence": self.remote_cache,
+                "lossless": self.lossless
             })
         })
         if req.status_code == 200:
@@ -267,7 +249,56 @@ class MTTS:
             return req.json()["strategy"]
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
-        
+
+    def _gen_token(self, account, pwd, token="", email=None):
+        """
+        生成或设置认证令牌。
+
+        Args:
+            account: 账号用户名
+            pwd: 密码
+            token: 预设的令牌（如果提供，直接使用该令牌）
+            email: 邮箱（如果提供，使用邮箱登录而不是用户名）
+
+        Returns:
+            dict: 包含生成结果的字典
+        """
+        if token != "":
+            self.token = token
+            return {"success": True, "content": token}
+
+        import json
+        data = {
+            "username": account,
+            "password": pwd
+        }
+
+        if email:
+            data = {
+                "email": email,
+                "password": pwd
+            }
+
+        try:
+            response = requests.post(self.api_url("register"), json=data, timeout=5)
+            if response.status_code != 200:
+                logger.error("MTTS::_gen_token response failed with status code: {}".format(response.status_code))
+                return {"success": False, "exception": "HTTP error: {}".format(response.status_code)}
+
+            response_data = response.json()
+            if response_data.get("success"):
+                self.token = response_data.get("content", "")
+                logger.info("MTTS::_gen_token token generated successfully")
+                return response_data
+            else:
+                logger.error("MTTS::_gen_token failed: {}".format(response_data.get("exception", "Unknown error")))
+                return response_data
+
+        except Exception as e:
+            import traceback
+            logger.error("MTTS::_gen_token request failed: {}".format(traceback.format_exc()))
+            return {"success": False, "exception": str(e)}
+
     def _verify_token(self):
         """
         验证token是否有效。
