@@ -185,6 +185,50 @@ class MTTS:
         self.remote_cache = True
         self.lossless = False
         self.__accessable = False
+        self._ignore_accessable = False
+
+
+        self.workload_raw = {
+            "None":{
+                "0": {
+                    "name": "Super PP 0",
+                    "vram": "100000 MiB",
+                    "mean_utilization": 100,
+                    "mean_memory": 21811,
+                    "mean_consumption": 100,
+                    "tflops": 400,
+                },                
+                "1": {
+                    "name": "if you see this, requests workload is failed",
+                    "vram": "100000 MiB",
+                    "mean_utilization": 0,
+                    "mean_memory": 21811,
+                    "tflops": 400,
+                    "mean_consumption": 100
+                },
+            },
+            "None2":{
+                "0": {
+                    "name": "Super PP 2",
+                    "vram": "100000 MiB",
+                    "mean_utilization": 0,
+                    "mean_memory": 21811,
+                    "tflops": 400,
+                    "mean_consumption": 100
+                    
+                },                
+                "1": {
+                    "name": "Super PP 3",
+                    "vram": "100000 MiB",
+                    "mean_utilization": 0,
+                    "mean_memory": 21811,
+                    "tflops": 400,
+                    "mean_consumption": 100
+                },
+            },
+            "onliners":0
+        }
+
 
         # 初始化缓存规则匹配器
         rules_config_path = os.path.join(cache_path, "..", "cache_rules.json")
@@ -325,6 +369,106 @@ class MTTS:
             import traceback
             logger.error("MTTS:_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
             return {"success":False, "exception": "MTTS:_verify_token failed"}
+    def update_workload(self):
+        """
+        更新工作负载信息（后台执行）。
+
+        Args:
+            无。
+
+        Returns:
+            threading.Thread对象，可以用于检查线程的状态。
+        """
+        import requests
+        import threading
+        if not self.__accessable:
+            logger.error("Maica is not serving")
+            return None
+
+        def task():
+            res = requests.get(self.api_url + "workload")
+            if res.status_code == 200:
+                data = res.json()
+                if data["success"]:
+                    self.workload_raw = data["content"]
+                    #logger.debug("Workload updated successfully.")
+                else:
+                    logger.error("Failed to update workload: {}".format(data))
+            else:
+                logger.error("Failed to update workload.")
+
+        thread = threading.Thread(target=task)
+        thread.daemon = True  # Optional: allow the program to exit even if the thread is running
+        thread.start()
+        return thread
+
+    def get_workload_lite(self):
+        """
+        获取最高负载设备的占用
+
+        Args:
+            无。
+
+        Returns:
+            工作负载信息简化版。
+
+        """
+
+        data = {
+            "avg_usage": 0,
+            "max_usage": 0,
+            "total_vmem": 0,
+            "total_inuse_vmem": 0,
+            "total_w": 0,
+            "mem_pencent":0,
+            "max_tflops":0,
+            "cur_tflops":0,
+            "onliners":0
+        }
+        if not self.__accessable:
+            return data
+    # Use iteritems() for Python 2
+        avgcount = 0
+        if PY2:
+            # 处理 onliners 键
+            if isinstance(self.workload_raw.get('onliners'), (int, float)):
+                data['onliners'] = int(self.workload_raw['onliners'])
+
+            for group_name, group in self.workload_raw.iteritems():
+                if group_name == 'onliners':
+                    continue
+                for card in group.itervalues():
+                    if card["mean_utilization"] > data["max_usage"]:
+                        data["max_usage"] = card["mean_utilization"]
+                    data["avg_usage"] += card["mean_utilization"]
+                    avgcount+=1
+                    data["total_vmem"] += int(card["vram"][:-4].strip())
+                    data["total_inuse_vmem"] += card["mean_memory"]
+                    data["total_w"] += card["mean_consumption"]
+                    data["max_tflops"] += int(card["tflops"])
+                    data["cur_tflops"] += int(card["tflops"]) * card["mean_utilization"] * 0.01
+        elif PY3:
+            # 处理 onliners 键
+            if isinstance(self.workload_raw.get('onliners'), (int, float)):
+                data['onliners'] = int(self.workload_raw['onliners'])
+
+            for group_name, group in self.workload_raw.items():
+                if group_name == 'onliners':
+                    continue
+                for card in group.values():
+                    if card["mean_utilization"] > data["max_usage"]:
+                        data["max_usage"] = card["mean_utilization"]
+                    data["avg_usage"] += card["mean_utilization"]
+                    avgcount+=1
+                    data["total_vmem"] += int(card["vram"][:-4].strip())
+                    data["total_inuse_vmem"] += card["mean_memory"]
+                    data["total_w"] += card["mean_consumption"]
+                    data["max_tflops"] += int(card["tflops"])
+                    data["cur_tflops"] += int(card["tflops"]) * card["mean_utilization"] * 0.01
+
+        if avgcount > 0:
+            data["avg_usage"] /= avgcount
+        return data
 
     def get_version(self):
 
@@ -369,12 +513,10 @@ class MTTS:
         if d.get(u"success", False):
             self._serving_status = d["content"]
             if self._serving_status != "serving" and not self._ignore_accessable:
-                self.status = self.MaicaAiStatus.SERVER_MAINTAIN
                 self.__accessable = False
                 logger.error("accessable(): Maica is not serving: {}".format(d["content"]))
             else:
                 self.__accessable = True
-                self.status = self.MaicaAiStatus.NOT_READY
         else:
             self.__accessable = False
             logger.error("accessable(): Maica is not serving: request failed: {}".format(d))

@@ -41,6 +41,31 @@ init -100 python in mtts:
                 persistent.mtts["_outdated"] = True
         else:
             store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
+
+
+    def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
+        # Calculate the number of filled positions in the progress bar
+        filled_length = int(round(bar_length * percentage / 100.0))
+        
+        # Generate the progress bar string
+        bar = '▇' * filled_length + '▁' * (bar_length - filled_length)
+        
+        # Format the output string based on the presence of total
+        if total is not None:
+            if not current:
+                current = total * percentage / 100.0
+            if unit:
+                return '|{}| {}% | {}{} / {}{}'.format(bar, int(percentage), int(current), unit, total, unit)
+            else:
+                return '|{}| {}% | {} / {}'.format(bar, int(percentage), int(current), total)
+        elif current is not None:
+            if unit:
+                return '|{}| {}% | {}{}'.format(bar, int(percentage), current, unit)
+            else:
+                return '|{}| {}% | {}'.format(bar, int(percentage), current)
+        else:
+            return '|{}| {}%'.format(bar, int(percentage))
+
 init -100 python:
     import json_exporter_mtts
     def get_emote_mood(emote, emotion_selector = json_exporter_mtts.emotion_selector):  # 获取情绪
