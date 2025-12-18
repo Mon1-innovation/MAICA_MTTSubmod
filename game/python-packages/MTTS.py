@@ -184,6 +184,7 @@ class MTTS:
         self.local_cache = True
         self.remote_cache = True
         self.lossless = False
+        self.__accessable = False
 
         # 初始化缓存规则匹配器
         rules_config_path = os.path.join(cache_path, "..", "cache_rules.json")
@@ -359,7 +360,28 @@ class MTTS:
             error_msg = traceback.format_exc()
             logger.error("MTTS: Get version request encountered an error: {}".format(error_msg))
             return {"success": False, "exception": "MTTS: Get version request failed"}
-        
+    
+    def accessable(self):
+        import requests, json
+        res = requests.get(self.api_url + "accessibility")
+        logger.debug("accessable(): try get accessibility from {}".format(self.api_url + "accessibility"))
+        d = res.json()
+        if d.get(u"success", False):
+            self._serving_status = d["content"]
+            if self._serving_status != "serving" and not self._ignore_accessable:
+                self.status = self.MaicaAiStatus.SERVER_MAINTAIN
+                self.__accessable = False
+                logger.error("accessable(): Maica is not serving: {}".format(d["content"]))
+            else:
+                self.__accessable = True
+                self.status = self.MaicaAiStatus.NOT_READY
+        else:
+            self.__accessable = False
+            logger.error("accessable(): Maica is not serving: request failed: {}".format(d))
+    
+    @property
+    def is_accessable(self):
+        return self.__accessable
 import threading
 
 class AsyncTask(object):

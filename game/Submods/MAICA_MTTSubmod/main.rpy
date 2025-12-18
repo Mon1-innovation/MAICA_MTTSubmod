@@ -28,6 +28,7 @@ init -100 python in mtts:
     matcher = MTTS.CacheRuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
+    AsyncTask(mtts.accessable)
 
     def apply_settings():
         pass
@@ -71,7 +72,7 @@ init python:
             srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
-        if not persistent.mtts["enabled"] and persistent.mtts["_outdated"]:
+        if not persistent.mtts["enabled"] and persistent.mtts["_outdated"] and not store.mtts.mtts.is_accessable:
             return old_renpysay(who, what, interact, *args, **kwargs)
 
         text = process_str(renpy.substitute(what))
