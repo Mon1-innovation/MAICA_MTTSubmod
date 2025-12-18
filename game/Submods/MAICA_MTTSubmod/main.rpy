@@ -3,7 +3,7 @@ init -990 python:
         "enabled": False,
         "_chat_installed": False,
         "volume": 1.0,
-        "conversion": True
+        "acs_enabled": True
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -25,8 +25,7 @@ init -100 python in mtts:
     MTTS.logger = store.mas_submod_utils.submod_log
 
     def apply_settings():
-        mtts.conversion = store.persistent.mtts["conversion"]
-
+        pass
 init -100 python:
     import json_exporter_mtts
     def get_emote_mood(emote, emotion_selector = json_exporter_mtts.emotion_selector):  # 获取情绪
@@ -64,11 +63,15 @@ init python:
         rule = store.mtts.matcher.match_rule(text, store.mas_submod_utils.current_label)
         if not rule['action']:
             return old_renpysay(who, what, interact, *args, **kwargs)
+        if rule['name'] == 'MAICA_Chat':
+            target_lang = store.maica.maica.target_lang
+        else:
+            target_lang = "zh" if config.language == 'chinese' else 'en'
         store.mtts_status = renpy.substitute(_("生成中"))
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         mtts.mtts.local_cache = 'local' in rule['action']
         mtts.mtts.remote_cache = 'remote' in rule['action']
-        res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp)
+        res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
         name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
         while not res.is_finished:
             old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)

@@ -2,6 +2,7 @@
     "cacheRules":{
         "rules":[
             {
+                "name":"General variable text",
                 "regex_text":".*\\[.*\\].*",
                 "regex_label":null,
                 "action":["local"],
@@ -9,6 +10,7 @@
                 "priority":0
             },
             {
+                "name":"MAICA_Chat",
                 "regex_text":null,
                 "regex_label":"^maica_talking$",
                 "action":["local"],
@@ -16,6 +18,7 @@
                 "priority":100
             },
             {
+                "name":"General text",
                 "regex_text":null,
                 "regex_label":null,
                 "action":["local", "remote"],

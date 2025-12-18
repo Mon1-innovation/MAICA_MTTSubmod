@@ -181,7 +181,6 @@ class MTTS:
         self.cache_path = cache_path
         self.target_lang = "zh"
         self.cache = DataCache(cache_path)
-        self.conversion = True
         self.local_cache = True
         self.remote_cache = True
         self.lossless = False
