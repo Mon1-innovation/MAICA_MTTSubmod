@@ -11,7 +11,7 @@
             {
                 "regex_text":null,
                 "regex_label":"^maica_talking$",
-                "action":[],
+                "action":["local"],
                 "min_len":3,
                 "priority":100
             },

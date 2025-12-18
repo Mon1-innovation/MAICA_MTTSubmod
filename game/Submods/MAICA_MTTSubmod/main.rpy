@@ -28,20 +28,18 @@ init -100 python in mtts:
         mtts.conversion = store.persistent.mtts["conversion"]
 
 init -100 python:
-    try:
-        import json_exporter
-        persistent.mtts["_chat_installed"] = True
-        def get_emote_mood(emote, emotion_selector = json_exporter.emotion_selector):  # 获取情绪
-            try:
-                for mood, keywords in emotion_selector.items():  # 遍历情绪和关键词字典
-                    for key in keywords:  # 遍历当前情绪的所有关键词
-                        if emote in key:  # 检查关键词是否存在于输入字符串
-                            return mood
-            except Exception as e:
-                pass
-            return "微笑"  # 无匹配时返回 None
-    except ImportError:
-        persistent.mtts["_chat_installed"] = False
+    import json_exporter_mtts
+    def get_emote_mood(emote, emotion_selector = json_exporter_mtts.emotion_selector):  # 获取情绪
+        try:
+            for mood, keywords in emotion_selector.items():  # 遍历情绪和关键词字典
+                for key in keywords:  # 遍历当前情绪的所有关键词
+                    if emote in key:  # 检查关键词是否存在于输入字符串
+                        return mood
+        except Exception as e:
+            pass
+        return "微笑"  # 无匹配时返回 None
+init python:
+    persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
 init python:
     
     import MTTS
@@ -60,7 +58,7 @@ init python:
             srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
-        if not persistent.mtts["enabled"] or not persistent.mtts["_chat_installed"]:
+        if not persistent.mtts["enabled"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
         text = process_str(renpy.substitute(what))
         rule = store.mtts.matcher.match_rule(text, store.mas_submod_utils.current_label)
