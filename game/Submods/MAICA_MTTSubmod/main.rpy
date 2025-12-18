@@ -4,6 +4,7 @@ init -990 python:
         "_chat_installed": False,
         "volume": 1.0,
         "acs_enabled": True
+        "_outdated": False
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -26,6 +27,15 @@ init -100 python in mtts:
 
     def apply_settings():
         pass
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100):
+    def mtts_check_outdated():
+        version = mtts.get_version()
+        if version.get("success"):
+            min_version = version['content']['fe_synbrace_version']
+            if store.mas_utils.compareVersionLists(mtts_version.strip().split('.'), min_version.strip().split('.')) < 0:
+                persistent.mtts["_outdated"] = True
+        else:
+            store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
 init -100 python:
     import json_exporter_mtts
     def get_emote_mood(emote, emotion_selector = json_exporter_mtts.emotion_selector):  # 获取情绪
@@ -57,8 +67,9 @@ init python:
             srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
-        if not persistent.mtts["enabled"]:
+        if not persistent.mtts["enabled"] and persistent.mtts["_outdated"]:
             return old_renpysay(who, what, interact, *args, **kwargs)
+
         text = process_str(renpy.substitute(what))
         rule = store.mtts.matcher.match_rule(text, store.mas_submod_utils.current_label)
         if not rule['action']:
@@ -67,6 +78,7 @@ init python:
             target_lang = store.maica.maica.target_lang
         else:
             target_lang = "zh" if config.language == 'chinese' else 'en'
+            
         store.mtts_status = renpy.substitute(_("生成中"))
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         mtts.mtts.local_cache = 'local' in rule['action']

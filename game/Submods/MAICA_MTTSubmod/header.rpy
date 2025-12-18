@@ -2,12 +2,12 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-
+    mtts_version = "0.1.0"
     store.mas_submod_utils.Submod(
         author="P",
         name="MAICA MTTSubmod",
         description=_("MAICA官方TTS子模组"),
-        version="0.1.0",
+        version=mtts_version,
         settings_pane="mtts_settingpane"
     )
 
@@ -23,6 +23,8 @@ init -989 python:
         )
 
 screen mtts_settingpane():
+    if persistent.mtts["_outdated"]:
+        textbutton _("> 当前版本过旧, 请更新到最新版")
     if renpy.seen_label("mtts_greeting"):
         textbutton _("> MTTS设置"):
             action Show("mtts_settings")
