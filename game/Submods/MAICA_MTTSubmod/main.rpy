@@ -17,7 +17,11 @@ init -100 python in mtts:
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MTTSubmod"))
     if not store.mas_hasAPIKey("Maica_Token"):
         store.mas_registerAPIKey("Maica_Token", "Maica Token")
+    store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
+    if not store.mas_hasAPIKey("MTTS_endpoint"):
+        store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
     mtts = MTTS.MTTS(
+        url = store.mas_getAPIKey("MTTS_endpoint"),
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
@@ -78,7 +82,7 @@ init python:
             target_lang = store.maica.maica.target_lang
         else:
             target_lang = "zh" if config.language == 'chinese' else 'en'
-            
+
         store.mtts_status = renpy.substitute(_("生成中"))
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         mtts.mtts.local_cache = 'local' in rule['action']
