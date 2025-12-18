@@ -75,10 +75,12 @@ screen mtts_settings():
                         
                         textbutton "[persistent.mtts.get('volume')]"
                     
+
+                    
                     hbox:
-                        textbutton _("音色转换: [persistent.mtts.get('conversion')]"):
-                            action ToggleDict(persistent.mtts, "conversion", True, False)
-                            hovered SetField(_tooltip, "value", _("是否使用svc模型. svc模型表现不稳定, 但不启用的话意义何在呢."))
+                        textbutton _("是否装备饰品: [persistent.mtts.get('acs_enabled')]"):
+                            action ToggleDict(persistent.mtts, "acs_enabled", True, False)
+                            hovered SetField(_tooltip, "value", _("功能开关有延迟"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
                             
