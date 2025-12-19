@@ -1,6 +1,6 @@
 default use_email = True
 
-screen maica_login():
+screen mtts_login():
     modal True
     zorder 92
 
@@ -8,9 +8,9 @@ screen maica_login():
                     Function(store.mtts.mtts._gen_token, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
                     Function(_maica_verify_token),
                     Function(_maica_clear),
-                    Hide("maica_login")
+                    Hide("mtts_login")
                     ]
-    $ cancel_action = [Function(_maica_clear), Hide("maica_login")]
+    $ cancel_action = [Function(_maica_clear), Hide("mtts_login")]
 
     use maica_setter_medium_frame(ok_action=ok_action, cancel_action=cancel_action):
 
@@ -18,11 +18,11 @@ screen maica_login():
             if use_email:
                 textbutton _("输入DCC账号邮箱"):
                     style "confirm_button"
-                    action Show("maica_login_input",message = _("请输入DCC账号邮箱"),returnto = "_maica_LoginEmail")
+                    action Show("mtts_login_input",message = _("请输入DCC账号邮箱"),returnto = "_maica_LoginEmail")
             else:
                 textbutton _("输入DCC账号用户名"):
                     style "confirm_button"
-                    action Show("maica_login_input",message = _("请输入DCC账号用户名") ,returnto = "_maica_LoginAcc")
+                    action Show("mtts_login_input",message = _("请输入DCC账号用户名") ,returnto = "_maica_LoginAcc")
 
         hbox:
             style_prefix "maica_check"
@@ -41,7 +41,7 @@ screen maica_login():
         hbox:
             textbutton _("输入密码"):
                 style "confirm_button"
-                action Show("maica_login_input",message = _("请输入密码"),returnto = "_maica_LoginPw")
+                action Show("mtts_login_input",message = _("请输入密码"),returnto = "_maica_LoginPw")
         hbox:
             text ""
 
@@ -62,7 +62,7 @@ screen maica_login():
                 yalign 1.0
 
 
-screen maica_login_input(message, returnto, ok_action = Hide("maica_login_input")):
+screen mtts_login_input(message, returnto, ok_action = Hide("mtts_login_input")):
     ## Ensure other screens do not get input while this screen is displayed.s
     modal True
     zorder 92

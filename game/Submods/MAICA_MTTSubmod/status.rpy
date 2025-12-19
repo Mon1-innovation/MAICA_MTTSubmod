@@ -1,5 +1,9 @@
+
+
 init -1 python:
-    default store.mtts_status = renpy.substitute(_("待机"))
+    if not hasattr(store, "mtts_status"):
+        store.mtts_status = renpy.substitute(_("待机"))
+    # default store.mtts_status = renpy.substitute(_("待机"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
         if not maica_isWorkLoadScreenVisible():
