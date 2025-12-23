@@ -69,7 +69,9 @@ screen mtts_settings():
                 
                 textbutton "[persistent.mtts.get('volume')]"
             
-
+            hbox:
+                textbutton _("展示状态小窗(需要重启)"):
+                    action ToggleDict(persistent.mtts, "ministathud", True, False)
             
             hbox:
                 textbutton _("是否装备饰品: [persistent.mtts.get('acs_enabled')]"):

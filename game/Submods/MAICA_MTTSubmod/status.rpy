@@ -12,6 +12,11 @@ init -1 python:
 
     def maicatts_isWorkLoadScreenVisible():
         return "maicatts_stat_lite" in config.overlay_screens
+    
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
+    def auto_show_statlite():
+        if persistent.mtts['ministathud']:
+            maicatts_enableWorkLoadScreen()
 
 screen maicatts_stat_lite():
     python:
