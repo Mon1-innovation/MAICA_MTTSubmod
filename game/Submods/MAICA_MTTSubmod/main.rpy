@@ -3,9 +3,9 @@ init -990 python:
         "enabled": False,
         "_chat_installed": False,
         "volume": 1.0,
-        "acs_enabled": True,,
+        "acs_enabled": True,
         "_outdated": False,
-        "ministathud": False,
+        "ministathud": False
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
