@@ -25,7 +25,10 @@ init -989 python:
 screen mtts_settingpane():
     if persistent.mtts["_outdated"]:
         textbutton _("> 当前版本过旧, 请更新到最新版")
+
     if renpy.seen_label("mtts_greeting"):
+        textbutton _(">登录"):
+            action Show("mtts_login")
         textbutton _("> MTTS设置"):
             action Show("mtts_settings")
     else:
