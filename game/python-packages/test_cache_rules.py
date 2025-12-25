@@ -34,7 +34,7 @@ def test_cache_rule_matcher():
     # 测试用例
     test_cases = [
         {
-            "text": "这是一个[包含方括号]的字符串",
+            "text": "不过跟[player]打肯定不一样吧",
             "label": "test_label",
             "expected_rule": "regex_text",
             "description": "测试包含方括号的字符串"

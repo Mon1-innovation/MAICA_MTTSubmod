@@ -27,8 +27,12 @@ screen mtts_settingpane():
         textbutton _("> 当前版本过旧, 请更新到最新版")
 
     if renpy.seen_label("mtts_greeting"):
-        textbutton _(">登录"):
-            action Show("mtts_login")
+        if not persistent.mtts["_chat_installed"]:
+            textbutton _("> 登录 (推荐使用Blessland完成登录)"):
+                action Show("mtts_login")
+        else:
+            textbutton _("> 使用 MAICA Blessland 完成登录"):
+                action Show("maica_login")
         textbutton _("> MTTS设置"):
             action Show("mtts_settings")
     else:
@@ -43,7 +47,6 @@ screen mtts_settings():
             _tooltip = submods_screen.scope.get("tooltip", None)
         else:
             _tooltip = None
-    $ _tooltip = store._tooltip
 
     $ w = 1100
     $ h = 640
@@ -73,7 +76,7 @@ screen mtts_settings():
                 textbutton "[persistent.mtts.get('volume')]"
             
             hbox:
-                textbutton _("展示状态小窗(需要重启)"):
+                textbutton _("状态小窗(需要重启): [persistent.mtts.get('ministathud')]"):
                     action ToggleDict(persistent.mtts, "ministathud", True, False)
             
             hbox:
@@ -82,7 +85,7 @@ screen mtts_settings():
                     hovered SetField(_tooltip, "value", _("功能开关有延迟"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
-                        hbox:
+            hbox:
                 style_prefix "maica_check"
                 textbutton (_("展开性能监控") if store.nvw_folded else _("收起性能监控")):
                     action [
@@ -126,7 +129,6 @@ init python:
 
 
 screen maica_workload_stat():
-    $ _tooltip = store._tooltip
     python:
         stat = {k: v for k, v in iterize(store.mtts.mtts.workload_raw) if k != "onliners"}
     python:

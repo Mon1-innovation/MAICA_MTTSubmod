@@ -11,7 +11,8 @@ init -1 python:
         priority=11,
         stay_on_start=False,
         acs_type="ribbon",
-        keep_on_desk=True
+        keep_on_desk=True,
+        use_folders=False
     )
     mttsacs_microphone = MASAccessory(
         "mttsmicrophone",
@@ -23,7 +24,8 @@ init -1 python:
         priority=11,
         stay_on_start=False,
         acs_type="flowers",
-        keep_on_desk=True
+        keep_on_desk=True,
+        use_folders=False
     )
     store.mas_sprites.init_acs(mttsacs_headset)
     store.mas_sprites.init_acs(mttsacs_microphone)

@@ -29,7 +29,7 @@ init -100 python in mtts:
     matcher = MTTS.CacheRuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
-    AsyncTask(mtts.accessable)
+    _acc = AsyncTask(mtts.accessable)
 
     def apply_settings():
         pass
@@ -43,6 +43,11 @@ init -100 python in mtts:
         else:
             store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
 
+        if _acc.is_finished:
+            if _acc.exception:
+                store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
+        else:
+            store.mas_submod_utils.submod_log.warning("")
 
     def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
         # Calculate the number of filled positions in the progress bar
@@ -86,30 +91,27 @@ init python:
     old_renpysay = renpy.say
     store.mtts = mtts
     PY2, PY3 = MTTS.PY2, MTTS.PY3
-    if PY2:
-        import datapy2_mtts
-        pattern_content = datapy2_mtts.pattern_content
-    else:
-        pattern_content = r'[A-Za-z一-龥0-9]'
     def mtts_say(who, what, interact=True, *args, **kwargs):
+        if not persistent.mtts["enabled"] and persistent.mtts["_outdated"] and not store.mtts.mtts.is_accessable:
+            store.mtts_status = renpy.substitute(_("未启用/未更新/服务不可用"))
+            return old_renpysay(who, what, interact, *args, **kwargs)
         def process_str(srt):
             import re
             # \{fast\}.*?\{fast\} , \{.*?\} 将匹配的str替换为空字符串
             srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
-        if not persistent.mtts["enabled"] and persistent.mtts["_outdated"] and not store.mtts.mtts.is_accessable:
-            return old_renpysay(who, what, interact, *args, **kwargs)
 
         text = process_str(renpy.substitute(what))
-        rule = store.mtts.matcher.match_rule(text, store.mas_submod_utils.current_label)
+        rule = store.mtts.matcher.match_rule(what, store.mas_submod_utils.current_label)
+        store.mtts_match_rule = rule.get('name', 'Default')
         if not rule['action']:
+            store.mtts_status = renpy.substitute(_("未匹配任何规则/规则为空action"))
             return old_renpysay(who, what, interact, *args, **kwargs)
         if rule['name'] == 'MAICA_Chat':
             target_lang = store.maica.maica.target_lang
         else:
             target_lang = "zh" if config.language == 'chinese' else 'en'
-
         store.mtts_status = renpy.substitute(_("生成中"))
         exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
         mtts.mtts.local_cache = 'local' in rule['action']

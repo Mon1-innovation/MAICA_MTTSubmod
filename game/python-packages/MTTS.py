@@ -25,19 +25,20 @@ class CacheRuleMatcher:
     def _load_rules(self):
         """从配置文件加载规则"""
         try:
-            with open(self.rules_config_path, 'r', encoding='utf-8') as f:
+            import io
+            with io.open(self.rules_config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 cache_rules = config.get('cacheRules', )
                 self.rules = cache_rules.get('rules', [])
                 self.default_action = cache_rules.get('default_action', [])
         except Exception as e:
-            logger.error("Failed to load cache rules: {}".format(e))
+            raise Exception("Failed to load cache rules: {}".format(e))
             self.rules = []
             self.default_action = []
 
     def _count_content_chars(self, text):
         """
-        计算文本中的非符号字符数（中文、英文、数字）
+        计算文本中的非符号字符数（任何字母、数字，排除符号、标点、空白等）
 
         Args:
             text: 要计算的文本
@@ -45,8 +46,14 @@ class CacheRuleMatcher:
         Returns:
             int: 非符号字符数
         """
-        pattern = r'[A-Za-z一-龥0-9]'
-        return len(re.findall(pattern, text))
+        import unicodedata
+        count = 0
+        for char in text:
+            category = unicodedata.category(char)
+            # L*: 字母（任何语言），N*: 数字
+            if category[0] in ('L', 'N'):
+                count += 1
+        return count
 
     def match_rule(self, text, label):
         """
@@ -66,6 +73,7 @@ class CacheRuleMatcher:
             # 检查最小长度要求（非符号字符长度）
             min_len = rule.get('min_len', 0)
             if self._count_content_chars(text) < min_len:
+                logger.warning("Text length is too short: {}".format(text))
                 continue
 
             # 尝试匹配 regex_text
