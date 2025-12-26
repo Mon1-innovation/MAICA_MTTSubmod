@@ -8,7 +8,7 @@ init -1 python:
     # default store.mtts_status = renpy.substitute(_("待机"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
-        if not maica_isWorkLoadScreenVisible():
+        if not maicatts_isWorkLoadScreenVisible():
             config.overlay_screens.append("maicatts_stat_lite")
 
     def maicatts_disableWorkLoadScreen():
@@ -19,7 +19,7 @@ init -1 python:
     def maicatts_isWorkLoadScreenVisible():
         return "maicatts_stat_lite" in config.overlay_screens
     
-    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=1000)
     def auto_show_statlite():
         if persistent.mtts['ministathud']:
             maicatts_enableWorkLoadScreen()
