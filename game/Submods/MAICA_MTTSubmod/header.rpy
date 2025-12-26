@@ -5,8 +5,8 @@ init -990 python:
     mtts_version = "0.1.0"
     store.mas_submod_utils.Submod(
         author="P",
-        name="MAICA MTTSubmod",
-        description=_("MAICA官方TTS子模组"),
+        name="MTTS Synbrace",
+        description=_("MAICA-MTTS官方前端子模组"),
         version=mtts_version,
         settings_pane="mtts_settingpane"
     )
