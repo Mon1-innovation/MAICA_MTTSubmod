@@ -8,6 +8,8 @@ init 5 python:
             rules={
                 "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
             },
+            conditional="renpy.seen_label('mas_gift_giving_instructs')",
+            action=EV_ACT_QUEUE,
             random=True,
             aff_range=(mas_aff.NORMAL, None)
         )
