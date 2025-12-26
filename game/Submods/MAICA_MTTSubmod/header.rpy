@@ -26,17 +26,15 @@ screen mtts_settingpane():
     if persistent.mtts["_outdated"]:
         textbutton _("> 当前版本过旧, 请更新到最新版")
 
-    if renpy.seen_label("mtts_greeting"):
-        if not persistent.mtts["_chat_installed"]:
-            textbutton _("> 登录 (推荐使用Blessland完成登录)"):
-                action Show("mtts_login")
-        else:
-            textbutton _("> 使用 MAICA Blessland 完成登录"):
-                action Show("maica_login")
-        textbutton _("> MTTS设置"):
-            action Show("mtts_settings")
+    if not persistent.mtts["_chat_installed"]:
+        textbutton _("> 登录 (未安装Blessland, 使用独立模式)"):
+            action Show("mtts_login")
     else:
-        textbutton _("> MTTS设置 (相关事件未解锁)")
+        textbutton _("> 使用 MAICA Blessland 完成登录"):
+            action Show("maica_login")
+    textbutton _("> MTTS设置"):
+        action Show("mtts_settings")
+
 
 screen mtts_settings():
     default tooltip = Tooltip("")
@@ -60,29 +58,40 @@ screen mtts_settings():
 
     use maica_common_outer_frame(w, h, x, y):
         use maica_common_inner_frame(w, h, x, y):
+            if renpy.seen_label("mtts_greeting"):
+                hbox:
+                    style_prefix "generic_fancy_check"
+                    textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
+                        action ToggleDict(persistent.mtts, "enabled", True, False)
+                        hovered SetField(_tooltip, "value", _("启用以生成和播放TTS."))
+                        unhovered SetField(_tooltip, "value", _tooltip.default)
 
-            hbox:
-                textbutton _("MTTS 开关 [persistent.mtts.get('enabled')]"):
-                    action ToggleDict(persistent.mtts, "enabled", True, False)
+            else:
+                hbox:
+                    text _("! MTTS未解锁, 启用不会生效"):
+                        color "#FF0000"
+                hbox:
+                    textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
+                        style "generic_fancy_check_button_disabled"
+                        action ToggleDict(persistent.mtts, "enabled", True, False)
+                        hovered SetField(_tooltip, "value", _("启用以生成和播放TTS.\n! MTTS未解锁, 启用不会生效"))
+                        unhovered SetField(_tooltip, "value", _tooltip.default)
+            
+            $ tooltip_volume = _("TTS的语音音量")
+            use num_bar(_("语音音量"), 200 if config.language == "chinese" else 350, tooltip_volume, "volume", 0, 9, "mtts")
             
             hbox:
-                textbutton _("语音音量: "):
-                    action NullAction()
-
-                bar:
-                    value DictValue(persistent.mtts, "volume", 1.0, step=0.01,offset=0 ,style="slider")
-                    xsize 200
-                
-                textbutton "[persistent.mtts.get('volume')]"
-            
-            hbox:
-                textbutton _("状态小窗(需要重启): [persistent.mtts.get('ministathud')]"):
+                style_prefix "generic_fancy_check"
+                textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
                     action ToggleDict(persistent.mtts, "ministathud", True, False)
-            
+                    hovered SetField(_tooltip, "value", _("是否在屏幕右上角显示MTTS状态小窗"))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+
             hbox:
-                textbutton _("是否装备饰品: [persistent.mtts.get('acs_enabled')]"):
+                style_prefix "generic_fancy_check"
+                textbutton _("启用时显示饰品: [persistent.mtts.get('acs_enabled')]"):
                     action ToggleDict(persistent.mtts, "acs_enabled", True, False)
-                    hovered SetField(_tooltip, "value", _("功能开关有延迟"))
+                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时自动穿戴对应饰品.\n* 可能有一定延迟"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
@@ -161,6 +170,51 @@ init python:
             return wrapper
 
     store.workload_throttle = ThrottleReturnNone(15.0)
+
+    def common_can_add(var, min, max, sdict):
+        if isinstance(max, float):
+            unit = 0.01
+        else:
+            unit = 1
+        s_dict = getattr(persistent, sdict)
+        return min <= s_dict[var] < max
+
+    def common_add(var, min, max, sdict):
+        if isinstance(max, float):
+            unit = 0.01
+        else:
+            unit = 1
+        s_dict = getattr(persistent, sdict)
+        if common_can_add(var, min, max, sdict):
+            s_dict[var] += unit
+            if s_dict[var] > max:
+                s_dict[var] = max
+
+    def common_can_sub(var, min, max, sdict):
+        if isinstance(max, float):
+            unit = 0.01
+        else:
+            unit = 1
+        s_dict = getattr(persistent, sdict)
+        return min < s_dict[var] <= max
+
+    def common_sub(var, min, max, sdict):
+        if isinstance(max, float):
+            unit = 0.01
+        else:
+            unit = 1
+        s_dict = getattr(persistent, sdict)
+        if common_can_sub(var, min, max, sdict):
+            s_dict[var] -= unit
+            if s_dict[var] < min:
+                s_dict[var] = min
+
+    def toggle_var(var):
+        if getattr(store, var, None):
+            setattr(store, var, False)
+        else:
+            setattr(store, var, True)
+
 
 define maica_confont = mas_ui.MONO_FONT
 screen maica_workload_stat():

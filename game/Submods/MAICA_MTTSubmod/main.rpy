@@ -5,7 +5,7 @@ init -990 python:
         "volume": 1.0,
         "acs_enabled": True,
         "_outdated": False,
-        "ministathud": False
+        "ministathud": True,
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -92,6 +92,9 @@ init python:
     store.mtts = mtts
     PY2, PY3 = MTTS.PY2, MTTS.PY3
     def mtts_say(who, what, interact=True, *args, **kwargs):
+        if not renpy.seen_label("mtts_greeting"):
+            store.mtts_status = renpy.substitute(_("未解锁"))
+            return old_renpysay(who, what, interact, *args, **kwargs)
         if not persistent.mtts["enabled"] and persistent.mtts["_outdated"] and not store.mtts.mtts.is_accessable:
             store.mtts_status = renpy.substitute(_("未启用/未更新/服务不可用"))
             return old_renpysay(who, what, interact, *args, **kwargs)
