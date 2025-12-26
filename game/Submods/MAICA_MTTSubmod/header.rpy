@@ -42,9 +42,11 @@ screen mtts_settings():
     python:
         submods_screen = store.renpy.get_screen("submods", "screens")
         if submods_screen:
-            _tooltip = submods_screen.scope.get("tooltip", None)
+            store._tooltip = submods_screen.scope.get("tooltip", None)
         else:
-            _tooltip = None
+            store._tooltip = None
+
+    $ _tooltip = store._tooltip
 
     $ w = 1100
     $ h = 640
@@ -140,7 +142,7 @@ init python:
         elif PY3:
             return dict.items()
     
-        import time
+    import time
     class ThrottleReturnNone(object):
         """This is a wrapper."""
         
