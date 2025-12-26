@@ -40,9 +40,9 @@ screen mtts_settingpane():
 
 screen mtts_settings():
     default tooltip = Tooltip("")
+    default nvw_folded = False
     python:
         submods_screen = store.renpy.get_screen("submods", "screens")
-
         if submods_screen:
             _tooltip = submods_screen.scope.get("tooltip", None)
         else:
@@ -87,14 +87,12 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "maica_check"
-                textbutton (_("展开性能监控") if store.nvw_folded else _("收起性能监控")):
-                    action [
-                        Function(toggle_var, "nvw_folded")
-                        ]
+                textbutton (_("展开性能监控") if nvw_folded else _("收起性能监控")):
+                    action SetScreenVariable("nvw_folded", not nvw_folded)
                     hovered SetField(_tooltip, "value", _("显示/收起服务器的性能状态指标"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
-            if not store.nvw_folded:
+            if not nvw_folded:
                 hbox:
                     xpos 30
                     use maica_workload_stat()
@@ -115,19 +113,56 @@ init python:
         store._maica_LoginAcc = ""
         store._maica_LoginPw = ""
         store._maica_LoginEmail = ""
-        store.mas_api_keys.api_keys.update({"Maica_Token":store.maica.maica.ciphertext})
+        store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts.token})
         store.mas_api_keys.save_keys()
 
     def _maica_verify_token():
-        res = store.maica.maica._verify_token()
+        res = store.mtts.mtts._verify_token()
         if res.get("success"):
             renpy.show_screen("maica_message", message=_("验证成功"))
         else:
             store.mas_api_keys.api_keys.update({"Maica_Token":""})
-            store.maica.maica.ciphertext = ""
             renpy.show_screen("maica_message", message=renpy.substitute(_("验证失败, 请检查账号密码")) + "\n" + renpy.substitute(_("失败原因: ")) + res.get("exception"))
+init python:
+    from bot_interface import PY2, PY3
+    def iterize(dict):
+        if PY2:
+            return dict.iteritems()
+        elif PY3:
+            return dict.items()
+    
+        import time
+    class ThrottleReturnNone(object):
+        """This is a wrapper."""
+        
+        def __init__(self, wait):
+            self.wait = wait
+            self.last_called = 0.0
+            self.remain = 0
+            self.result = None
+        
+        def __call__(self, func):
+            def wrapper(*args, **kwargs):
+                now = time.time()
+                elapsed = now - self.last_called
+                
+                if elapsed < self.wait:
+                    pass
+                else:
+                    self.last_called = now
+                    self.result = func(*args, **kwargs)
 
+                self.remain = self.wait - elapsed
+                if self.remain < 0.0:
+                    self.remain = 0.0
 
+                return None
+            
+            return wrapper
+
+    store.workload_throttle = ThrottleReturnNone(15.0)
+
+define maica_confont = mas_ui.MONO_FONT
 screen maica_workload_stat():
     python:
         stat = {k: v for k, v in iterize(store.mtts.mtts.workload_raw) if k != "onliners"}
@@ -136,7 +171,7 @@ screen maica_workload_stat():
 
         @store.workload_throttle
         def check_and_update():
-            store.maica.maica.update_workload()
+            store.mtts.mtts.update_workload()
 
     modal True
     zorder 90
@@ -173,7 +208,7 @@ screen maica_workload_stat():
             hbox:
                 text renpy.substitute(_("下次更新数据")):
                     size 15
-                text store.maica.progress_bar(((store.workload_throttle.remain / store.update_interval)) * 100, bar_length = 78, total=store.update_interval, unit="s"):
+                text store.mtts.progress_bar(((store.workload_throttle.remain / store.update_interval)) * 100, bar_length = 78, total=store.update_interval, unit="s"):
                     size 15
                     font maica_confont
                 timer 1.0 repeat True action Function(check_and_update)
