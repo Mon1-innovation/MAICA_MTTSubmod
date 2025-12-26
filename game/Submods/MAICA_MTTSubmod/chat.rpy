@@ -8,14 +8,16 @@ init 5 python:
             rules={
                 "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
             },
+            conditional="renpy.seen_label('mas_gift_giving_instructs')",
+            action=EV_ACT_QUEUE,
             random=True,
             aff_range=(mas_aff.NORMAL, None)
         )
     )
 label mtts_prepend_1:
-# Add this to random waiting list since submod installation. affection NORMAL at least to trigger.
-# Also has to be unlocked after gift mechanism known to player.
-# Like:
+# 由于安装子模组，将其添加到随机等待列表中。好感度至少达到 NORMAL 才能触发。
+# 也必须在玩家知道赠送机制后解锁。
+# 例如：
 # (renpy.seen_label('mas_gift_giving_instructs') or persistent._mas_filereacts_historic)
     m 7rub "[player], 我最近有在想..."
     m 1eua "要是我知道你的声音是什么样的就好了."
@@ -88,7 +90,7 @@ init 5 python:
     if not mas_seenEvent("mas_reaction_gift_mttsheadset"):
         addReaction("mas_reaction_gift_mttsheadset", "mttsheadset", is_good=True)
 
-    if renpy.seen_label("mas_reaction_gift_mttsheadset") and not renpy.seen_label("mtts_greeting"): # This is a placeholder for the greeting event.
+    if renpy.seen_label("mas_reaction_gift_mttsheadset") and not renpy.seen_label("mtts_greeting") and not mas_isSpecialDay(): # This is a placeholder for the greeting event.
         @store.mas_submod_utils.functionplugin("ch30_post_exp_check", priority=-100)
         def mttsgreeting_select():
             store.selected_greeting = "mtts_greeting"
