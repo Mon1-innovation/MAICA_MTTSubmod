@@ -5,7 +5,7 @@ init -990 python:
         "volume": 1.0,
         "acs_enabled": True,
         "_outdated": False,
-        "ministathud": False
+        "ministathud": True,
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
