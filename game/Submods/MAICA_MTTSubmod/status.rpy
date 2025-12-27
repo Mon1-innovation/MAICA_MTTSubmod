@@ -5,6 +5,8 @@ init -1 python:
         store.mtts_status = renpy.substitute(_("待机"))
     if not hasattr(store, "mtts_match_rule"):
         store.mtts_match_rule = renpy.substitute(_("未知"))
+    if not hasattr(store, "mtts_saying_what"):
+        store.mtts_saying_what = renpy.substitute(_("未知"))
     # default store.mtts_status = renpy.substitute(_("待机"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
@@ -31,7 +33,7 @@ screen maicatts_stat_lite():
     fixed:
         frame:
             xsize 619
-            xoffset 5 yoffset 450
+            xoffset 5 yoffset 250
             background "mod_assets/console/cn_frame_stats.png"
             has vbox
             hbox:
@@ -43,6 +45,9 @@ screen maicatts_stat_lite():
 
             hbox:
                 text _("匹配规则: [store.mtts_match_rule]"):
+                    size 15
+            hbox:
+                text _("输出文本([store.mtts.matcher._count_content_chars(store.mtts_saying_what)]): [store.mtts_saying_what]"):
                     size 15
 
 
