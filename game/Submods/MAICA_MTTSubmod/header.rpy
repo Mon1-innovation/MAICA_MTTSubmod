@@ -80,7 +80,7 @@ screen mtts_settings():
                         unhovered SetField(_tooltip, "value", _tooltip.default)
             
             $ tooltip_volume = _("TTS的语音音量")
-            use num_bar(_("语音音量"), 200 if config.language == "chinese" else 350, tooltip_volume, "volume", 0, 9, "mtts")
+            use prog_bar(_("语音音量"), 200 if config.language == "chinese" else 350, tooltip_volume, "volume", 0.0, 1.0, "mtts")
             
             hbox:
                 style_prefix "generic_fancy_check"
