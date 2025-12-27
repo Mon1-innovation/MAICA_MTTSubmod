@@ -95,7 +95,7 @@ init python:
         if not renpy.seen_label("mtts_greeting"):
             store.mtts_status = renpy.substitute(_("未解锁"))
             return old_renpysay(who, what, interact, *args, **kwargs)
-        if not persistent.mtts["enabled"] and persistent.mtts["_outdated"] and not store.mtts.mtts.is_accessable:
+        if not (persistent.mtts["enabled"] and persistent.mtts["_outdated"] and store.mtts.mtts.is_accessable):
             store.mtts_status = renpy.substitute(_("未启用/未更新/服务不可用"))
             return old_renpysay(who, what, interact, *args, **kwargs)
         def process_str(srt):
