@@ -85,19 +85,22 @@ init -100 python:
         return "微笑"  # 无匹配时返回 None
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
-init python:
+init -1 python:
     
     import MTTS
     old_renpysay = renpy.say
     store.mtts = mtts
     PY2, PY3 = MTTS.PY2, MTTS.PY3
-    def mtts_say(who, what, interact=True, *args, **kwargs):
+    import time
+    def mtts_available():
         if not renpy.seen_label("mtts_greeting"):
             store.mtts_status = renpy.substitute(_("未解锁"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
+            return False# old_renpysay(who, what, interact, *args, **kwargs)
         if not persistent.mtts["enabled"] and persistent.mtts["_outdated"] and not store.mtts.mtts.is_accessable:
             store.mtts_status = renpy.substitute(_("未启用/未更新/服务不可用"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
+            return False# old_renpysay(who, what, interact, *args, **kwargs)
+        return True
+    def mtts_generate_sound(what):
         def process_str(srt):
             import re
             # \{fast\}.*?\{fast\} , \{.*?\} 将匹配的str替换为空字符串
@@ -110,7 +113,7 @@ init python:
         store.mtts_match_rule = rule.get('name', 'Default')
         if not rule['action']:
             store.mtts_status = renpy.substitute(_("未匹配任何规则/规则为空action"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
+            return# old_renpysay(who, what, interact, *args, **kwargs)
         if rule['name'] == 'MAICA_Chat':
             target_lang = store.maica.maica.target_lang
         else:
@@ -122,15 +125,16 @@ init python:
         res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
         name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
         while not res.is_finished:
-            old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
-            _history_list.pop()
+            time.sleep(0.1)
+            #old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
+            #_history_list.pop()
         if res.is_success:
             res = res.result
             if res.is_success():
                 store.mtts_status = renpy.substitute(_("播放中"))
                 renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
-                renpy.music.play(
-                    store.AudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
+                renpy.music.queue(
+                    store.MASAudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
                     channel="voice",
                 )
             else:
@@ -140,6 +144,6 @@ init python:
 
         store.mtts_status = renpy.substitute(_("待机"))
 
-        old_renpysay(who, what, interact, *args, **kwargs)
+        #old_renpysay(who, what, interact, *args, **kwargs)
 
-    renpy.say = mtts_say
+    #renpy.say = mtts_say
