@@ -78,8 +78,7 @@ label mtts_hint:
 P.S: 不要告诉她是我写的!\
 """) #需要单独建tl吧
         
-        filepath, message = aff_level_surprise_map.get(mas_curr_affection, (_("/小提示.txt"), mtts_gift_notice))
-        _write_txt("/characters{0}".format(filepath), message)
+        _write_txt("/characters{0}".format(renpy.substitute(_("/小提示.txt"))), mtts_gift_notice)
 
     m 1eud "嗨, [player]..."
     m 3euc "好像有人在'characters'文件夹里给你留了个便条."
