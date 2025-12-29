@@ -262,7 +262,7 @@ class MTTS:
             rc_override = False
         else:
             rc_override = self.remote_cache
-        req = requests.get(self.api_url("generate"), params={"access_token": self.token,
+        req = requests.get(self.get_api_url("generate"), params={"access_token": self.token,
              "content": json.dumps({
                 "text": text,
                 "emotion": emotion,
@@ -288,7 +288,7 @@ class MTTS:
             f.write(audio)
     
 
-    def api_url(self, endpoint):
+    def get_api_url(self, endpoint):
         return self.baseurl + endpoint
     
     def get_strategy(self):
@@ -296,7 +296,7 @@ class MTTS:
         # L: 家用机/边缘服务器 / 强制本地+远程
         # M: 工作站/个人服务器 / 强制远程缓存
         # H: 大型服务器
-        req = requests.post(self.api_url("strategy"), json={})
+        req = requests.post(self.get_api_url("strategy"), json={})
         if req.status_code == 200:
             return req.json()["strategy"]
         else:
@@ -320,7 +320,7 @@ class MTTS:
         }
         try:
             import json
-            response = requests.get(self.api_url("register"), params={"content":json.dumps(data)}, timeout=5)
+            response = requests.get(self.get_api_url("register"), params={"content":json.dumps(data)}, timeout=5)
             if (response.status_code != 200): 
                 raise Exception("MTTS::_gen_token response process failed because server return {}/{}".format(response.status_code, response.text))
 
@@ -350,7 +350,7 @@ class MTTS:
             return {"success": False, "exception": "MTTS: not serving"}
         import requests
         try:
-            res = requests.get(self.api_url("legality"), params={"access_token": self.token})
+            res = requests.get(self.get_api_url("legality"), params={"access_token": self.token})
             if res.status_code == 200:
                 res = res.json()
                 if res.get("success", False):
@@ -383,7 +383,7 @@ class MTTS:
             return None
 
         def task():
-            res = requests.get(self.api_url + "workload")
+            res = requests.get(self.get_api_url("workload"))
             if res.status_code == 200:
                 data = res.json()
                 if data["success"]:
@@ -485,7 +485,7 @@ class MTTS:
         import traceback
 
         try:
-            res = requests.get(self.api_url("version"))
+            res = requests.get(self.get_api_url("version"))
             if res.status_code == 200:
                 res = res.json()
                 if res.get("success", False):
@@ -507,8 +507,8 @@ class MTTS:
             self.__accessable = True
             return
         import requests, json
-        res = requests.get(self.api_url + "accessibility")
-        logger.debug("accessable(): try get accessibility from {}".format(self.api_url + "accessibility"))
+        res = requests.get(self.get_api_url("accessibility"))
+        logger.debug("accessable(): try get accessibility from {}".format(self.get_api_url("accessibility")))
         d = res.json()
         if d.get(u"success", False):
             self._serving_status = d["content"]
