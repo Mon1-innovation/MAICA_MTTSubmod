@@ -85,14 +85,14 @@ screen mtts_settings():
             hbox:
                 style_prefix "generic_fancy_check"
                 textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
-                    action [ToggleDict(persistent.mtts, "ministathud", True, False),Function(maicatts_syncWorkLoadScreenStatus)]
+                    action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
                     hovered SetField(_tooltip, "value", _("是否在屏幕右上角显示MTTS状态小窗"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
                 style_prefix "generic_fancy_check"
                 textbutton _("启用时显示饰品: [persistent.mtts.get('acs_enabled')]"):
-                    action ToggleDict(persistent.mtts, "acs_enabled", True, False)
+                    action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
                     hovered SetField(_tooltip, "value", _("是否在MTTS启用时自动穿戴对应饰品.\n* 可能有一定延迟"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
