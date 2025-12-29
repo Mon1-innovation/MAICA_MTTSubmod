@@ -302,54 +302,40 @@ class MTTS:
         else:
             raise Exception("{} {}".format(req.status_code, req.reason))
 
-    def _gen_token(self, account, pwd, token="", email=None):
-        """
-        生成或设置认证令牌。
-
-        Args:
-            account: 账号用户名
-            pwd: 密码
-            token: 预设的令牌（如果提供，直接使用该令牌）
-            email: 邮箱（如果提供，使用邮箱登录而不是用户名）
-
-        Returns:
-            dict: 包含生成结果的字典
-        """
+    def _gen_token(self, account, pwd, token = "", email = None):
         if token != "":
             self.token = token
-            return {"success": True, "content": token}
-
-        import json
+            return
+        if not self.__accessable and token == "":
+            return logger.error("_gen_token:MTTS server not serving.")
+        import requests
         data = {
-            "username": account,
-            "password": pwd
+            "username":account,
+            "password":pwd
         }
-
         if email:
             data = {
-                "email": email,
-                "password": pwd
-            }
-
+            "email":email,
+            "password":pwd
+        }
         try:
-            response = requests.post(self.api_url("register"), json=data, timeout=5)
-            if response.status_code != 200:
-                logger.error("MTTS::_gen_token response failed with status code: {}".format(response.status_code))
-                return {"success": False, "exception": "HTTP error: {}".format(response.status_code)}
-
-            response_data = response.json()
-            if response_data.get("success"):
-                self.token = response_data.get("content", "")
-                logger.info("MTTS::_gen_token token generated successfully")
-                return response_data
-            else:
-                logger.error("MTTS::_gen_token failed: {}".format(response_data.get("exception", "Unknown error")))
-                return response_data
-
+            import json
+            response = requests.get(self.api_url("register"), params={"content":json.dumps(data)}, timeout=5)
+            if (response.status_code != 200): 
+                raise Exception("MTTS::_gen_token response process failed because server return {}".format(response.status_code))
         except Exception as e:
             import traceback
-            logger.error("MTTS::_gen_token request failed: {}".format(traceback.format_exc()))
-            return {"success": False, "exception": str(e)}
+            logger.error("MTTS::_gen_token requests.post failed because can't connect to server: {}".format(e))
+            return
+        if response.status_code == 200:
+            response_data = response.json()
+            if response_data.get("success"):
+                self.token = response_data.get("content")
+            else:
+                logger.error("MTTS::_gen_token response process failed because server response failed: {}".format(response_data))
+        else:
+            logger.error("MTTS::_gen_token response process failed because server return {}".format(response.status_code))
+        return
 
     def _verify_token(self):
         """
@@ -361,22 +347,22 @@ class MTTS:
         """
         import requests
         try:
-            res = requests.get(self.api_url("legality"), params={"access_token": self.ciphertext})
+            res = requests.get(self.api_url("legality"), params={"access_token": self.token})
             if res.status_code == 200:
                 res = res.json()
                 if res.get("success", False):
                     return res
                 else:
-                    logger.warning("Maica::_verify_token not passed: {}".format(res))
+                    logger.warning("MTTS::_verify_token not passed: {}".format(res))
                     return res
             else:
-                logger.error("Maica::_verify_token requests.post failed because can't connect to server: {}".format(res.text))
-                return {"success":False, "exception": "Maica::_verify_token requests.post failed"}
+                logger.error("MTTS::_verify_token requests.post failed because can't connect to server: {}".format(res.text))
+                return {"success":False, "exception": "MTTS::_verify_token requests.post failed"}
 
         except Exception as e:
             import traceback
-            logger.error("Maica::_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
-            return {"success":False, "exception": "Maica::_verify_token failed"}
+            logger.error("MTTS::_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
+            return {"success":False, "exception": "MTTS::_verify_token failed"}
     def update_workload(self):
         """
         更新工作负载信息（后台执行）。
