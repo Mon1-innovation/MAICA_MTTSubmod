@@ -12,7 +12,7 @@ init -1 python:
             config.overlay_screens.append("maicatts_stat_lite")
 
     def maicatts_disableWorkLoadScreen():
-        if maica_isWorkLoadScreenVisible():
+        if maicatts_isWorkLoadScreenVisible():
             config.overlay_screens.remove("maicatts_stat_lite")
             renpy.hide_screen("maicatts_stat_lite")
 
@@ -23,6 +23,13 @@ init -1 python:
     def auto_show_statlite():
         if persistent.mtts['ministathud']:
             maicatts_enableWorkLoadScreen()
+
+    def maicatts_syncWorkLoadScreenStatus():
+        if persistent.mtts.get("ministathud", False):
+            maicatts_enableWorkLoadScreen()
+        else:
+            maicatts_disableWorkLoadScreen()
+        renpy.restart_interaction()
 
 screen maicatts_stat_lite():
     python:
