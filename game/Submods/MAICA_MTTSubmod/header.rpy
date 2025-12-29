@@ -85,7 +85,7 @@ screen mtts_settings():
             hbox:
                 style_prefix "generic_fancy_check"
                 textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
-                    action ToggleDict(persistent.mtts, "ministathud", True, False)
+                    action [ToggleDict(persistent.mtts, "ministathud", True, False),Function(maicatts_syncWorkLoadScreenStatus)]
                     hovered SetField(_tooltip, "value", _("是否在屏幕右上角显示MTTS状态小窗"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
