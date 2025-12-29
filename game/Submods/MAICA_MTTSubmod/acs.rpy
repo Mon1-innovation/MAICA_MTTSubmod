@@ -33,8 +33,6 @@ init -1 python:
     #monika_chr.wear_acs(mas_acs_roses)
     #monika_chr.remove_acs(mas_acs_flowers)
 
-    @store.mas_submod_utils.functionplugin("ch30_loop", priority=-100)
-    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_autoacs():
         if persistent.mtts.get("acs_enabled") and persistent.mtts.get("enabled"):
             monika_chr.wear_acs(mttsacs_headset)
@@ -42,4 +40,16 @@ init -1 python:
         else:
             monika_chr.remove_acs(mttsacs_headset)
             monika_chr.remove_acs(mttsacs_microphone)
+
+    @store.mas_submod_utils.functionplugin("ch30_loop", priority=-100)
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
+    def mtts_firstloadacs():
+        mtts_autoacs()
+    #def mtts_autoacs():
+    #    if persistent.mtts.get("acs_enabled") and persistent.mtts.get("enabled"):
+    #        monika_chr.wear_acs(mttsacs_headset)
+    #        monika_chr.wear_acs(mttsacs_microphone)
+    #    else:
+    #        monika_chr.remove_acs(mttsacs_headset)
+    #        monika_chr.remove_acs(mttsacs_microphone)
 
