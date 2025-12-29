@@ -361,22 +361,22 @@ class MTTS:
         """
         import requests
         try:
-            res = requests.post(self.api_url("legality"), json={"access_token": self.token})
+            res = requests.get(self.api_url("legality"), params={"access_token": self.ciphertext})
             if res.status_code == 200:
                 res = res.json()
                 if res.get("success", False):
                     return res
                 else:
-                    logger.warning("MTTS:_verify_token not passed: {}".format(res))
+                    logger.warning("Maica::_verify_token not passed: {}".format(res))
                     return res
             else:
-                logger.error("MTTS:_verify_token requests.post failed because can't connect to server: {}".format(res.text))
-                return {"success":False, "exception": "MTTS:_verify_token requests.post failed"}
+                logger.error("Maica::_verify_token requests.post failed because can't connect to server: {}".format(res.text))
+                return {"success":False, "exception": "Maica::_verify_token requests.post failed"}
 
         except Exception as e:
             import traceback
-            logger.error("MTTS:_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
-            return {"success":False, "exception": "MTTS:_verify_token failed"}
+            logger.error("Maica::_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
+            return {"success":False, "exception": "Maica::_verify_token failed"}
     def update_workload(self):
         """
         更新工作负载信息（后台执行）。
