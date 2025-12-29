@@ -5,7 +5,7 @@ screen mtts_login():
     zorder 92
     python:
         def none_gentoken(*args, **kwargs):
-            return store.mtts.mtts._gen_token(*args, **kwargs)
+            store.mtts.mtts._gen_token(*args, **kwargs)
     $ ok_action = [
                     Function(none_gentoken, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
                     Function(_maica_verify_token),
