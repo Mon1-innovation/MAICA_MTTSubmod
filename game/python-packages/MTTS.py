@@ -322,7 +322,8 @@ class MTTS:
             import json
             response = requests.get(self.api_url("register"), params={"content":json.dumps(data)}, timeout=5)
             if (response.status_code != 200): 
-                raise Exception("MTTS::_gen_token response process failed because server return {}".format(response.status_code))
+                raise Exception("MTTS::_gen_token response process failed because server return {}/{}".format(response.status_code, response.text))
+
         except Exception as e:
             import traceback
             logger.error("MTTS::_gen_token requests failed because can't connect to server: {}".format(e))
