@@ -3,11 +3,8 @@ default use_email = True
 screen mtts_login():
     modal True
     zorder 92
-    python:
-        def none_gentoken(*args, **kwargs):
-            store.mtts.mtts._gen_token(*args, **kwargs)
     $ ok_action = [
-                    Function(none_gentoken, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
+                    Function(store.mtts.mtts._gen_token, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
                     Function(_maica_verify_token),
                     Function(_maica_clear),
                     Hide("mtts_login")
