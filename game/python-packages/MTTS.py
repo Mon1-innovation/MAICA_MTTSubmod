@@ -325,7 +325,7 @@ class MTTS:
                 raise Exception("MTTS::_gen_token response process failed because server return {}".format(response.status_code))
         except Exception as e:
             import traceback
-            logger.error("MTTS::_gen_token requests.post failed because can't connect to server: {}".format(e))
+            logger.error("MTTS::_gen_token requests failed because can't connect to server: {}".format(e))
             return
         if response.status_code == 200:
             response_data = response.json()
@@ -345,6 +345,8 @@ class MTTS:
             bool: 验证结果。
         
         """
+        if not self.__accessable:
+            return {"success": False, "exception": "MTTS: not serving"}
         import requests
         try:
             res = requests.get(self.api_url("legality"), params={"access_token": self.token})
@@ -500,6 +502,9 @@ class MTTS:
             return {"success": False, "exception": "MTTS: Get version request failed"}
     
     def accessable(self):
+        if self._ignore_accessable:
+            self.__accessable = True
+            return
         import requests, json
         res = requests.get(self.api_url + "accessibility")
         logger.debug("accessable(): try get accessibility from {}".format(self.api_url + "accessibility"))

@@ -16,8 +16,7 @@ init -990 python:
 init -100 python in mtts:
     import MTTS, store, os
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MTTSubmod"))
-    if not store.mas_hasAPIKey("Maica_Token"):
-        store.mas_registerAPIKey("Maica_Token", "Maica Token")
+    store.mas_registerAPIKey("Maica_Token", "Maica Token")
     store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
     if not store.mas_hasAPIKey("MTTS_endpoint"):
         store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
@@ -29,7 +28,7 @@ init -100 python in mtts:
     matcher = MTTS.CacheRuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
-    _acc = AsyncTask(mtts.accessable)
+    
 
     def apply_settings():
         pass
@@ -83,10 +82,10 @@ init -100 python:
         except Exception as e:
             pass
         return "微笑"  # 无匹配时返回 None
+init python in mtts:
+    _acc = AsyncTask(mtts.accessable)
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
-init python:
-    
     import MTTS
     old_renpysay = renpy.say
     store.mtts = mtts
