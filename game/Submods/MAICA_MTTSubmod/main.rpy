@@ -42,9 +42,10 @@ init -100 python in mtts:
         else:
             store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
 
-        if _acc.is_finished:
-            if _acc.exception:
-                store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
+        if _acc is not None:
+            if _acc.is_finished:
+                if _acc.exception:
+                    store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
         else:
             store.mas_submod_utils.submod_log.warning("")
 
@@ -83,7 +84,16 @@ init -100 python:
             pass
         return "微笑"  # 无匹配时返回 None
 init python in mtts:
-    _acc = AsyncTask(mtts.accessable)
+    _acc = None
+
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-101)
+    def start_mtts():
+        global _acc
+        if _acc is None or _acc.is_finished:
+            _acc = AsyncTask(mtts.accessable)
+    
+    # _acc = AsyncTask(mtts.accessable)
+
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
     import MTTS
@@ -98,8 +108,9 @@ init python:
 
         @property
         def conditions(self):
-            if _acc.is_alive():
-                _acc.wait()
+            if _acc is not None:
+                if _acc.is_alive():
+                    _acc.wait()
             if not renpy.seen_label("mtts_greeting"):
                 store.mtts_status = renpy.substitute(_("未解锁"))
                 return False
