@@ -107,6 +107,9 @@ init python:
             elif persistent.mtts["_outdated"]:
                 store.mtts_status = renpy.substitute(_("版本过旧"))
                 return False
+            elif store.mtts.mtts.is_pending:
+                store.mtts_status = renpy.substitute(_("正在验证可用性..."))
+                return False
             elif not store.mtts.mtts.is_accessable:
                 store.mtts_status = renpy.substitute(_("无连接"))
                 return False
