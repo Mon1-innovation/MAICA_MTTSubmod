@@ -540,6 +540,7 @@ class MTTS:
     def accessable(self):
         if self._ignore_accessable:
             self.__accessable = True
+            self._ispending = False
             return
         import requests, json
         res = requests.get(self.get_api_url("accessibility"))
@@ -555,6 +556,7 @@ class MTTS:
         else:
             self.__accessable = False
             logger.error("accessable(): Maica is not serving: request failed: {}".format(d))
+        self._ispending = False
     
     @property
     def is_accessable(self):
