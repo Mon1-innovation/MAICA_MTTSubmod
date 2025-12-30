@@ -98,7 +98,8 @@ init python:
 
         @property
         def conditions(self):
-            _acc.wait()
+            if _acc.is_alive():
+                _acc.wait()
             if not renpy.seen_label("mtts_greeting"):
                 store.mtts_status = renpy.substitute(_("未解锁"))
                 return False
