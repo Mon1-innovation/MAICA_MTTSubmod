@@ -378,6 +378,11 @@ class MTTS:
             bool: 验证结果。
         
         """
+        import store
+        _acc = getattr(store.mtts, "_acc", None)
+        if _acc is not None:
+            if _acc.is_alive():
+                _acc.wait()
         if not self.__accessable:
             return {"success": False, "exception": "MTTS: not serving"}
         import requests
