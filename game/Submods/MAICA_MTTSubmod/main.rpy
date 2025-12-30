@@ -153,15 +153,15 @@ init python:
             mtts.mtts.local_cache = 'local' in rule['action']
             mtts.mtts.remote_cache = 'remote' in rule['action']
 
-            res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
+            task = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
             name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
 
-            while not res.is_finished:
+            while not task.is_finished:
                 old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
                 _history_list.pop()
 
-            if res.is_success:
-                res = res.result
+            if task.is_success:
+                res = task.result
                 if res.is_success():
                     store.mtts_status = renpy.substitute(_("播放中"))
                     renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
@@ -170,9 +170,9 @@ init python:
                         channel="voice",
                     )
                 else:
-                    renpy.notify("语音生成失败, 可能是服务器返回错误")
+                    renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
             else:
-                renpy.notify("语音生成失败 {}".format(res.exception))
+                renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
 
             store.mtts_status = renpy.substitute(_("待机"))
 
