@@ -226,7 +226,6 @@ class MTTS:
         self.lossless = False
         self.__accessable = False
         self._ignore_accessable = False
-        self._ispending = True
 
 
         self.workload_raw = {
@@ -379,8 +378,6 @@ class MTTS:
             bool: 验证结果。
         
         """
-        if self._ispending:
-            return {"success": False, "exception": "MTTS: pending accessibility, please wait"}
         if not self.__accessable:
             return {"success": False, "exception": "MTTS: not serving"}
         import requests
@@ -540,7 +537,6 @@ class MTTS:
     def accessable(self):
         if self._ignore_accessable:
             self.__accessable = True
-            self._ispending = False
             return
         import requests, json
         res = requests.get(self.get_api_url("accessibility"))
@@ -556,15 +552,10 @@ class MTTS:
         else:
             self.__accessable = False
             logger.error("accessable(): Maica is not serving: request failed: {}".format(d))
-        self._ispending = False
     
     @property
     def is_accessable(self):
         return self.__accessable
-    @property
-    def is_pending(self):
-        return self._ispending
-        
 import threading
 
 class AsyncTask(object):
