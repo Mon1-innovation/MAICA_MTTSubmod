@@ -226,6 +226,7 @@ class MTTS:
         self.lossless = False
         self.__accessable = False
         self._ignore_accessable = False
+        self._ispending = True
 
 
         self.workload_raw = {
@@ -378,6 +379,8 @@ class MTTS:
             bool: 验证结果。
         
         """
+        if self._ispending:
+            return {"success": False, "exception": "MTTS: pending accessibility, please wait"}
         if not self.__accessable:
             return {"success": False, "exception": "MTTS: not serving"}
         import requests
@@ -556,6 +559,10 @@ class MTTS:
     @property
     def is_accessable(self):
         return self.__accessable
+    @property
+    def is_pending(self):
+        return self._ispending
+        
 import threading
 
 class AsyncTask(object):
