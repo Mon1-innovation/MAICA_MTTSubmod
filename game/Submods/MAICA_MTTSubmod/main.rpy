@@ -90,19 +90,36 @@ init python:
     old_renpysay = renpy.say
     store.mtts = mtts
     PY2, PY3 = MTTS.PY2, MTTS.PY3
-    def mtts_say(who, what, interact=True, *args, **kwargs):
-        if not renpy.seen_label("mtts_greeting"):
-            store.mtts_status = renpy.substitute(_("未解锁"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
-        if not persistent.mtts["enabled"]:
-            store.mtts_status = renpy.substitute(_("未启用"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
-        if persistent.mtts["_outdated"]:
-            store.mtts_status = renpy.substitute(_("版本过旧"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
-        if not store.mtts.mtts.is_accessable:
-            store.mtts_status = renpy.substitute(_("无连接"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
+
+    class MttsSay(object):
+
+        def __init__(self):
+            self._history = MTTS.LimitedList(3)
+
+        @property
+        def conditions(self):
+            if not renpy.seen_label("mtts_greeting"):
+                store.mtts_status = renpy.substitute(_("未解锁"))
+                return False
+            elif not persistent.mtts["enabled"]:
+                store.mtts_status = renpy.substitute(_("未启用"))
+                return False
+            elif persistent.mtts["_outdated"]:
+                store.mtts_status = renpy.substitute(_("版本过旧"))
+                return False
+            elif not store.mtts.mtts.is_accessable:
+                store.mtts_status = renpy.substitute(_("无连接"))
+                return False
+            else:
+                return True
+
+        def is_duplicated(self, what):
+            for sentence in self._history:
+                if sentence in what and not sentence == what:
+                    return True
+            return False
+
+        @staticmethod
         def process_str(srt):
             import re
             # \{fast\}.*?\{fast\} , \{.*?\} 将匹配的str替换为空字符串
@@ -110,41 +127,57 @@ init python:
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
 
-        text = process_str(renpy.substitute(what))
-        rule = store.mtts.matcher.match_rule(what, store.mas_submod_utils.current_label)
-        store.mtts_match_rule = rule.get('name', 'Default')
-        if not rule['action']:
-            store.mtts_status = renpy.substitute(_("未匹配任何规则/规则为空action"))
-            return old_renpysay(who, what, interact, *args, **kwargs)
-        if rule['name'] == 'MAICA_Chat':
-            target_lang = store.maica.maica.target_lang
-        else:
-            target_lang = "zh" if config.language == 'chinese' else 'en'
-        store.mtts_status = renpy.substitute(_("生成中"))
-        exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
-        mtts.mtts.local_cache = 'local' in rule['action']
-        mtts.mtts.remote_cache = 'remote' in rule['action']
-        res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
-        name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
-        while not res.is_finished:
-            old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
-            _history_list.pop()
-        if res.is_success:
-            res = res.result
-            if res.is_success():
-                store.mtts_status = renpy.substitute(_("播放中"))
-                renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
-                renpy.music.play(
-                    store.AudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
-                    channel="voice",
-                )
+        def __call__(self, who, what, interact=True, *args, **kwargs):
+            if (
+                not self.conditions
+                or self.is_duplicated(what)
+            ):
+                return old_renpysay(who, what, interact, *args, **kwargs)
+
+            text = self.process_str(renpy.substitute(what))
+            rule = store.mtts.matcher.match_rule(what, store.mas_submod_utils.current_label)
+            store.mtts_match_rule = rule.get('name', 'Default')
+
+            if not rule['action']:
+                store.mtts_status = renpy.substitute(_("规则为空"))
+                return old_renpysay(who, what, interact, *args, **kwargs)
+
+            if rule['name'] == 'MAICA_Chat':
+                target_lang = store.maica.maica.target_lang
             else:
-                renpy.notify("语音生成失败, 可能是服务器返回错误")
-        else:
-            renpy.notify("语音生成失败 {}".format(res.exception))
+                target_lang = "zh" if config.language == 'chinese' else 'en'
 
-        store.mtts_status = renpy.substitute(_("待机"))
+            store.mtts_status = renpy.substitute(_("生成中"))
+            exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
 
-        old_renpysay(who, what, interact, *args, **kwargs)
+            mtts.mtts.local_cache = 'local' in rule['action']
+            mtts.mtts.remote_cache = 'remote' in rule['action']
 
+            res = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
+            name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
+
+            while not res.is_finished:
+                old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
+                _history_list.pop()
+
+            if res.is_success:
+                res = res.result
+                if res.is_success():
+                    store.mtts_status = renpy.substitute(_("播放中"))
+                    renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
+                    renpy.music.play(
+                        store.AudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
+                        channel="voice",
+                    )
+                else:
+                    renpy.notify("语音生成失败, 可能是服务器返回错误")
+            else:
+                renpy.notify("语音生成失败 {}".format(res.exception))
+
+            store.mtts_status = renpy.substitute(_("待机"))
+
+            self._history.append(what)
+            old_renpysay(who, what, interact, *args, **kwargs)
+
+    mtts_say = MttsSay()
     renpy.say = mtts_say
