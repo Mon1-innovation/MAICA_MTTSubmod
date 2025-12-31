@@ -6,12 +6,23 @@ import re
 import sys
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+BASIC_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+formatter = logging.Formatter(BASIC_FORMAT, DATE_FORMAT)
+chlr = logging.StreamHandler() # 输出到控制台的handler
+chlr.setFormatter(formatter)
+chlr.setLevel(logging.DEBUG)  # 也可以不设置，不设置就默认用logger的level
+logger.addHandler(chlr)
+
 
 class LimitedList(list):
     """Might not have applied to all functionalities!"""
     def __init__(self, max_size, *args, **kwargs):
         self.max_size = max_size
-        super().__init__(*args, **kwargs)
+        super(LimitedList, self).__init__(*args, **kwargs)
         
         while len(self) > self.max_size:
             self.pop(0)
@@ -25,7 +36,7 @@ class LimitedList(list):
     def append(self, item):
         if len(self) >= self.max_size:
             self.pop(0)
-        super().append(item)
+        super(LimitedList, self).append(item)
     
     def extend(self, iterable):
         for item in iterable:
@@ -34,7 +45,7 @@ class LimitedList(list):
     def insert(self, index, item):
         if len(self) >= self.max_size:
             self.pop(0)
-        super().insert(index, item)
+        super(LimitedList, self).insert(index, item)
     
     def __repr__(self):
         # return f"LimitedList(max_size={self.max_size}, {super().__repr__()})"
@@ -146,21 +157,6 @@ class CacheRuleMatcher:
         """
         rule = self.match_rule(text, label)
         return rule.get('action', self.default_action)
-
-class PrintLogger:
-    def debug(self, msg):
-        print(msg)
-    def info(self, msg):
-        print(msg)
-    def warning(self, msg):
-        print(msg)
-    def error(self, msg):
-        print(msg)
-    def critical(self, msg):
-        print(msg)
-
-
-logger = PrintLogger()
 
 class MTTSAudio:
     def __init__(self, data):
@@ -314,6 +310,7 @@ class MTTS:
                 logger.debug("MTTS:generated {}".format((label_name, text)))
                 return MTTSAudio(req.content)
         else:
+            logger.error("MTTS:generate failed because {} {}".format(req.reason, req.text))
             raise Exception("{} {}".format(req.status_code, req.reason))
     
     def save_audio(self, audio, filename):
@@ -379,11 +376,6 @@ class MTTS:
             bool: 验证结果。
         
         """
-        import store
-        _acc = getattr(store.mtts, "_acc", None)
-        if _acc is not None:
-            if _acc.is_alive():
-                _acc.wait()
         if not self.__accessable:
             return {"success": False, "exception": "MTTS: not serving"}
         import requests

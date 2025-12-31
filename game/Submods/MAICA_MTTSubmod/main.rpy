@@ -15,6 +15,7 @@ init -990 python:
     persistent.mtts = setting
 init -100 python in mtts:
     import MTTS, store, os
+    MTTS.logger = store.mas_submod_utils.submod_log
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MTTSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
     store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
@@ -43,6 +44,7 @@ init -100 python in mtts:
             store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
 
         if _acc is not None:
+            _acc.wait()
             if _acc.is_finished:
                 if _acc.exception:
                     store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
@@ -84,16 +86,7 @@ init -100 python:
             pass
         return "微笑"  # 无匹配时返回 None
 init python in mtts:
-    _acc = None
-
-    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-101)
-    def start_mtts():
-        global _acc
-        if _acc is None or _acc.is_finished:
-            _acc = AsyncTask(mtts.accessable)
-    
-    # _acc = AsyncTask(mtts.accessable)
-
+    _acc = AsyncTask(mtts.accessable)
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
     import MTTS
@@ -108,9 +101,9 @@ init python:
 
         @property
         def conditions(self):
+            _acc = store.mtts._acc
             if _acc is not None:
-                if _acc.is_alive():
-                    _acc.wait()
+                _acc.wait()
             if not renpy.seen_label("mtts_greeting"):
                 store.mtts_status = renpy.substitute(_("未解锁"))
                 return False
