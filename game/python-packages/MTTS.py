@@ -37,7 +37,8 @@ class LimitedList(list):
         super().insert(index, item)
     
     def __repr__(self):
-        return f"LimitedList(max_size={self.max_size}, {super().__repr__()})"
+        # return f"LimitedList(max_size={self.max_size}, {super().__repr__()})"
+        return "LimitedList(max_size={}, {})".format(self.max_size, super(LimitedList, self).__repr__())
 
 class CacheRuleMatcher:
     """缓存规则匹配器，用于根据文本和标签匹配缓存规则"""
