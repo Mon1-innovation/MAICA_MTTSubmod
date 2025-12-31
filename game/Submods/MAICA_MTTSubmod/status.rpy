@@ -25,31 +25,36 @@ init -1 python:
             maicatts_enableWorkLoadScreen()
 
     def maicatts_syncWorkLoadScreenStatus():
-        if persistent.mtts.get("ministathud", False):
-            maicatts_enableWorkLoadScreen()
-        else:
-            maicatts_disableWorkLoadScreen()
+        # if persistent.mtts.get("ministathud", False):
+        #     maicatts_enableWorkLoadScreen()
+        # else:
+        #     maicatts_disableWorkLoadScreen()
+
+        maicatts_enableWorkLoadScreen()
         renpy.restart_interaction()
 
 screen maicatts_stat_lite():
-    python:
-        mtts_instance = store.mtts.mtts
     zorder 90
-    fixed:
-        frame:
-            xsize 619
-            xoffset 5 yoffset 450
-            background "mod_assets/console/cn_frame_stats.png"
-            has vbox
-            hbox:
-                text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
-                    size 15
-            hbox:
-                text _("当前label: [store.mas_submod_utils.current_label]"):
-                    size 15
+    if not persistent.mtts.get("ministathud", False):
+        null
+    else:    
+        python:
+            mtts_instance = store.mtts.mtts
+        fixed:
+            frame:
+                xsize 619
+                xoffset 5 yoffset 450
+                background "mod_assets/console/cn_frame_stats.png"
+                has vbox
+                hbox:
+                    text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
+                        size 15
+                hbox:
+                    text _("当前label: [store.mas_submod_utils.current_label]"):
+                        size 15
 
-            hbox:
-                text _("匹配规则: [store.mtts_match_rule]"):
-                    size 15
+                hbox:
+                    text _("匹配规则: [store.mtts_match_rule]"):
+                        size 15
 
 
