@@ -8,7 +8,7 @@ init 5 python:
             rules={
                 "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
             },
-            conditional="renpy.seen_label('mas_gift_giving_instructs')",
+            conditional="renpy.seen_label('mas_gift_giving_instructs') and not renpy.seen_label('mtts_greeting')",
             action=EV_ACT_QUEUE,
             random=True,
             aff_range=(mas_aff.NORMAL, None)
@@ -119,8 +119,8 @@ init 5 python:
 label mas_reaction_gift_mttsheadset:
     #m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
     python:
-        if not renpy.seen_label("mtts_prepend_1"):
-            MASEventList.queue("mtts_prepend_1")
+        # if not renpy.seen_label("mtts_prepend_1"):
+        #     MASEventList.queue("mtts_prepend_1")
         mas_showDecoTag("mtts_giftbox", True)
     return
 label mtts_greeting:
