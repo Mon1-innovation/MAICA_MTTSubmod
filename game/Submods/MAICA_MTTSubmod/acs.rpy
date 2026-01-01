@@ -27,8 +27,22 @@ init -1 python:
         keep_on_desk=True,
         use_folders=False
     )
+    mttsacs_giftbox = MASAccessory(
+        "mttsgiftbox",
+        "mttsgiftbox",
+        MASPoseMap(
+            default="0",
+            use_reg_for_l=True
+        ),
+        priority=11,
+        stay_on_start=False,
+        acs_type="flowers",
+        keep_on_desk=True,
+        use_folders=False
+    )
     store.mas_sprites.init_acs(mttsacs_headset)
     store.mas_sprites.init_acs(mttsacs_microphone)
+    store.mas_sprites.init_acs(mttsacs_giftbox)
 
     #monika_chr.wear_acs(mas_acs_roses)
     #monika_chr.remove_acs(mas_acs_flowers)

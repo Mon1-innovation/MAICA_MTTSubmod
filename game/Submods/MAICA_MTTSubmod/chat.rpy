@@ -121,7 +121,7 @@ label mas_reaction_gift_mttsheadset:
     python:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
-        mas_showDecoTag("mtts_giftbox", True)
+        monika_chr.wear_acs(mttsacs_giftbox)
     return
 label mtts_greeting:
 # 显示MTTS的麦克风.
