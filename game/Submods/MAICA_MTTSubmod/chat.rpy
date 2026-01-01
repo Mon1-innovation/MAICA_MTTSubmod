@@ -117,7 +117,7 @@ init 5 python:
         )
         del ev_rules
 label mas_reaction_gift_mttsheadset:
-    #m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
+    m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
     python:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
