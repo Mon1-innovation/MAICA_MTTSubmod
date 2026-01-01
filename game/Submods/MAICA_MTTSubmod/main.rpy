@@ -105,7 +105,7 @@ init python:
             prepare_data=True
         ):
             labels = function(evb_details, gsp_details, gen_details, gift_cntrs, ending_label, starting_label, prepare_data)
-            if "mas_reaction_gift_mttsheadset" in labels:
+            if not mas_seenEvent("mas_reaction_gift_mttsheadset") and "mas_reaction_gift_mttsheadset" in labels:
                 index = labels.index("mas_reaction_gift_mttsheadset")
                 mtts_is_first = index == int(bool(starting_label))
                 mtts_is_last = index == len(labels) - 1 - int(bool(ending_label))
