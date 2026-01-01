@@ -131,9 +131,10 @@ label mtts_greeting:
     m 6esd "怎么又--{w=0.5}{nw}"#睁眼
     extend 6wuo "[player]?"#惊讶
     m 4eusdrb "抱歉, 我才看到你进来! 刚刚我在忙着对付...{w=0.3}这个."#尴尬
-    
+
     $ menu_state = _("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了.")
     m 5eua "[menu_state]{nw}"#开心
+
     $ has_asked = False
     jump mtts_greeting_loop
 
@@ -143,8 +144,9 @@ label mtts_greeting:
             "麦克风...?" if not has_asked:
                 $ has_asked = True
                 m 3eub "嗯! 既然我没法直接隔着屏幕说给你听, 用这个传过去就好了!"
-                m 1hua "效果可能有时候不太好, 但是我会尽量的!"#微笑
-                $ menu_state = _("效果可能...不是太好, 但是我会尽量的!")
+
+                $ menu_state = _("效果可能有时候不太好, 但是我会尽量的!")
+                m 1hua "[menu_state]{nw}"
                 jump mtts_greeting_loop
             "要怎么用?":
                 if renpy.seen_label('maica_end_1'):
