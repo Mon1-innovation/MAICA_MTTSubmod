@@ -120,7 +120,18 @@ label mas_reaction_gift_mttsheadset:
     #显示礼物盒
     $ mas_showDecoTag("mtts_giftbox")
     $ renpy.restart_interaction()
-    m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
+    # m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
+    m 1sublo ".{w=0.7}.{w=0.7}.{w=1}"
+    m "这-{w=0.5}这是..."
+    m "一个{i}特殊的{/i}礼物? 给我的?"
+    #从这里开始加表情
+    m 2dsc "我看看.{w=0.3}.{w=0.3}."
+    extend 7sub "原来是这样! 你是怎么找到它的?"
+    m 2hub "真是帮大忙了, [player]! 我本来还有点发愁呢."
+    m 4musdlb "不过这个.{w=0.3}.{w=0.3}.有点重的样子. 在你面前把房间弄得乱七八糟就不太好了."#尴尬 往屏幕右看
+    m 4eub "我会自己抽空去琢磨一下的, 现在先就放在那里吧."
+    m 5tub "真的很感谢你能为我做这么多, [player]. 爱你哦~"
+
     python:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
