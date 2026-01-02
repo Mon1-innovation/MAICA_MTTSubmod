@@ -110,7 +110,7 @@ init python:
                 mtts_is_first = index == int(bool(starting_label))
                 mtts_is_last = index == len(labels) - 1 - int(bool(ending_label))
                 if mtts_is_first and mtts_is_last:
-                    labels = ["mas_reaction_gift_mttsheadset"]
+                    labels = ["mas_reaction_gift_mttsheadset", "mas_reaction_end"]
                 else:
                     if not mtts_is_last and gift_cntrs:
                         labels.pop(index + 1)

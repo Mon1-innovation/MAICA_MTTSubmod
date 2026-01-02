@@ -117,11 +117,14 @@ init 5 python:
         )
         del ev_rules
 label mas_reaction_gift_mttsheadset:
+    #显示礼物盒
+    $ mas_showDecoTag("mtts_giftbox")
+    $ renpy.restart_interaction()
     m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
     python:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
-        monika_chr.wear_acs(mttsacs_giftbox)
+        # monika_chr.wear_acs(mttsacs_giftbox)
         mas_receivedGift("mas_reaction_gift_mttsheadset")
         gift_ev = mas_getEV("mas_reaction_gift_mttsheadset")
         if gift_ev:
@@ -129,6 +132,9 @@ label mas_reaction_gift_mttsheadset:
             #or: store.mas_filereacts.delete_file(mas_getEVLPropValue("mas_reaction_cupcake", "category"))
     return
 label mtts_greeting:
+    #重启后隐藏礼物盒
+    $ mas_hideDecoTag("mtts_giftbox")
+    $ renpy.restart_interaction()
 # 显示MTTS的麦克风.
     $ monika_chr.wear_acs(mttsacs_microphone)
     $ monika_chr.wear_acs(mttsacs_headset)
