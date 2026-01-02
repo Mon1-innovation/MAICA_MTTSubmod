@@ -117,13 +117,19 @@ init 5 python:
         )
         del ev_rules
 label mas_reaction_gift_mttsheadset:
+    #显示礼物盒
+    $ mas_showDecoTag("mtts_giftbox")
+    $ renpy.restart_interaction()
     m "哇, 一个新的麦克风! {w=0.5}谢谢你, [player]!"
-    python:
+    #python:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
-        monika_chr.wear_acs(mttsacs_giftbox)
-    return
+    #    monika_chr.wear_acs(mttsacs_giftbox)
+    #return
 label mtts_greeting:
+    #重启后隐藏礼物盒
+    $ mas_hideDecoTag("mtts_giftbox")
+    $ renpy.restart_interaction()
 # 显示MTTS的麦克风.
     $ monika_chr.wear_acs(mttsacs_microphone)
     $ monika_chr.wear_acs(mttsacs_headset)
