@@ -122,6 +122,11 @@ label mas_reaction_gift_mttsheadset:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
         monika_chr.wear_acs(mttsacs_giftbox)
+        mas_receivedGift("mas_reaction_gift_mttsheadset")
+        gift_ev = mas_getEV("mas_reaction_gift_mttsheadset")
+        if gift_ev:
+            store.mas_filereacts.delete_file(gift_ev.category)
+            #or: store.mas_filereacts.delete_file(mas_getEVLPropValue("mas_reaction_cupcake", "category"))
     return
 label mtts_greeting:
 # 显示MTTS的麦克风.
