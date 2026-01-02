@@ -35,5 +35,15 @@
             }
         ],
         "default_action":[]
+    },
+    "replaceRules":{
+        "rules":[
+            {
+                "name":"Heart Replace",
+                "regex_text": "<3",
+                "replace_with": "",
+                "priority":0
+            }
+        ]
     }
 }

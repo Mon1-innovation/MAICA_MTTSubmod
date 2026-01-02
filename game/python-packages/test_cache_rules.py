@@ -25,7 +25,7 @@ def test_cache_rule_matcher():
         return False
 
     # 创建规则匹配器
-    matcher = MTTS.CacheRuleMatcher(rules_path)
+    matcher = MTTS.RuleMatcher(rules_path)
 
     print("\n=== 规则加载测试 ===")
     print("加载的规则数: {}".format(len(matcher.rules)))
@@ -68,7 +68,7 @@ def test_cache_rule_matcher():
         description = test_case["description"]
         expected = test_case["expected_rule"]
 
-        rule = matcher.match_rule(text, label)
+        rule = matcher.match_cache_rule(text, label)
         action = matcher.get_action(text, label)
 
         # 计算非符号字符数
@@ -100,6 +100,46 @@ def test_cache_rule_matcher():
             else:
                 print("  ✗ 失败: 应该使用默认 action")
                 all_passed = False
+
+    print("\n=== 字符串替换规则测试 ===")
+    print("加载的替换规则数: {}".format(len(matcher.replace_rules)))
+
+    # 测试替换规则
+    replace_test_cases = [
+        {
+            "text": "I love you <3",
+            "expected": "I love you ",
+            "description": "测试 <3 替换为空"
+        },
+        {
+            "text": "Multiple <3 <3 hearts",
+            "expected": "Multiple   hearts",
+            "description": "测试多个 <3 替换"
+        },
+        {
+            "text": "No special chars here",
+            "expected": "No special chars here",
+            "description": "测试无替换的文本"
+        }
+    ]
+
+    for i, test_case in enumerate(replace_test_cases, 1):
+        text = test_case["text"]
+        expected = test_case["expected"]
+        description = test_case["description"]
+
+        result = matcher.apply_replace_rules(text)
+
+        print("\n替换测试 {}: {}".format(i, description))
+        print("  原文本: '{}'".format(text))
+        print("  期望结果: '{}'".format(expected))
+        print("  实际结果: '{}'".format(result))
+
+        if result == expected:
+            print("  ✓ 通过")
+        else:
+            print("  ✗ 失败")
+            all_passed = False
 
     print("\n=== 测试总结 ===")
     if all_passed:

@@ -51,7 +51,7 @@ class LimitedList(list):
         # return f"LimitedList(max_size={self.max_size}, {super().__repr__()})"
         return "LimitedList(max_size={}, {})".format(self.max_size, super(LimitedList, self).__repr__())
 
-class CacheRuleMatcher:
+class RuleMatcher:
     """缓存规则匹配器，用于根据文本和标签匹配缓存规则"""
 
     def __init__(self, rules_config_path):
@@ -63,6 +63,7 @@ class CacheRuleMatcher:
         """
         self.rules_config_path = rules_config_path
         self.rules = []
+        self.replace_rules = []
         self.default_action = []
         self._load_rules()
 
@@ -75,10 +76,17 @@ class CacheRuleMatcher:
                 cache_rules = config.get('cacheRules', )
                 self.rules = cache_rules.get('rules', [])
                 self.default_action = cache_rules.get('default_action', [])
+                # 支持两种配置格式：直接数组或包含rules键的对象
+                replace_rules_config = config.get('replaceRules', {})
+                if isinstance(replace_rules_config, list):
+                    self.replace_rules = replace_rules_config
+                else:
+                    self.replace_rules = replace_rules_config.get('rules', [])
         except Exception as e:
             raise Exception("Failed to load cache rules: {}".format(e))
             self.rules = []
             self.default_action = []
+            self.replace_rules = []
 
     def _count_content_chars(self, text):
         """
@@ -99,7 +107,28 @@ class CacheRuleMatcher:
                 count += 1
         return count
 
-    def match_rule(self, text, label):
+    def _apply_text_replacement(self, text, rule):
+        """
+        应用规则中定义的文本替换
+
+        Args:
+            text: 原始文本
+            rule: 规则字典
+
+        Returns:
+            str: 替换后的文本，如果没有替换则返回None
+        """
+        replace_pattern = rule.get('replace_pattern')
+        replace_with = rule.get('replace_with')
+
+        if replace_pattern is not None:
+            try:
+                return re.sub(replace_pattern, replace_with if replace_with is not None else '', text)
+            except Exception as e:
+                logger.warning("Text replacement failed: {}".format(e))
+        return None
+
+    def match_cache_rule(self, text, label):
         """
         根据文本和标签匹配规则
 
@@ -125,6 +154,10 @@ class CacheRuleMatcher:
             if regex_text:
                 try:
                     if re.search(regex_text, text):
+                        # 执行文本替换（如果规则包含替换字段）
+                        replaced_text = self._apply_text_replacement(text, rule)
+                        if replaced_text is not None:
+                            rule['replaced_text'] = replaced_text
                         return rule
                 except Exception as e:
                     logger.warning("Invalid regex_text pattern: {}".format(e))
@@ -134,6 +167,10 @@ class CacheRuleMatcher:
             if regex_label:
                 try:
                     if re.match(regex_label, label):
+                        # 执行文本替换（如果规则包含替换字段）
+                        replaced_text = self._apply_text_replacement(text, rule)
+                        if replaced_text is not None:
+                            rule['replaced_text'] = replaced_text
                         return rule
                 except Exception as e:
                     logger.warning("Invalid regex_label pattern: {}".format(e))
@@ -143,6 +180,39 @@ class CacheRuleMatcher:
             'action': self.default_action,
             'is_default': True
         }
+
+    def apply_replace_rules(self, text):
+        """
+        应用所有替换规则到文本
+
+        Args:
+            text: 原始文本
+
+        Returns:
+            str: 应用替换后的文本
+        """
+        # 按优先级排序规则（优先级高的在前）
+        sorted_rules = sorted(self.replace_rules, key=lambda r: r.get('priority', 0), reverse=True)
+
+        result = text
+        for rule in sorted_rules:
+            regex_pattern = rule.get('regex_text')
+            replace_with = rule.get('replace_with', '')
+
+            if regex_pattern is not None:
+                try:
+                    result = re.sub(regex_pattern, replace_with, result)
+                    logger.debug("Applied replace rule '{}': {} -> {}".format(
+                        rule.get('name', 'unnamed'),
+                        regex_pattern,
+                        replace_with if replace_with else '(empty)'
+                    ))
+                except Exception as e:
+                    logger.warning("Replace rule '{}' failed: {}".format(
+                        rule.get('name', 'unnamed'),
+                        e
+                    ))
+        return result
 
     def get_action(self, text, label):
         """
@@ -155,7 +225,7 @@ class CacheRuleMatcher:
         Returns:
             list: action列表
         """
-        rule = self.match_rule(text, label)
+        rule = self.match_cache_rule(text, label)
         return rule.get('action', self.default_action)
 
 class MTTSAudio:
@@ -270,7 +340,7 @@ class MTTS:
         # 初始化缓存规则匹配器
         rules_config_path = os.path.join(cache_path, "..", "cache_rules.json")
         if os.path.exists(rules_config_path):
-            self.rule_matcher = CacheRuleMatcher(rules_config_path)
+            self.rule_matcher = RuleMatcher(rules_config_path)
         else:
             self.rule_matcher = None
 

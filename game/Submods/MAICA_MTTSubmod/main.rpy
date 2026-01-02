@@ -26,7 +26,7 @@ init -100 python in mtts:
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
-    matcher = MTTS.CacheRuleMatcher(os.path.join(basedir, "cache_rules.json"))
+    matcher = MTTS.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = MTTS.AsyncTask
     MTTS.logger = store.mas_submod_utils.submod_log
     
@@ -167,9 +167,11 @@ init python:
                 or self.is_duplicated(what)
             ):
                 return old_renpysay(who, what, interact, *args, **kwargs)
-
-            text = self.process_str(renpy.substitute(what))
-            rule = store.mtts.matcher.match_rule(what, store.mas_submod_utils.current_label)
+            
+            if who != store.m:
+                return old_renpysay(who, what, interact, *args, **kwargs)
+            text = self.process_str(store.mtts.matcher.apply_replace_rules(renpy.substitute(what)))
+            rule = store.mtts.matcher.match_cache_rule(what, store.mas_submod_utils.current_label)
             store.mtts_match_rule = rule.get('name', 'Default')
 
             if not rule['action']:
