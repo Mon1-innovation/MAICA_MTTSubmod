@@ -125,7 +125,7 @@ label mas_reaction_gift_mttsheadset:
         # if not renpy.seen_label("mtts_prepend_1"):
         #     MASEventList.queue("mtts_prepend_1")
     #    monika_chr.wear_acs(mttsacs_giftbox)
-    #return
+    return
 label mtts_greeting:
     #重启后隐藏礼物盒
     $ mas_hideDecoTag("mtts_giftbox")
