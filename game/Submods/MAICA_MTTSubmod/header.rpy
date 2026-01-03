@@ -60,6 +60,10 @@ screen mtts_settings():
 
     use maica_common_outer_frame(w, h, x, y):
         use maica_common_inner_frame(w, h, x, y):
+
+            hbox:
+                use divider(_("基础功能"))
+
             if renpy.seen_label("mtts_greeting"):
                 hbox:
                     style_prefix "generic_fancy_check"
@@ -81,6 +85,9 @@ screen mtts_settings():
             
             $ tooltip_volume = _("TTS的语音音量")
             use prog_bar(_("语音音量"), 200 if config.language == "chinese" else 350, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
+
+            hbox:
+                use divider(_("工具与功能"))
             
             hbox:
                 style_prefix "generic_fancy_check"
@@ -97,6 +104,9 @@ screen mtts_settings():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
+                use divider(_("统计与信息"))
+
+            hbox:
                 style_prefix "maica_check"
                 textbutton (_("展开性能监控") if nvw_folded else _("收起性能监控")):
                     action SetScreenVariable("nvw_folded", not nvw_folded)
@@ -109,9 +119,33 @@ screen mtts_settings():
                     use maica_workload_stat()
 
                     
-    hbox:
-        textbutton _("关闭"):
-            action [Function(store.mtts.apply_settings), Hide("mtts_settings")]
+    # hbox:
+    #     textbutton _("关闭"):
+    #         action [Function(store.mtts.apply_settings), Hide("mtts_settings")]
+        hbox:
+            xpos 10
+            style_prefix "confirm"
+            textbutton _("保存设置"):
+                action [
+                        Function(store.mtts.apply_settings),
+                        Function(renpy.notify, _("MTTS: 已保存修改")),
+                        Hide("mtts_settings")
+                        ]
+            textbutton _("放弃修改"):
+                action [
+                        Function(store.mtts.discard_settings),
+                        Function(renpy.notify, _("MTTS: 已放弃设置修改")),
+                        Hide("mtts_settings")
+                        ]
+            textbutton _("重置设置"):
+                action [
+                        Function(store.mtts.reset_settings),
+                        Function(store.mtts.apply_settings),
+                        Function(renpy.notify, _("MTTS: 已重置设置")),
+                        Hide("mtts_settings")
+                    ]
+
+
     if tooltip.value:
         frame:
             xalign 0.5 yalign 1.0

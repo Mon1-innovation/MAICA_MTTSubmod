@@ -31,8 +31,7 @@ init -100 python in mtts:
     MTTS.logger = store.mas_submod_utils.submod_log
     
 
-    def apply_settings():
-        pass
+    
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_check_outdated():
         version = mtts.get_version()
@@ -50,6 +49,8 @@ init -100 python in mtts:
                     store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
         else:
             store.mas_submod_utils.submod_log.warning("")
+
+    
 
     def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
         # Calculate the number of filled positions in the progress bar
@@ -73,6 +74,26 @@ init -100 python in mtts:
                 return '|{}| {}% | {}'.format(bar, int(percentage), current)
         else:
             return '|{}| {}%'.format(bar, int(percentage))
+
+init 10 python in mtts:
+    import store
+    def apply_settings():
+        # pass
+        store.mtts.enabled = store.persistent.mtts["enabled"]
+        store.mtts.volume = store.persistent.mtts["volume"]
+        store.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
+        store.mtts.ministathud = store.persistent.mtts["ministathud"]
+        
+    def discard_settings():
+        # pass
+        store.persistent.mtts["enabled"] = store.mtts.enabled
+        store.persistent.mtts["volume"] = store.mtts.volume
+        store.persistent.mtts["acs_enabled"] = store.mtts.acs_enabled
+        store.persistent.mtts["ministathud"] = store.mtts.ministathud
+        
+
+    def reset_settings():
+        store.persistent.mtts = store.setting.copy()
 
 init -100 python:
     import json_exporter_mtts
