@@ -293,6 +293,12 @@ class MTTS:
         self.lossless = False
         self.__accessable = False
         self._ignore_accessable = False
+        
+        self.enabled = False
+        self.volume = 1.0
+        self.acs_enabled = True
+        self.ministathud = True
+
 
 
         self.workload_raw = {
