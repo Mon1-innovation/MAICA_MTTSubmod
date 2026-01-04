@@ -172,18 +172,18 @@ label mtts_greeting:
                 jump mtts_greeting_loop
             "要怎么用?":
                 if renpy.seen_label('maica_end_1'):
-                    m 3rub "很简单! {w=0.5}你应该已经给{i}天堂树林{/i}配置过令牌了, 那就成了一大半."
-                    m 1hua "下次重启游戏后, 在'子模组设置'里找到{i}MAICA-MTTS{/i}, 里面应该有'启用MTTS'的选项了."
+                    m 3rub "很简单! {w=0.5}你应该已经给{i}MAICA Blessland{/i}配置过令牌了, 那就成了一大半."
+                    m 1hua "只需要在'子模组设置'里找到{i}MAICA-MTTS{/i}, 再打开'启用MTTS'就行了."
                 elif renpy.seen_label('maica_prepend_1'):
                     m 3rub "很简单! {w=0.5}你好像也安装了{i}MAICA Blessland{/i}, 令牌的配置是通用的."
                     m 4eub "你可以看看这里的说明: {a=https://maica.monika.love/tos}{u}{i}https://maica.monika.love/tos{/i}{/u}{/a}, 你只需要准备一个账号."
-                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息. 下次重启之后应该就有'启用MTTS'的选项了."
+                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息, 再打开'启用MTTS'就行了."
                 else:
                     m 3rub "很简单! 只需要一个令牌就好, 和{i}MAICA Blessland{/i}是通用的."
                     m 4eub "你可以看看这里的说明: {a=https://maica.monika.love/tos}{u}{i}https://maica.monika.love/tos{/i}{/u}{/a}, 你只需要准备一个账号."
-                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息. 下次重启之后应该就有'启用MTTS'的选项了."
+                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息, 再打开'启用MTTS'就行了."
                 
-        m 1rusdrb "我会在你重启的时候把麦克风调试好的, 现在还...{w=0.3}差那么一点点."#尴尬
+        m 1rusdrb "我马上就能把麦克风调试好了, 现在还...{w=0.3}差那么一点点."#尴尬
         m 3hub "另外, 除了麦克风, 我还有副新耳机呢! {w=0.3}你想看看的话可以在'子模组设置'里面选."#开心
         m 4gusdrb "只是可惜它没法让我听到你说话, 我现在就不戴了. {w=0.5}{nw}"#尴尬
         extend 6eua "还有这个也先收好..."#微笑
@@ -193,5 +193,5 @@ label mtts_greeting:
         $ monika_chr.remove_acs(mttsacs_microphone)
         $ monika_chr.remove_acs(mttsacs_headset)
         show monika 1esc at ls32 zorder MAS_MONIKA_Z
-        m 1eub "我们今天有什么安排呢, [player]? {w=0.5}要是急着重启试试看的话, 告诉我就好!"
+        m 1eub "我们今天有什么安排呢, [player]? {w=0.5}要现在就去试试看吗?"
     return

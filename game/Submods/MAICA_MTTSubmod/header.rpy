@@ -62,7 +62,7 @@ screen mtts_settings():
         use maica_common_inner_frame(w, h, x, y):
 
             hbox:
-                use divider(_("基础功能"))
+                use divider(_("行为与表现"))
 
             if renpy.seen_label("mtts_greeting"):
                 hbox:
