@@ -68,7 +68,7 @@ screen mtts_settings():
                 hbox:
                     style_prefix "generic_fancy_check"
                     textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
-                        action ToggleDict(persistent.mtts, "enabled", True, False)
+                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
                         hovered SetField(_tooltip, "value", _("启用以生成和播放TTS."))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
 

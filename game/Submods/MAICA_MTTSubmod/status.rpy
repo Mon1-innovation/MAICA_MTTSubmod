@@ -42,19 +42,29 @@ screen maicatts_stat_lite():
             mtts_instance = store.mtts.mtts
         fixed:
             frame:
-                xsize 619
+                xsize 309
                 xoffset 5 yoffset 450
                 background "mod_assets/console/cn_frame_stats.png"
                 has vbox
                 hbox:
                     text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
                         size 15
+
+                    if renpy.seen_label("mtts_greeting"):
+                        text "  ":
+                            size 15
+                        textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
+                            style "hkb_button"
+                            action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
+
                 hbox:
-                    text _("当前label: [store.mas_submod_utils.current_label]"):
+                    text _("当前话题: [store.mas_submod_utils.current_label]"):
                         size 15
+                        font maica_confont
 
                 hbox:
                     text _("匹配规则: [store.mtts_match_rule]"):
                         size 15
+                        font maica_confont
 
 
