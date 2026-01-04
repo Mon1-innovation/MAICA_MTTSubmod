@@ -40,11 +40,13 @@ screen maicatts_stat_lite():
     else:    
         python:
             mtts_instance = store.mtts.mtts
+            bg = "mod_assets/console/cn_frame_tts_on.png" if persistent.mtts.get("enabled", False) and store.mtts_say.conditions else "mod_assets/console/cn_frame_tts_off.png"
         fixed:
             frame:
                 xsize 309
                 xoffset 5 yoffset 450
-                background "mod_assets/console/cn_frame_stats.png"
+                # background "mod_assets/console/cn_frame_stats.png"
+                background bg
                 has vbox
                 hbox:
                     text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
@@ -59,12 +61,12 @@ screen maicatts_stat_lite():
 
                 hbox:
                     text "CURR: [store.mas_submod_utils.current_label]":
-                        size 15
+                        size 14
                         font maica_confont
 
                 hbox:
                     text "RULE: [store.mtts_match_rule]":
-                        size 15
+                        size 14
                         font maica_confont
 
 
