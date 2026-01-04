@@ -98,9 +98,9 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "generic_fancy_check"
-                textbutton _("启用时显示饰品: [persistent.mtts.get('acs_enabled')]"):
+                textbutton _("启用时显示道具: [persistent.mtts.get('acs_enabled')]"):
                     action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
-                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时自动穿戴对应饰品.\n* 可能有一定延迟"))
+                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:

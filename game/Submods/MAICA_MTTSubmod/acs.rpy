@@ -49,10 +49,10 @@ init -1 python:
 
     def mtts_autoacs():
         if persistent.mtts.get("acs_enabled") and persistent.mtts.get("enabled"):
-            monika_chr.wear_acs(mttsacs_headset)
+            # monika_chr.wear_acs(mttsacs_headset)
             monika_chr.wear_acs(mttsacs_microphone)
         else:
-            monika_chr.remove_acs(mttsacs_headset)
+            # monika_chr.remove_acs(mttsacs_headset)
             monika_chr.remove_acs(mttsacs_microphone)
 
     @store.mas_submod_utils.functionplugin("ch30_loop", priority=-100)
