@@ -58,12 +58,12 @@ screen maicatts_stat_lite():
                             action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
 
                 hbox:
-                    text _("CURR: [store.mas_submod_utils.current_label]"):
+                    text "CURR: [store.mas_submod_utils.current_label]":
                         size 15
                         font maica_confont
 
                 hbox:
-                    text _("RULE: [store.mtts_match_rule]"):
+                    text "RULE: [store.mtts_match_rule]":
                         size 15
                         font maica_confont
 
