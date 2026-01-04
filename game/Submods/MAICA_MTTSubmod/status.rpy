@@ -58,12 +58,12 @@ screen maicatts_stat_lite():
                             action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
 
                 hbox:
-                    text _("当前话题: [store.mas_submod_utils.current_label]"):
+                    text _("CURR: [store.mas_submod_utils.current_label]"):
                         size 15
                         font maica_confont
 
                 hbox:
-                    text _("匹配规则: [store.mtts_match_rule]"):
+                    text _("RULE: [store.mtts_match_rule]"):
                         size 15
                         font maica_confont
 
