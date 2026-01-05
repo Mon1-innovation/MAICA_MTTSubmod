@@ -41,32 +41,53 @@ screen maicatts_stat_lite():
         python:
             mtts_instance = store.mtts.mtts
             bg = "mod_assets/console/cn_frame_tts_on.png" if persistent.mtts.get("enabled", False) and store.mtts_say.conditions else "mod_assets/console/cn_frame_tts_off.png"
+            chat_console_on = renpy.get_screen("mas_py_console_teaching") is not None
+            xoff, yoff = (960, 5) if chat_console_on else (5, 450)
         fixed:
             frame:
                 xsize 309
-                xoffset 5 yoffset 450
-                # background "mod_assets/console/cn_frame_stats.png"
+                # xoffset 5 yoffset 450
+                xoffset xoff yoffset yoff
+
                 background bg
-                has vbox
-                hbox:
-                    text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
-                        size 15
-
-                    if renpy.seen_label("mtts_greeting"):
-                        text "  ":
+                vbox:
+                    xoffset 5
+                    hbox:
+                        text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
                             size 15
-                        textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
-                            style "hkb_button"
+
+                    hbox:
+                        text "CURR: [store.mas_submod_utils.current_label]":
+                            size 14
+                            font maica_confont
+
+                    hbox:
+                        text "RULE: [store.mtts_match_rule]":
+                            size 14
+                            font maica_confont
+
+
+                if renpy.seen_label("mtts_greeting"):
+                    fixed:
+                        xysize (89, 24)
+                        xalign 1.0
+                        yalign 0.0
+                        xoffset 0
+                        yoffset 3
+
+                        button:
+                            xfill True
+                            yfill True
+                            background "mod_assets/console/cn_frame_tts_button.png"
+                            hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
                             action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
-
-                hbox:
-                    text "CURR: [store.mas_submod_utils.current_label]":
-                        size 14
-                        font maica_confont
-
-                hbox:
-                    text "RULE: [store.mtts_match_rule]":
-                        size 14
-                        font maica_confont
+                            add Text(
+                                "MTTS: {0}".format("ON" if persistent.mtts.get("enabled", False) else "OFF"),
+                                size=14
+                            ) 
+                            xpos 34 
+                            ypos 12 
+                            xanchor 0.5 
+                            yanchor 0.5
 
 
