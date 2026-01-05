@@ -48,7 +48,7 @@ init -1 python:
     #monika_chr.remove_acs(mas_acs_flowers)
 
     def mtts_autoacs():
-        if persistent.mtts.get("acs_enabled") and store.mtts_say.conditions:
+        if store.mtts_say.conditions and persistent.mtts.get("acs_enabled"):
             # monika_chr.wear_acs(mttsacs_headset)
             monika_chr.wear_acs(mttsacs_microphone)
         else:
