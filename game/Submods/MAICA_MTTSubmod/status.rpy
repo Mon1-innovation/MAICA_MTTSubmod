@@ -90,7 +90,7 @@ screen maicatts_stat_lite():
                             hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
                             action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
                             add Text(
-                                "{0}◉{{/color}} MTTS".format(beacon),
+                                "{0}◉{{/color}} I / O".format(beacon),
                                 size=14
                             ) 
                             xpos 34 
