@@ -75,6 +75,14 @@ screen maicatts_stat_lite():
                         xoffset 0
                         yoffset 3
 
+                        python:
+                            if persistent.mtts.get("enabled", False) and store.mtts_say.conditions:
+                                beacon = "{color=#00FF00}"
+                            elif persistent.mtts.get("enabled", False):
+                                beacon = "{color=#FFFF00}"
+                            else:
+                                beacon = "{color=#FF0000}"
+
                         button:
                             xfill True
                             yfill True
@@ -82,7 +90,7 @@ screen maicatts_stat_lite():
                             hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
                             action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
                             add Text(
-                                "MTTS: {0}".format("ON" if persistent.mtts.get("enabled", False) else "OFF"),
+                                "{0}◉{{/color}} MTTS".format(beacon),
                                 size=14
                             ) 
                             xpos 34 
