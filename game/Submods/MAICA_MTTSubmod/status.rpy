@@ -91,6 +91,7 @@ screen maicatts_stat_lite():
                             action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
                             add Text(
                                 "{0}◉{{/color}} I / O".format(beacon),
+                                font=maica_confont,
                                 size=14
                             ) 
                             xpos 34 
