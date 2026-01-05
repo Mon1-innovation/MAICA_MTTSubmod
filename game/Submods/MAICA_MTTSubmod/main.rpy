@@ -78,18 +78,16 @@ init -100 python in mtts:
 init 10 python in mtts:
     import store
     def apply_settings():
-        # pass
-        store.mtts.enabled = store.persistent.mtts["enabled"]
-        store.mtts.volume = store.persistent.mtts["volume"]
-        store.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
-        store.mtts.ministathud = store.persistent.mtts["ministathud"]
+        store.mtts.mtts.enabled = store.persistent.mtts["enabled"]
+        store.mtts.mtts.volume = store.persistent.mtts["volume"]
+        store.mtts.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
+        store.mtts.mtts.ministathud = store.persistent.mtts["ministathud"]
         
     def discard_settings():
-        # pass
-        store.persistent.mtts["enabled"] = store.mtts.enabled
-        store.persistent.mtts["volume"] = store.mtts.volume
-        store.persistent.mtts["acs_enabled"] = store.mtts.acs_enabled
-        store.persistent.mtts["ministathud"] = store.mtts.ministathud
+        store.persistent.mtts["enabled"] = store.mtts.mtts.enabled
+        store.persistent.mtts["volume"] = store.mtts.mtts.volume
+        store.persistent.mtts["acs_enabled"] = store.mtts.mtts.acs_enabled
+        store.persistent.mtts["ministathud"] = store.mtts.mtts.ministathud
         
 
     def reset_settings():
@@ -225,7 +223,7 @@ init python:
                     store.mtts_status = renpy.substitute(_("播放中"))
                     renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
                     renpy.music.play(
-                        store.AudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
+                        store.MASAudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
                         channel="voice",
                     )
                 else:
@@ -237,6 +235,23 @@ init python:
 
             self._history.append(what)
             old_renpysay(who, what, interact, *args, **kwargs)
+
+    def mtts_refresh_status_once():
+        # 一次性刷新，开关手动调用
+        if not renpy.seen_label("mtts_greeting"):
+            store.mtts_status = renpy.substitute(_("未解锁"))
+            return
+
+        if not persistent.mtts.get("enabled", False):
+            store.mtts_status = renpy.substitute(_("未启用"))
+            return
+
+        if persistent.mtts.get("_outdated", False):
+            store.mtts_status = renpy.substitute(_("版本过旧"))
+            return
+
+        ok = store.mtts.mtts.is_accessable
+        store.mtts_status = renpy.substitute(_("待机")) if ok else renpy.substitute(_("无连接"))
 
     mtts_say = MttsSay()
     renpy.say = mtts_say
