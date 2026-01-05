@@ -72,7 +72,7 @@ screen maicatts_stat_lite():
                         xysize (89, 24)
                         xalign 1.0
                         yalign 0.0
-                        xoffset 0
+                        xoffset -3
                         yoffset 3
 
                         python:
@@ -88,15 +88,15 @@ screen maicatts_stat_lite():
                             yfill True
                             background "mod_assets/console/cn_frame_tts_button.png"
                             hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
-                            action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs)]
+                            action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
                             add Text(
                                 "{0}●{{/color}} I / O".format(beacon),
                                 font=maica_confont,
                                 size=14
-                            ) 
-                            xpos 34 
-                            ypos 12 
-                            xanchor 0.5 
-                            yanchor 0.5
+                            ): 
+                                xpos 34 
+                                ypos 10 
+                                xanchor 0.5 
+                                yanchor 0.5
 
 
