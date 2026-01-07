@@ -104,7 +104,7 @@ screen mtts_node_setting():
 
                                 $ _pid = provider.get("id")
                                 $ _pname = provider.get("name") or ""
-                                $ _dev = provider.get("deviceName")
+                                $ _desc = provider.get("description")
                                 $ _model = provider.get("servingModel")
                                 $ _portal = provider.get("portalPage")
 
@@ -114,8 +114,8 @@ screen mtts_node_setting():
                                 text _("ID: [_pid]"):
                                     size 15
 
-                                if _dev:
-                                    text _("设备: [_dev]"):
+                                if _desc:
+                                    text _("说明: [_desc]"):
                                         size 15
 
                                 if _model:
