@@ -6,6 +6,7 @@ init -990 python:
         "acs_enabled": True,
         "_outdated": False,
         "ministathud": True,
+        "provider_id": 1 if renpy.windows else 2
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -15,19 +16,55 @@ init -990 python:
     persistent.mtts = setting
 init -100 python in mtts:
     import MTTS, store, os
+    from mtts_provider_manager import MTTSProviderManager
     MTTS.logger = store.mas_submod_utils.submod_log
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MTTSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
-    store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
-    if not store.mas_hasAPIKey("MTTS_endpoint"):
-        store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
+
+    provider_id = store.persistent.mtts.get("provider_id", 1 if renpy.windows else 2)
+    provider_manager = MTTSProviderManager(provider_id)
+    try:
+        provider_manager.get_provider()
+    except Exception:
+        pass
+    # store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
+    # if not store.mas_hasAPIKey("MTTS_endpoint"):
+    #     store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
     mtts = MTTS.MTTS(
-        url = store.mas_getAPIKey("MTTS_endpoint"),
+        # url = store.mas_getAPIKey("MTTS_endpoint"),
+        url = provider_manager.get_tts_url(),
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
+    mtts.user_acc = u""
     matcher = MTTS.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = MTTS.AsyncTask
+    def sync_provider_id(pid):
+        """Switch provider node immediately (updates baseurl + reruns accessibility check)."""
+        try:
+            pid = int(pid)
+        except Exception:
+            pid = 0
+        store.persistent.mtts["provider_id"] = pid
+        # Keep MAICA_CHAT setting in sync if installed
+        try:
+            if store.persistent.mtts.get("_chat_installed", False) and hasattr(store.persistent, "maica_setting_dict") and isinstance(store.persistent.maica_setting_dict, dict):
+                store.persistent.maica_setting_dict["provider_id"] = pid
+        except Exception:
+            pass
+        provider_manager.set_provider_id(pid)
+        mtts.baseurl = provider_manager.get_tts_url()
+        mtts.provider_id = pid
+        # restart accessibility async task
+        global _acc
+        try:
+            _acc = AsyncTask(mtts.accessable)
+        except Exception:
+            _acc = None
+        try:
+            renpy.notify(_("MTTS: 已切换节点, 正在重新检测可用性"))
+        except Exception:
+            pass
     MTTS.logger = store.mas_submod_utils.submod_log
     
 
@@ -82,12 +119,14 @@ init 10 python in mtts:
         store.mtts.mtts.volume = store.persistent.mtts["volume"]
         store.mtts.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
         store.mtts.mtts.ministathud = store.persistent.mtts["ministathud"]
+        store.mtts.mtts.provider_id = store.persistent.mtts["provider_id"]
         
     def discard_settings():
         store.persistent.mtts["enabled"] = store.mtts.mtts.enabled
         store.persistent.mtts["volume"] = store.mtts.mtts.volume
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts.ministathud
+        store.persistent.mtts["provider_id"] = store.mtts.mtts.provider_id
         
 
     def reset_settings():

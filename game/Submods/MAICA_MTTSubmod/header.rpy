@@ -39,6 +39,11 @@ screen mtts_settingpane():
 screen mtts_settings():
     default tooltip = Tooltip("")
     default nvw_folded = False
+
+    if persistent.mtts.get("_chat_installed", False):
+        # 打开设置页时尝试从chat同步一次用户名
+        timer 0.2 action Function(mtts_try_sync_user_acc_from_blessland)
+
     python:
         submods_screen = store.renpy.get_screen("submods", "screens")
         if submods_screen:
@@ -60,6 +65,35 @@ screen mtts_settings():
 
     use maica_common_outer_frame(w, h, x, y):
         use maica_common_inner_frame(w, h, x, y):
+
+
+            hbox:
+                use divider(_("连接与安全"))
+
+            hbox:
+                style_prefix "maica_check"
+                $ _node_name = store.mtts.provider_manager.get_server_info().get("name", _("未知"))
+                textbutton _("服务提供节点: [_node_name]"):
+                    action Show("mtts_node_setting")
+                    hovered SetField(_tooltip, "value", _("选择MTTS服务提供节点. 切换后会自动重测可用性."))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+
+            hbox:
+                style_prefix "maica_check_nohover"
+                python:
+                    _user_name = getattr(store.mtts.mtts, "user_acc", u"")
+                    if persistent.mtts.get("_chat_installed", False):
+                        try:
+                            _user_name = store.maica.maica.user_acc or _user_name
+                        except Exception:
+                            pass
+                    if not _user_name:
+                        _user_name = _("未登录")
+                textbutton _("当前用户: [_user_name]"):
+                    action NullAction()
+                    hovered SetField(_tooltip, "value", _("显示当前登录账号 (由最近一次登录/验证记录)."))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+
 
             hbox:
                 use divider(_("行为与表现"))
@@ -161,13 +195,72 @@ init python:
         store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts.token})
         store.mas_api_keys.save_keys()
 
+    def _is_str(x):
+        try:
+            return isinstance(x, basestring)  # py2
+        except Exception:
+            return isinstance(x, str)
+
     def _maica_verify_token():
         res = store.mtts.mtts._verify_token()
         if res.get("success"):
+            c = res.get("content", None)
+            if _is_str(c) and c:
+                store.mtts.mtts.user_acc = c
+
             renpy.show_screen("maica_message", message=_("验证成功"))
         else:
             store.mas_api_keys.api_keys.update({"Maica_Token":""})
             renpy.show_screen("maica_message", message=renpy.substitute(_("验证失败, 请检查账号密码")) + "\n" + renpy.substitute(_("失败原因: ")) + res.get("exception"))
+    
+    def mtts_try_sync_user_acc_from_blessland():
+        """
+        Blessland 登录模式下 (已通过验证): 先尝试从Chat侧拉取用户名, 失败则从 mas_api_keys 同步 token, 手动发一次请求从后端拉取用户名填充 user_acc.
+        """
+        
+        if not persistent.mtts.get("_chat_installed", False):
+            return
+
+        try:
+            m = store.mtts.mtts
+        except Exception:
+            return
+
+        # 拉取Chat侧的 user_acc (如有)
+        try:
+            acc = getattr(store.maica.maica, "user_acc", "")
+            if acc:
+                if getattr(m, "user_acc", u"") != acc:
+                    m.user_acc = acc
+                    renpy.restart_interaction()
+                return
+        except Exception:
+            pass
+
+        if getattr(m, "user_acc", u""):
+            return
+
+        try:
+            token = store.mas_getAPIKey("Maica_Token") or ""
+        except Exception:
+            token = ""
+        if not token:
+            return
+        if getattr(m, "token", "") != token:
+            m.token = token
+        try:
+            res = m._verify_token()
+        except Exception:
+            return
+        if not res.get("success", False):
+            return
+        
+        c = res.get("content", None)
+        if _is_str(c) and c:
+            m.user_acc = c
+            renpy.restart_interaction()
+            return
+    
 init python:
     from bot_interface import PY2, PY3
     def iterize(dict):
