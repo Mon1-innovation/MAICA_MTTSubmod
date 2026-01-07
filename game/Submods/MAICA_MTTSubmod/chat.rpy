@@ -141,7 +141,7 @@ label mas_reaction_gift_mttsheadset:
         if gift_ev:
             store.mas_filereacts.delete_file(gift_ev.category)
             #or: store.mas_filereacts.delete_file(mas_getEVLPropValue("mas_reaction_cupcake", "category"))
-    return
+    return "love"
 label mtts_greeting:
     #重启后隐藏礼物盒
     $ mas_hideDecoTag("mtts_giftbox")
