@@ -46,7 +46,7 @@ screen mtts_login():
 
         hbox:
             style_prefix "small_expl"
-            text _("※ 使用MAICA Blessland, 即认为你同意 "):
+            text _("※ 使用MAICA-MTTS Synbrace, 即认为你同意 "):
                 size 15
             textbutton _("{u}MAICA服务条款{/u}"):
                 action OpenURL("https://maica.monika.love/tos")
