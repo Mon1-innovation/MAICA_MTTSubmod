@@ -18,7 +18,7 @@ init -100 python in mtts:
     import MTTS, store, os
     from mtts_provider_manager import MTTSProviderManager
     MTTS.logger = store.mas_submod_utils.submod_log
-    basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MTTSubmod"))
+    basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
 
     provider_id = store.persistent.mtts.get("provider_id", 1 if renpy.windows else 2)
