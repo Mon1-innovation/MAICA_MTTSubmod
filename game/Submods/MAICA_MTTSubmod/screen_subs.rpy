@@ -71,91 +71,56 @@ screen mtts_login_input(message, returnto, ok_action = Hide("mtts_login_input"))
 
 
 screen mtts_node_setting():
-    ## Service provider node picker (ported from MAICA_CHAT)
+    $ _tooltip = store._tooltip
+    # python:
+    #     def set_provider(id):
+    #         persistent.maica_setting_dict["provider_id"] = id
+
     modal True
     zorder 92
 
-    $ w = 1100
-    $ h = 640
-    $ x = 0.5
-    $ y = 0.5
+    use maica_common_outer_frame():
+        use maica_common_inner_frame():
 
-    style_prefix "maica_check"
+            for provider in store.mtts.provider_manager._servers:
+                use maica_l2_subframe():
+                    text str(provider.get('id')) + ' | ' + provider.get('name')
+                    
 
-    use maica_common_outer_frame(w, h, x, y):
-        use maica_common_inner_frame(w, h, x, y):
+                    hbox:
+                        text renpy.substitute(_("说明: ")) + provider.get('description', 'Device not provided')
+                    hbox:
+                        text renpy.substitute(_("当前模型: ")) + provider.get('servingModel', 'No model provided')
 
-            hbox:
-                use divider(_("服务提供节点"))
 
-            viewport:
-                draggable True
-                mousewheel True
-                scrollbars "vertical"
-                ysize 510
+                hbox:
+                    hbox:
+                        style_prefix "generic_fancy_check"
+                        textbutton _("使用该节点"):
+                            action [
+                                # Function(set_provider, provider.get('id')),
+                                Function(store.mtts.sync_provider_id, provider.get('id')),
+                                Hide("mtts_node_setting")
+                            ]
+                            selected persistent.mtts["provider_id"] == provider.get('id')
+                    hbox:
+                        style_prefix "maica_check"
+                        textbutton renpy.substitute(_("> 打开官网")) + "(" + provider.get('portalPage') + ")":
+                            action OpenURL(provider.get('portalPage'))
 
-                vbox:
-                    spacing 10
+                    if provider.get("isOfficial", False):
+                        hbox:
+                            style_prefix "maica_check_nohover"
+                            textbutton _(" <官方服务>")
+                        
+        hbox:
+            xpos 10
+            style_prefix "confirm"
+            textbutton _("刷新节点列表"):
+                action Function(store.mtts.provider_manager.get_provider)
 
-                    for provider in store.mtts.provider_manager._servers:
-                        use maica_l2_subframe():
-                            vbox:
-                                spacing 4
-
-                                $ _pid = provider.get("id")
-                                $ _pname = provider.get("name") or ""
-                                $ _desc = provider.get("description")
-                                $ _model = provider.get("servingModel")
-                                $ _portal = provider.get("portalPage")
-
-                                text _pname:
-                                    size 30
-
-                                text _("ID: [_pid]"):
-                                    size 15
-
-                                if _desc:
-                                    text _("说明: [_desc]"):
-                                        size 15
-
-                                if _model:
-                                    text _("服务模型: [_model]"):
-                                        size 15
-
-                                if _portal:
-                                    textbutton _("门户页面"):
-                                        text_size 15
-                                        action OpenURL(_portal)
-
-                                $ _tts_url = provider.get("ttsInterface")
-                                if not _tts_url:
-                                    $ _tts_url = store.mtts.provider_manager._derive_tts_from_http(provider.get("httpInterface"))
-                                $ _tts_url = store.mtts.provider_manager._ensure_trailing_slash(_tts_url)
-
-                                if _tts_url:
-                                    text _("TTS接口: [_tts_url]"):
-                                        size 15
-
-                                hbox:
-                                    style_prefix "confirm"
-
-                                    textbutton _("使用该节点"):
-                                        action [Function(store.mtts.sync_provider_id, _pid), Hide("mtts_node_setting")]
-
-                                    if persistent.mtts.get("provider_id") == _pid:
-                                        text _("(当前)"):
-                                            size 15
-                                            yalign 0.5
-
-            hbox:
-                xpos 10
-                style_prefix "confirm"
-
-                textbutton _("刷新节点列表"):
-                    action Function(store.mtts.provider_manager.get_provider)
-
-                textbutton _("测试当前节点可用性"):
-                    action Function(store.mtts.mtts.accessable)
-
-                textbutton _("关闭"):
-                    action Hide("mtts_node_setting")
+            textbutton _("关闭"):
+                action Hide("mtts_node_setting")
+            
+            textbutton _("测试当前节点可用性"):
+                action Function(store.mtts.mtts.accessable)
