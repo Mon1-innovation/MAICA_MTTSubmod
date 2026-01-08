@@ -24,13 +24,13 @@ init -989 python:
 
 screen mtts_settingpane():
     if persistent.mtts["_outdated"]:
-        textbutton _("> 当前版本过旧, 请更新到最新版")
+        textbutton _("> 当前版本支持已终止, 请更新至最新版")
 
     if not persistent.mtts["_chat_installed"]:
-        textbutton _("> 登录 (未安装Blessland, 使用独立模式)"):
+        textbutton _("> 使用账号生成令牌 (未安装Blessland, 使用独立模式)"):
             action Show("mtts_login")
     else:
-        textbutton _("> 使用 MAICA Blessland 完成登录"):
+        textbutton _("> 使用 MAICA Blessland 生成令牌"):
             action Show("maica_login")
     textbutton _("> MTTS设置"):
         action Show("mtts_settings")
@@ -72,10 +72,10 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "maica_check"
-                $ _node_name = store.mtts.provider_manager.get_server_info().get("name", _("未知"))
+                $ _node_name = store.mtts.provider_manager.get_server_info().get("name", "Unknown")
                 textbutton _("服务提供节点: [_node_name]"):
                     action Show("mtts_node_setting")
-                    hovered SetField(_tooltip, "value", _("选择MTTS服务提供节点. 切换后会自动重测可用性."))
+                    hovered SetField(_tooltip, "value", _("设置服务器节点."))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
@@ -91,7 +91,7 @@ screen mtts_settings():
                         _user_name = _("未登录")
                 textbutton _("当前用户: [_user_name]"):
                     action NullAction()
-                    hovered SetField(_tooltip, "value", _("显示当前登录账号 (由最近一次登录/验证记录)."))
+                    hovered SetField(_tooltip, "value", _("如需更换或退出账号, 请在Submods界面退出登录.\n* 要修改账号信息或密码, 请前往注册网站"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
 
@@ -118,7 +118,7 @@ screen mtts_settings():
                         unhovered SetField(_tooltip, "value", _tooltip.default)
             
             $ tooltip_volume = _("TTS的语音音量")
-            use prog_bar(_("语音音量"), 200 if config.language == "chinese" else 350, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
+            use prog_bar(_("语音音量"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
 
             hbox:
                 use divider(_("工具与功能"))
@@ -127,7 +127,7 @@ screen mtts_settings():
                 style_prefix "generic_fancy_check"
                 textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
                     action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
-                    hovered SetField(_tooltip, "value", _("是否在屏幕右上角显示MTTS状态小窗"))
+                    hovered SetField(_tooltip, "value", _("是否在游戏内显示MTTS状态小窗"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
@@ -162,7 +162,7 @@ screen mtts_settings():
             textbutton _("保存设置"):
                 action [
                         Function(store.mtts.apply_settings),
-                        Function(renpy.notify, _("MTTS: 已保存修改")),
+                        Function(renpy.notify, _("MTTS: 设置已保存")),
                         Hide("mtts_settings")
                         ]
             textbutton _("放弃修改"):
