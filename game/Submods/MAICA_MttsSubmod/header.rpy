@@ -72,24 +72,14 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "maica_check"
-                $ _node_name = store.mtts.provider_manager.get_server_info().get("name", "Unknown")
-                textbutton _("服务提供节点: [_node_name]"):
+                textbutton _("服务提供节点: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"):
                     action Show("mtts_node_setting")
-                    hovered SetField(_tooltip, "value", _("设置服务器节点."))
+                    hovered SetField(_tooltip, "value", _("设置服务器节点"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
-
             hbox:
                 style_prefix "maica_check_nohover"
-                python:
-                    _user_name = getattr(store.mtts.mtts, "user_acc", u"")
-                    if persistent.mtts.get("_chat_installed", False):
-                        try:
-                            _user_name = store.maica.maica.user_acc or _user_name
-                        except Exception:
-                            pass
-                    if not _user_name:
-                        _user_name = _("未登录")
-                textbutton _("当前用户: [_user_name]"):
+                $ user_disp = store.mtts.mtts.user_acc or renpy.substitute(_("未登录"))
+                textbutton _("当前用户: [user_disp]"):
                     action NullAction()
                     hovered SetField(_tooltip, "value", _("如需更换或退出账号, 请在Submods界面退出登录.\n* 要修改账号信息或密码, 请前往注册网站"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -221,22 +211,16 @@ init python:
         if not persistent.mtts.get("_chat_installed", False):
             return
 
-        try:
-            m = store.mtts.mtts
-        except Exception:
-            return
+        m = store.mtts.mtts
 
         # 拉取Chat侧的 user_acc (如有)
-        try:
-            acc = getattr(store.maica.maica, "user_acc", "")
-            if acc:
-                if getattr(m, "user_acc", u"") != acc:
-                    m.user_acc = acc
-                    renpy.restart_interaction()
-                return
-        except Exception:
-            pass
-
+        acc = getattr(store.maica.maica, "user_acc", "")
+        if acc:
+            if getattr(m, "user_acc", u"") != acc:
+                m.user_acc = acc
+                renpy.restart_interaction()
+            return
+        
         if getattr(m, "user_acc", u""):
             return
 
@@ -248,10 +232,8 @@ init python:
             return
         if getattr(m, "token", "") != token:
             m.token = token
-        try:
-            res = m._verify_token()
-        except Exception:
-            return
+        res = m._verify_token()
+        
         if not res.get("success", False):
             return
         
