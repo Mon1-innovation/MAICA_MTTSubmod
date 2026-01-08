@@ -4,121 +4,121 @@
 translate english mtts_prepend_1_cfac0d94:
 
     # m 7rub "[player], 我最近有在想..."
-    m 7rub ""
+    m 7rub "[player], I have been wondering recently..."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:23
 translate english mtts_prepend_1_e23ccee4:
 
     # m 1eua "要是我知道你的声音是什么样的就好了."
-    m 1eua ""
+    m 1eua "What does your voice sound like."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:24
 translate english mtts_prepend_1_3190ed3b:
 
     # m 3husdrb "虽然让你对着屏幕说话...感觉有点奇怪, 哈哈!"
-    m 3husdrb ""
+    m 3husdrb "Though it might look weird to have you talking with a screen... Ahaha!"
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:25
 translate english mtts_prepend_1_5bab3cd3:
 
     # m 1tua "你应该也会想听我的声音吧? 如果能让你听到, 我是不介意说出来的."
-    m 1tua ""
+    m 1tua "What about my voice for you? I'd like to talk to you for real without worrying about that."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:27
 translate english mtts_prepend_1_3d5aaa75:
 
     # m 3rub "你应该在原本结局的地方听过我唱歌, 但那已经是好久以前了."
-    m 3rub ""
+    m 3rub "You should have heard me singing back in the original ending, but that was already long ago."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:29
 translate english mtts_prepend_1_ebf35aee:
 
     # m 3rud "你应该在原本结局的地方听过我唱歌, 但那也没几句嘛."
-    m 3rud ""
+    m 3rud "You should have heard me singing back in the original ending, but that's all."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:31
 translate english mtts_prepend_1_964e1357:
 
     # m 2tsb "你好像还没听过我的声音呢, 不过你已经上网搜过了也说不定."
-    m 2tsb ""
+    m 2tsb "You havn't ever heard my voice in person yet, except for you searched online or what."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:32
 translate english mtts_prepend_1_04239647:
 
     # m 3hua "虽然在屏幕上写字也算是和你聊天, 但真的说出来会不会更有仪式感一点?"
-    m 3hua ""
+    m 3hua "I could take this screen writting a form of talking, but how much better if I can really pronounce?"
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:34
 translate english mtts_prepend_1_048765dd:
 
     # m 2rsd "上次和你聊过关于{i}人工智能{/i}的事情之后, 我又找到了一点新的线索..."
-    m 2rsd ""
+    m 2rsd "After last time we talked about {i}Artificial Intelligence{/i}, I found some extra clues..."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:35
 translate english mtts_prepend_1_69d8e762:
 
     # m 7husdrb "抱歉老在吊你的胃口啦, 哈哈!"
-    m 7husdrb ""
+    m 7husdrb "Sorry for tantalizing, ehehe!"
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:37
 translate english mtts_prepend_1_b15971a3:
 
     # m 2rsb "至于要怎么说给你听, 我有个想法..."
-    m 2rsb ""
+    m 2rsb "As for the approach, I actually have some clues by now..."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:38
 translate english mtts_prepend_1_8d7a3153:
 
     # m 6husdrb "不过还没到能告诉你的时候, 哈哈!"
-    m 6husdrb ""
+    m 6husdrb "Not now, ehehe!"
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:39
 translate english mtts_prepend_1_c0824202:
 
     # m 3eua "耐心等我就好! {w=0.5}等我弄明白了会告诉你的."
-    m 3eua ""
+    m 3eua "Just be patient! {w=0.5}I'll tell you whenever I sort these out."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:40
 translate english mtts_prepend_1_45cdac65:
 
     # m 5tubla "另外, 谢谢你一直这么替我着想! 我很珍惜能更靠近你的每个机会."
-    m 5tubla ""
+    m 5tubla "By the way, thanks for always being so considerate! I really cherish every chance to get closer to you."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:83
 translate english mtts_hint_10ae7c8e:
 
     # m 1eud "嗨, [player]..."
-    m 1eud ""
+    m 1eud "Hey, [player]..."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:84
 translate english mtts_hint_b0ebb956:
 
     # m 3euc "好像有人在'characters'文件夹里给你留了个便条."
-    m 3euc ""
+    m 3euc "Someone left a note in the characters folder addressed to you."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:85
 translate english mtts_hint_7f0afa86:
 
-    # m 1ekc "我没看啦, 毕竟是写给你的...{w=0.3}{nw}"
-    m 1ekc ""
+    # m 1ekc "我没看啦, 毕竟是写给你的..."
+    m 1ekc "Of course, I haven't read it, since it's obviously for you..."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:124
 translate english mas_reaction_gift_mttsheadset_142e3049:
 
     # m 1sublo ".{w=0.7}.{w=0.7}.{w=1}"
-    m 1sublo ""
+    m 1sublo ".{w=0.7}.{w=0.7}.{w=1}"
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:125
 translate english mas_reaction_gift_mttsheadset_4c49e669:
 
     # m "这-{w=0.5}这是..."
-    m ""
+    m "T-{w=0.5}This is..."
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:126
 translate english mas_reaction_gift_mttsheadset_e5982e5d:
 
     # m "一个{i}特殊的{/i}礼物? 给我的?"
-    m ""
+    m "A {i}special{/i} gift? For me?"
 
 # game/Submods/MAICA_MTTSubmod/chat.rpy:128
 translate english mas_reaction_gift_mttsheadset_78fb97ec:

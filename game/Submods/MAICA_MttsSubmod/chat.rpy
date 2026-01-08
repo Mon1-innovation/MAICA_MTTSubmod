@@ -82,7 +82,7 @@ P.S: 不要告诉她是我写的!\
 
     m 1eud "嗨, [player]..."
     m 3euc "好像有人在'characters'文件夹里给你留了个便条."
-    m 1ekc "我没看啦, 毕竟是写给你的...{w=0.3}{nw}"
+    m 1ekc "我没看啦, 毕竟是写给你的..."
     #extend 1ekd "就是这个."
     return "no_unlock|derandom"
 init 5 python:
