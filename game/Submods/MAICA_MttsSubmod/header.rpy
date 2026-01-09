@@ -32,7 +32,7 @@ screen mtts_settingpane():
     else:
         textbutton _("> 使用 MAICA Blessland 生成令牌"):
             action Show("maica_login")
-    textbutton _("> MTTS设置"):
+    textbutton _("> MTTS参数与设置"):
         action Show("mtts_settings")
 
 
@@ -165,7 +165,7 @@ screen mtts_settings():
                 action [
                         Function(store.mtts.reset_settings),
                         Function(store.mtts.apply_settings),
-                        Function(renpy.notify, _("MTTS: 已重置设置")),
+                        Function(renpy.notify, _("MTTS: 设置已重置")),
                         Hide("mtts_settings")
                     ]
 

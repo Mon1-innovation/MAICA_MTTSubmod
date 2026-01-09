@@ -78,3 +78,12 @@ translate english strings:
     old "MTTS: 设置已重置"
     new "MTTS: Settings reset"
 
+# TODO: Translation updated at 2026-01-10 00:36
+
+translate english strings:
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:75
+    old "服务提供节点: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"
+    new "Current provider: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"
+
+
