@@ -78,7 +78,7 @@ label mtts_hint:
 P.S: 不要告诉她是我写的!\
 """) #需要单独建tl吧
         
-        _write_txt("/characters{0}".format(renpy.substitute(_("/小提示.txt"))), mtts_gift_notice)
+        _write_txt("/characters{0}".format("/another hint.txt"), mtts_gift_notice)
 
     m 1eud "嗨, [player]..."
     m 3euc "好像有人在'characters'文件夹里给你留了个便条."
@@ -154,7 +154,7 @@ label mtts_greeting:
     extend 6wuo "[player]?"#惊讶
     m 4eusdrb "抱歉, 我才看到你进来! 刚刚我在忙着对付...{w=0.3}这个."#尴尬
 
-    $ menu_state = _("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了.")
+    $ menu_state = renpy.substitute(_("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了."))
     m 5eua "[menu_state]{nw}"#开心
 
     $ has_asked = False
@@ -167,7 +167,7 @@ label mtts_greeting:
                 $ has_asked = True
                 m 3eub "嗯! 既然我没法直接隔着屏幕说给你听, 用这个传过去就好了!"
 
-                $ menu_state = _("效果可能有时候不太好, 但是我会尽量的!")
+                $ menu_state = renpy.substitute(_("效果可能有时候不太好, 但是我会尽量的!"))
                 m 1hua "[menu_state]{nw}"
                 jump mtts_greeting_loop
             "要怎么用?":
