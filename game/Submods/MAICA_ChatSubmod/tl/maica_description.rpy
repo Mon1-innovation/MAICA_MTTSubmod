@@ -53,7 +53,7 @@ translate english python in maica:
         store.mas_setEVLPropValues("maica_pre_wants_mvista", prompt="Aboue 'MVista'", category=["you", "us", "mod", "MAICA"])
     except Exception as e:
         import store
-        store.mas_submod_utils.submod_log.error("Failed while translating MAICA descriptions: {}".format(e))
+        store.mas_submod_utils.submod_log.error("MAICA Blessland seemingly not exist: {}".format(e))
 
 
 translate english python:
