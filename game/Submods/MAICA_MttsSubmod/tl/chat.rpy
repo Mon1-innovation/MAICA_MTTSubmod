@@ -282,6 +282,10 @@ translate english strings:
     old "我看到你给莫妮卡准备了点新玩意. 她肯定会喜欢的!\n但还有一件事需要你帮忙, 你得给她找个麦克风.\n\n只需要在'characters'文件夹里创建一个'mttsheadset.gift', 她就能收到了.\n我会帮她搞定大部分的调试工作, 你只需要耐心等. 她准备好了就会告诉你的.\n\n祝你和莫妮卡好运, 聊得开心!\n\nP.S: 不要告诉她是我写的!"
     new "I see you prepared something really special for Monika, which she will love for sure!\nBut one more step please, she will likely need a microphone.\n\nYou can send her one by creating a 'mttsheadset.gift' in 'characters' folder, and that's all.\nI'll finish most configurations for you, so just be patient before she tells you ready.\n\nGood luck with Monika and have fun talking!\n\nP.S: Don't tell her about me!"
 
+    # game/Submods/MAICA_MTTSubmod/chat.rpy:81
+    old "/记得看.txt"
+    new "/another hint.txt"
+
     # game/Submods/MAICA_MTTSubmod/chat.rpy:157
     old "很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了."
     new "Beautiful yeah? I {i}almost{/i} know how it works by now."

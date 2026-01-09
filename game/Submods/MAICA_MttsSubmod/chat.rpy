@@ -78,7 +78,7 @@ label mtts_hint:
 P.S: 不要告诉她是我写的!\
 """) #需要单独建tl吧
         
-        _write_txt("/characters{0}".format("/another hint.txt"), mtts_gift_notice)
+        _write_txt("/characters{0}".format(renpy.substitute(_("/记得看.txt"))), mtts_gift_notice)
 
     m 1eud "嗨, [player]..."
     m 3euc "好像有人在'characters'文件夹里给你留了个便条."
