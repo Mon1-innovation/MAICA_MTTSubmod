@@ -45,7 +45,7 @@ screen mtts_settings():
         timer 0.2 action Function(mtts_try_sync_user_acc_from_blessland)
 
     python:
-        submods_screen = store.renpy.get_screen("submods", "screens")
+        submods_screen = store.renpy.get_screen("mtts_settings", "screens")
         if submods_screen:
             store._tooltip = submods_screen.scope.get("tooltip", None)
         else:
