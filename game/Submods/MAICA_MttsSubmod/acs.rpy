@@ -1,32 +1,50 @@
 image mtts_giftbox = MASFilterSwitch("mod_assets/location/spaceroom/mtts/gift.png")
 
 init -1 python:
-    mttsacs_headset = MASAccessory(
-        "mttsheadset",
-        "mttsheadset",
-        MASPoseMap(
-            default="0",
-            l_default="5"
-        ),
-        priority=11,
-        stay_on_start=False,
-        acs_type="ribbon",
-        keep_on_desk=True,
-        use_folders=False
-    )
-    mttsacs_microphone = MASAccessory(
-        "mttsmicrophone",
-        "mttsmicrophone",
-        MASPoseMap(
-            default="0",
-            use_reg_for_l=True
-        ),
-        priority=11,
-        stay_on_start=False,
-        acs_type="flowers",
-        keep_on_desk=True,
-        use_folders=False
-    )
+    hs_kwargs = {
+        "priority": 11,
+        "stay_on_start": False,
+        "acs_type": "ribbon",
+        "keep_on_desk": True,
+        "use_folders": False
+    }
+    mph_kwargs = {
+        "priority": 11,
+        "stay_on_start": False,
+        "acs_type": "flowers",
+        "keep_on_desk": True,
+        "use_folders": False
+    }
+
+    load_success = None
+    while not load_success:
+        try:
+            mttsacs_headset = MASAccessory(
+                "mttsheadset",
+                "mttsheadset",
+                MASPoseMap(
+                    default="0",
+                    l_default="5"
+                ),
+                **hs_kwargs
+            )
+            mttsacs_microphone = MASAccessory(
+                "mttsmicrophone",
+                "mttsmicrophone",
+                MASPoseMap(
+                    default="0",
+                    use_reg_for_l=True
+                ),
+                **mph_kwargs
+            )
+            load_success = True
+        except Exception as e:
+            for kwargs in (hs_kwargs, mph_kwargs):
+                if "use_folders" in kwargs:
+                    kwargs.pop("use_folders")
+                else:
+                    raise e
+
     #mttsacs_giftbox = MASAccessory(
     #    "mttsgiftbox",
     #    "mttsgiftbox",
