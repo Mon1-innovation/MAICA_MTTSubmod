@@ -242,6 +242,8 @@ class DataCache:
         self.cache_path = cache_path
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
+        
+        self._cache_size = None
     
     def save(self, filename, data):
         with open(os.path.join(self.cache_path, filename), "wb") as f:
@@ -261,7 +263,7 @@ class DataCache:
         # 检查缓存是否存在
         filename = self.get_cachename(label_name, text)
         return os.path.exists(os.path.join(self.cache_path, filename))
-    
+
     def get_total_cache_size_mb(self):
         # 获取缓存目录的总大小
         total_size = 0
@@ -271,6 +273,11 @@ class DataCache:
                 total_size += os.path.getsize(fp)
         return total_size / (1024 * 1024)
         
+    @property
+    def cache_size(self):
+        if self._cache_size == None:
+            self._cache_size = self.get_total_cache_size_mb()
+        return self._cache_size
 
     def clear_cache(self):
         # 清空缓存目录
@@ -282,6 +289,7 @@ class DataCache:
                 except OSError:
                     logger.warning("Failed to delete file: {}".format(fp))
         logger.info("Cache cleared.")
+        self._cache_size = self.get_total_cache_size_mb()
 
 class MTTS:
     def __init__(self, url = "https://maicadev.monika.love/tts/", token = "", cache_path = ""):

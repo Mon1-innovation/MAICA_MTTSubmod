@@ -34,13 +34,6 @@ screen mtts_settingpane():
             action Show("maica_login")
     textbutton _("> MTTS参数与设置"):
         action Show("mtts_settings")
-    
-    if not mtts_remove_cache_on_quit:
-        textbutton _("> 当前缓存占用： [store.mtts.mtts.cache.get_total_cache_size_mb()]MB"):
-            action SetVariable("mtts_remove_cache_on_quit", True)
-    else:
-        textbutton _("> 当前缓存占用： [store.mtts.mtts.cache.get_total_cache_size_mb()]MB [[将在退出时清理缓存]")
-
 
 screen mtts_settings():
     default tooltip = Tooltip("")
@@ -132,6 +125,33 @@ screen mtts_settings():
                     action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
                     hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
+
+
+            hbox:
+                frame:
+                    xmaximum 950
+                    xpos 30
+                    xfill True
+                    has vbox:
+                        xmaximum 950
+                        xfill True
+                    $ tooltip_tts_cache = _("MTTS本地缓存, 用以降低资源开销和响应延迟.\n* 若模型更换, 需要清除缓存以采用新的表现\n! 请不要随意清除缓存, 这会产生大量额外开销")
+
+                    hbox:
+                        style_prefix "maica_check_nohover"
+                        if not mtts_remove_cache_on_quit:
+                            textbutton _("当前缓存占用：[store.mtts.mtts.cache.cache_size]MB"):
+                                action NullAction()
+                                hovered SetField(_tooltip, "value", tooltip_tts_cache)
+                                unhovered SetField(_tooltip, "value", _tooltip.default)
+
+                    hbox:
+                        style_prefix "maica_check"
+                        textbutton _("{color=#FF0000}清除缓存{/color}"):
+                            action Function(store.mtts.mtts.cache.clear_cache)
+                            hovered SetField(_tooltip, "value", tooltip_mf_info)
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
+
 
             hbox:
                 use divider(_("统计与信息"))
