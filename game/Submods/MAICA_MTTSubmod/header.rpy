@@ -34,6 +34,12 @@ screen mtts_settingpane():
             action Show("maica_login")
     textbutton _("> MTTS设置"):
         action Show("mtts_settings")
+    
+    if not mtts_remove_cache_on_quit:
+        textbutton _("> 当前缓存占用： [store.mtts.mtts.cache.get_total_cache_size_mb()]MB"):
+            action SetVariable("mtts_remove_cache_on_quit", True)
+    else:
+        textbutton _("> 当前缓存占用： [store.mtts.mtts.cache.get_total_cache_size_mb()]MB [[将在退出时清理缓存]")
 
 
 screen mtts_settings():
