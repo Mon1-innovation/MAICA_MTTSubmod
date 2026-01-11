@@ -24,15 +24,15 @@ init -989 python:
 
 screen mtts_settingpane():
     if persistent.mtts["_outdated"]:
-        textbutton _("> 当前版本过旧, 请更新到最新版")
+        textbutton _("> 当前版本支持已终止, 请更新至最新版")
 
     if not persistent.mtts["_chat_installed"]:
-        textbutton _("> 登录 (未安装Blessland, 使用独立模式)"):
+        textbutton _("> 使用账号生成令牌 (未安装Blessland, 使用独立模式)"):
             action Show("mtts_login")
     else:
-        textbutton _("> 使用 MAICA Blessland 完成登录"):
+        textbutton _("> 使用 MAICA Blessland 生成令牌"):
             action Show("maica_login")
-    textbutton _("> MTTS设置"):
+    textbutton _("> MTTS参数与设置"):
         action Show("mtts_settings")
     
     if not mtts_remove_cache_on_quit:
@@ -45,8 +45,13 @@ screen mtts_settingpane():
 screen mtts_settings():
     default tooltip = Tooltip("")
     default nvw_folded = False
+
+    if persistent.mtts.get("_chat_installed", False):
+        # 打开设置页时尝试从chat同步一次用户名
+        timer 0.2 action Function(mtts_try_sync_user_acc_from_blessland)
+
     python:
-        submods_screen = store.renpy.get_screen("submods", "screens")
+        submods_screen = store.renpy.get_screen("mtts_settings", "screens")
         if submods_screen:
             store._tooltip = submods_screen.scope.get("tooltip", None)
         else:
@@ -66,11 +71,34 @@ screen mtts_settings():
 
     use maica_common_outer_frame(w, h, x, y):
         use maica_common_inner_frame(w, h, x, y):
+
+
+            hbox:
+                use divider(_("连接与安全"))
+
+            hbox:
+                style_prefix "maica_check"
+                textbutton _("服务提供节点: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"):
+                    action Show("mtts_node_setting")
+                    hovered SetField(_tooltip, "value", _("设置服务器节点"))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+            hbox:
+                style_prefix "maica_check_nohover"
+                $ user_disp = store.mtts.mtts.user_acc or renpy.substitute(_("未登录"))
+                textbutton _("当前用户: [user_disp]"):
+                    action NullAction()
+                    hovered SetField(_tooltip, "value", _("如需更换或退出账号, 请在Submods界面退出登录.\n* 要修改账号信息或密码, 请前往注册网站"))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+
+
+            hbox:
+                use divider(_("行为与表现"))
+
             if renpy.seen_label("mtts_greeting"):
                 hbox:
                     style_prefix "generic_fancy_check"
                     textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
-                        action ToggleDict(persistent.mtts, "enabled", True, False)
+                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
                         hovered SetField(_tooltip, "value", _("启用以生成和播放TTS."))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
 
@@ -86,21 +114,27 @@ screen mtts_settings():
                         unhovered SetField(_tooltip, "value", _tooltip.default)
             
             $ tooltip_volume = _("TTS的语音音量")
-            use prog_bar(_("语音音量"), 200 if config.language == "chinese" else 350, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
+            use prog_bar(_("语音音量"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
+
+            hbox:
+                use divider(_("工具与功能"))
             
             hbox:
                 style_prefix "generic_fancy_check"
                 textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
                     action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
-                    hovered SetField(_tooltip, "value", _("是否在屏幕右上角显示MTTS状态小窗"))
+                    hovered SetField(_tooltip, "value", _("是否在游戏内显示MTTS状态小窗"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
                 style_prefix "generic_fancy_check"
-                textbutton _("启用时显示饰品: [persistent.mtts.get('acs_enabled')]"):
+                textbutton _("启用时显示道具: [persistent.mtts.get('acs_enabled')]"):
                     action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
-                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时自动穿戴对应饰品.\n* 可能有一定延迟"))
+                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
+
+            hbox:
+                use divider(_("统计与信息"))
 
             hbox:
                 style_prefix "maica_check"
@@ -115,9 +149,33 @@ screen mtts_settings():
                     use maica_workload_stat()
 
                     
-    hbox:
-        textbutton _("关闭"):
-            action [Function(store.mtts.apply_settings), Hide("mtts_settings")]
+    # hbox:
+    #     textbutton _("关闭"):
+    #         action [Function(store.mtts.apply_settings), Hide("mtts_settings")]
+        hbox:
+            xpos 10
+            style_prefix "confirm"
+            textbutton _("保存设置"):
+                action [
+                        Function(store.mtts.apply_settings),
+                        Function(renpy.notify, _("MTTS: 设置已保存")),
+                        Hide("mtts_settings")
+                        ]
+            textbutton _("放弃修改"):
+                action [
+                        Function(store.mtts.discard_settings),
+                        Function(renpy.notify, _("MTTS: 已放弃设置修改")),
+                        Hide("mtts_settings")
+                        ]
+            textbutton _("重置设置"):
+                action [
+                        Function(store.mtts.reset_settings),
+                        Function(store.mtts.apply_settings),
+                        Function(renpy.notify, _("MTTS: 设置已重置")),
+                        Hide("mtts_settings")
+                    ]
+
+
     if tooltip.value:
         frame:
             xalign 0.5 yalign 1.0
@@ -133,13 +191,64 @@ init python:
         store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts.token})
         store.mas_api_keys.save_keys()
 
+    def _is_str(x):
+        try:
+            return isinstance(x, basestring)  # py2
+        except Exception:
+            return isinstance(x, str)
+
     def _maica_verify_token():
         res = store.mtts.mtts._verify_token()
         if res.get("success"):
+            c = res.get("content", None)
+            if _is_str(c) and c:
+                store.mtts.mtts.user_acc = c
+
             renpy.show_screen("maica_message", message=_("验证成功"))
         else:
             store.mas_api_keys.api_keys.update({"Maica_Token":""})
             renpy.show_screen("maica_message", message=renpy.substitute(_("验证失败, 请检查账号密码")) + "\n" + renpy.substitute(_("失败原因: ")) + res.get("exception"))
+    
+    def mtts_try_sync_user_acc_from_blessland():
+        """
+        Blessland 登录模式下 (已通过验证): 先尝试从Chat侧拉取用户名, 失败则从 mas_api_keys 同步 token, 手动发一次请求从后端拉取用户名填充 user_acc.
+        """
+        
+        if not persistent.mtts.get("_chat_installed", False):
+            return
+
+        m = store.mtts.mtts
+
+        # 拉取Chat侧的 user_acc (如有)
+        acc = getattr(store.maica.maica, "user_acc", "")
+        if acc:
+            if getattr(m, "user_acc", u"") != acc:
+                m.user_acc = acc
+                renpy.restart_interaction()
+            return
+        
+        if getattr(m, "user_acc", u""):
+            return
+
+        try:
+            token = store.mas_getAPIKey("Maica_Token") or ""
+        except Exception:
+            token = ""
+        if not token:
+            return
+        if getattr(m, "token", "") != token:
+            m.token = token
+        res = m._verify_token()
+        
+        if not res.get("success", False):
+            return
+        
+        c = res.get("content", None)
+        if _is_str(c) and c:
+            m.user_acc = c
+            renpy.restart_interaction()
+            return
+    
 init python:
     from bot_interface import PY2, PY3
     def iterize(dict):

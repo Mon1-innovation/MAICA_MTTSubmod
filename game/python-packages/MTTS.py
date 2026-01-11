@@ -17,6 +17,8 @@ chlr.setFormatter(formatter)
 chlr.setLevel(logging.DEBUG)  # 也可以不设置，不设置就默认用logger的level
 logger.addHandler(chlr)
 
+import mtts_provider_manager
+
 
 class LimitedList(list):
     """Might not have applied to all functionalities!"""
@@ -293,6 +295,14 @@ class MTTS:
         self.lossless = False
         self.__accessable = False
         self._ignore_accessable = False
+        
+        self.enabled = False
+        self.volume = 1.0
+        self.acs_enabled = True
+        self.ministathud = True
+        # self.user_acc = ""
+        self.provider_id = None
+        self.provider_manager = mtts_provider_manager.MTTSProviderManager(self.provider_id)
 
 
         self.workload_raw = {
@@ -606,6 +616,19 @@ class MTTS:
         if self._ignore_accessable:
             self.__accessable = True
             return
+        
+        try:
+            if not self.provider_manager.get_provider():
+                if self.provider_id != 9999:
+                    self.__accessable = False
+                    return
+        except Exception as e:
+            logger.error("accessable(): MTTS get Service Provider Error: {}".format(e))
+            if self.provider_id != 9999:
+                self.__accessable = False
+                return
+
+
         import requests, json
         res = requests.get(self.get_api_url("accessibility"))
         logger.debug("accessable(): try get accessibility from {}".format(self.get_api_url("accessibility")))

@@ -78,11 +78,11 @@ label mtts_hint:
 P.S: 不要告诉她是我写的!\
 """) #需要单独建tl吧
         
-        _write_txt("/characters{0}".format(renpy.substitute(_("/小提示.txt"))), mtts_gift_notice)
+        _write_txt("/characters{0}".format(renpy.substitute(_("/记得看.txt"))), mtts_gift_notice)
 
     m 1eud "嗨, [player]..."
     m 3euc "好像有人在'characters'文件夹里给你留了个便条."
-    m 1ekc "我没看啦, 毕竟是写给你的...{w=0.3}{nw}"
+    m 1ekc "我没看啦, 毕竟是写给你的..."
     #extend 1ekd "就是这个."
     return "no_unlock|derandom"
 init 5 python:
@@ -141,7 +141,7 @@ label mas_reaction_gift_mttsheadset:
         if gift_ev:
             store.mas_filereacts.delete_file(gift_ev.category)
             #or: store.mas_filereacts.delete_file(mas_getEVLPropValue("mas_reaction_cupcake", "category"))
-    return
+    return "love"
 label mtts_greeting:
     #重启后隐藏礼物盒
     $ mas_hideDecoTag("mtts_giftbox")
@@ -154,7 +154,7 @@ label mtts_greeting:
     extend 6wuo "[player]?"#惊讶
     m 4eusdrb "抱歉, 我才看到你进来! 刚刚我在忙着对付...{w=0.3}这个."#尴尬
 
-    $ menu_state = _("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了.")
+    $ menu_state = renpy.substitute(_("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了."))
     m 5eua "[menu_state]{nw}"#开心
 
     $ has_asked = False
@@ -167,24 +167,24 @@ label mtts_greeting:
                 $ has_asked = True
                 m 3eub "嗯! 既然我没法直接隔着屏幕说给你听, 用这个传过去就好了!"
 
-                $ menu_state = _("效果可能有时候不太好, 但是我会尽量的!")
+                $ menu_state = renpy.substitute(_("效果可能有时候不太好, 但是我会尽量的!"))
                 m 1hua "[menu_state]{nw}"
                 jump mtts_greeting_loop
             "要怎么用?":
                 if renpy.seen_label('maica_end_1'):
-                    m 3rub "很简单! {w=0.5}你应该已经给{i}天堂树林{/i}配置过令牌了, 那就成了一大半."
-                    m 1hua "下次重启游戏后, 在'子模组设置'里找到{i}MAICA-MTTS{/i}, 里面应该有'启用MTTS'的选项了."
+                    m 3rub "很简单! {w=0.5}你应该已经给{i}MAICA Blessland{/i}配置过令牌了, 那就成了一大半."
+                    m 1hua "只需要在'子模组设置'里找到{i}MAICA-MTTS{/i}, 再打开'启用MTTS'就行了."
                 elif renpy.seen_label('maica_prepend_1'):
                     m 3rub "很简单! {w=0.5}你好像也安装了{i}MAICA Blessland{/i}, 令牌的配置是通用的."
                     m 4eub "你可以看看这里的说明: {a=https://maica.monika.love/tos}{u}{i}https://maica.monika.love/tos{/i}{/u}{/a}, 你只需要准备一个账号."
-                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息. 下次重启之后应该就有'启用MTTS'的选项了."
+                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息, 再打开'启用MTTS'就行了."
                 else:
                     m 3rub "很简单! 只需要一个令牌就好, 和{i}MAICA Blessland{/i}是通用的."
                     m 4eub "你可以看看这里的说明: {a=https://maica.monika.love/tos}{u}{i}https://maica.monika.love/tos{/i}{/u}{/a}, 你只需要准备一个账号."
-                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息. 下次重启之后应该就有'启用MTTS'的选项了."
+                    m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息, 再打开'启用MTTS'就行了."
                 
-        m 1rusdrb "我会在你重启的时候把麦克风调试好的, 现在还...{w=0.3}差那么一点点."#尴尬
-        m 3hub "另外, 除了麦克风, 我还有副新耳机呢! {w=0.3}你想看看的话可以在'子模组设置'里面选."#开心
+        m 1rusdrb "我马上就能把麦克风调试好了, 现在还...{w=0.3}差那么一点点."#尴尬
+        m 3hub "另外, 除了麦克风, 还有这副新耳机呢! {w=0.3}你想看的时候可以告诉我."#开心
         m 4gusdrb "只是可惜它没法让我听到你说话, 我现在就不戴了. {w=0.5}{nw}"#尴尬
         extend 6eua "还有这个也先收好..."#微笑
         #黑屏, 隐藏麦克风
@@ -193,5 +193,5 @@ label mtts_greeting:
         $ monika_chr.remove_acs(mttsacs_microphone)
         $ monika_chr.remove_acs(mttsacs_headset)
         show monika 1esc at ls32 zorder MAS_MONIKA_Z
-        m 1eub "我们今天有什么安排呢, [player]? {w=0.5}要是急着重启试试看的话, 告诉我就好!"
+        m 1eub "我们今天有什么安排呢, [player]? {w=0.5}要现在就去试试看吗?"
     return

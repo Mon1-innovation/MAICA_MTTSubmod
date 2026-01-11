@@ -46,7 +46,7 @@ screen mtts_login():
 
         hbox:
             style_prefix "small_expl"
-            text _("※ 使用MAICA Blessland, 即认为你同意 "):
+            text _("※ 使用MAICA-MTTS Synbrace, 即认为你同意 "):
                 size 15
             textbutton _("{u}MAICA服务条款{/u}"):
                 action OpenURL("https://maica.monika.love/tos")
@@ -68,3 +68,59 @@ screen mtts_login_input(message, returnto, ok_action = Hide("mtts_login_input"))
 
     use maica_setter_medium_frame(message, ok_action):
         input default "" value VariableInputValue(returnto) length 64
+
+
+screen mtts_node_setting():
+    $ _tooltip = store._tooltip
+    # python:
+    #     def set_provider(id):
+    #         persistent.maica_setting_dict["provider_id"] = id
+
+    modal True
+    zorder 92
+
+    use maica_common_outer_frame():
+        use maica_common_inner_frame():
+
+            for provider in store.mtts.provider_manager._servers:
+                use maica_l2_subframe():
+                    text str(provider.get('id')) + ' | ' + provider.get('name')
+                    
+
+                    hbox:
+                        text renpy.substitute(_("说明: ")) + provider.get('description', 'Device not provided')
+                    hbox:
+                        text renpy.substitute(_("当前模型: ")) + provider.get('servingModel', 'No model provided')
+
+
+                hbox:
+                    hbox:
+                        style_prefix "generic_fancy_check"
+                        textbutton _("使用该节点"):
+                            action [
+                                # Function(set_provider, provider.get('id')),
+                                Function(store.mtts.sync_provider_id, provider.get('id')),
+                                Hide("mtts_node_setting")
+                            ]
+                            selected persistent.mtts["provider_id"] == provider.get('id')
+                    hbox:
+                        style_prefix "maica_check"
+                        textbutton renpy.substitute(_("> 打开官网")) + "(" + provider.get('portalPage') + ")":
+                            action OpenURL(provider.get('portalPage'))
+
+                    if provider.get("isOfficial", False):
+                        hbox:
+                            style_prefix "maica_check_nohover"
+                            textbutton _(" <官方服务>")
+                        
+        hbox:
+            xpos 10
+            style_prefix "confirm"
+            textbutton _("刷新节点列表"):
+                action Function(store.mtts.provider_manager.get_provider)
+
+            textbutton _("关闭"):
+                action Hide("mtts_node_setting")
+            
+            textbutton _("测试当前节点可用性"):
+                action Function(store.mtts.mtts.accessable)
