@@ -86,4 +86,19 @@ translate english strings:
     old "服务提供节点: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"
     new "Current provider: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"
 
+# TODO: Translation updated at 2026-01-11 20:21
+
+translate english strings:
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:138
+    old "MTTS本地缓存, 用以降低资源开销和响应延迟.\n* 若模型更换, 需要清除缓存以采用新的表现\n! 请{color=#FF0000}不要{/color}随意清除缓存, 这会产生大量额外开销"
+    new "MTTS local cache to reduce resource consumption and latency.\n* Flush cache to apply new performance on model change\n! Do {color=#FF0000}NOT{/color} flush unless you know what you're doing"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:143
+    old "当前缓存占用：[store.mtts.mtts.cache.cache_size]MB"
+    new "Current cache size: [store.mtts.mtts.cache.cache_size]MB"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:150
+    old "{color=#FF0000}清除缓存{/color}"
+    new "{color=#FF0000}Flush cache{/color}"
 

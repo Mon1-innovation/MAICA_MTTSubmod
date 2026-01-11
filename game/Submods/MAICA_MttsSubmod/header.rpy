@@ -135,7 +135,7 @@ screen mtts_settings():
                     has vbox:
                         xmaximum 950
                         xfill True
-                    $ tooltip_tts_cache = _("MTTS本地缓存, 用以降低资源开销和响应延迟.\n* 若模型更换, 需要清除缓存以采用新的表现\n! 请不要随意清除缓存, 这会产生大量额外开销")
+                    $ tooltip_tts_cache = _("MTTS本地缓存, 用以降低资源开销和响应延迟.\n* 若模型更换, 需要清除缓存以采用新的表现\n! 请{color=#FF0000}不要{/color}随意清除缓存, 这会产生大量额外开销")
 
                     hbox:
                         style_prefix "maica_check_nohover"
