@@ -149,7 +149,7 @@ screen mtts_settings():
                         style_prefix "maica_check"
                         textbutton _("{color=#FF0000}清除缓存{/color}"):
                             action Function(store.mtts.mtts.cache.clear_cache)
-                            hovered SetField(_tooltip, "value", tooltip_mf_info)
+                            hovered SetField(_tooltip, "value", tooltip_tts_cache)
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
 

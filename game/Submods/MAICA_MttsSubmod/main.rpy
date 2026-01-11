@@ -221,6 +221,24 @@ init python:
             srt = re.sub(r"\{.*?\}", "", srt)
             return srt
 
+        @staticmethod
+        def escape_brackets_in_exceptions_and_ellipsis(err, max_chars=120):
+            #输入转可显示文本 + 转义Exception里的中括号 (如requests)
+            try:
+                if isinstance(err, basestring):
+                    s = err
+                else:
+                    s = unicode(err)
+            except Exception:
+                s = u"{}".format(err)
+
+            if max_chars and len(s) > max_chars:
+                s = s[:max_chars-1] + u"\u2026" # \u2026: 省略号字符: …
+
+            s = s.replace(u"[", u"[[")
+            s = s.replace(u"]", u"]]")
+            return s
+
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if (
                 not self.conditions
@@ -266,9 +284,11 @@ init python:
                         channel="voice",
                     )
                 else:
-                    renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
+                    # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
+                    renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
             else:
-                renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
+                # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
+                renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(task.exception))
 
             store.mtts_status = renpy.substitute(_("待机"))
 
