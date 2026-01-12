@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from bot_interface import logger
+from MTTS import logger
 
 
 class MTTSProviderManager:
