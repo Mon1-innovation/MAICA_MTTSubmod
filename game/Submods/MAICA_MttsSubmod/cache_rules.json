@@ -43,6 +43,12 @@
                 "regex_text": "<3",
                 "replace_with": "",
                 "priority":0
+            },
+            {
+                "name":"Replace consecutive dots",
+                "regex_text": "\\.+",
+                "replace_with": ".",
+                "priority":0
             }
         ]
     }
