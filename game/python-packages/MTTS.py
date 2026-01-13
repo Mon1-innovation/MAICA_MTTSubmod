@@ -101,6 +101,36 @@ class RuleMatcher:
             int: 非符号字符数
         """
         import unicodedata
+
+        # 确保 text 是 unicode 字符串（兼容 Python 2 和 3）
+        if PY2:
+            if isinstance(text, str):
+                # 尝试多种编码方式解码
+                try:
+                    text = text.decode('utf-8')
+                except UnicodeDecodeError:
+                    # 回退：使用正则判断中英文数量
+                    logger.warning("Failed to decode text with utf-8 and gbk, falling back to regex counting")
+                    count = len(re.findall(u'[\u4e00-\u9fff]+', text.decode('utf-8', errors='replace')))
+                    count += len(re.findall(u'[a-zA-Z0-9]+', text.decode('utf-8', errors='replace')))
+                    return count
+            elif not isinstance(text, unicode):
+                text = unicode(text)
+        else:  # PY3
+            if isinstance(text, bytes):
+                # 尝试多种编码方式解码
+                try:
+                    text = text.decode('utf-8')
+                except UnicodeDecodeError:
+                    # 回退：使用正则判断中英文数量
+                    logger.warning("Failed to decode text with utf-8 and gbk, falling back to regex counting")
+                    text = text.decode('utf-8', errors='replace')
+                    count = len(re.findall(r'[\u4e00-\u9fff]+', text))
+                    count += len(re.findall(r'[a-zA-Z0-9]+', text))
+                    return count
+            elif not isinstance(text, str):
+                text = str(text)
+
         count = 0
         for char in text:
             category = unicodedata.category(char)
