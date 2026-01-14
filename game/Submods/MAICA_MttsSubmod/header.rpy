@@ -23,17 +23,53 @@ init -989 python:
         )
 
 screen mtts_settingpane():
-    if persistent.mtts["_outdated"]:
-        textbutton _("> 当前版本支持已终止, 请更新至最新版")
+    vbox:
+        # background None
+        # has vbox:
+            # yfit True
 
-    if not persistent.mtts["_chat_installed"]:
-        textbutton _("> 使用账号生成令牌 (未安装Blessland, 使用独立模式)"):
-            action Show("mtts_login")
-    else:
-        textbutton _("> 使用 MAICA Blessland 生成令牌"):
-            action Show("maica_login")
-    textbutton _("> MTTS参数与设置"):
-        action Show("mtts_settings")
+        vbox:
+            spacing 5
+            xpos 45
+            xsize 900
+
+            text "":
+                size 0
+            if persistent.mtts["_outdated"]:
+                hbox:
+                    text _("> 当前版本支持已终止, 请更新至最新版"):
+                        style "main_menu_version_l"
+
+            $ res, libv, uiv = store.mtts.validate_version()
+            if res is None:
+                hbox:
+                    text _("> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, 而不是源代码"):
+                        style "main_menu_version_l"
+            elif res != 0:
+                hbox:
+                    text _("> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请从Release完整地更新MTTS"):
+                        style "main_menu_version_l"
+
+            text "":
+                size 0
+
+        vbox:
+            xmaximum 800
+            xfill True
+            style_prefix "check"
+
+            if not persistent.mtts["_chat_installed"]:
+                textbutton _("> 使用账号生成令牌 (未安装Blessland, 使用独立模式)"):
+                    action Show("mtts_login")
+            else:
+                textbutton _("> 使用 MAICA Blessland 生成令牌"):
+                    action Show("maica_login")
+            textbutton _("> MTTS参数与设置"):
+                action Show("mtts_settings")
+
+            if os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation")):
+                textbutton _("> 向 MTTS 捐赠"):
+                    action Show("mtts_support")
 
 screen mtts_settings():
     default tooltip = Tooltip("")
