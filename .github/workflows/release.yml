@@ -39,22 +39,30 @@ jobs:
         echo "Using version: $version"
         echo "version=$version" >> $GITHUB_OUTPUT
 
-    - name: Check if release exists
+    - name: Check if tag exists
       id: check_release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        release=$(curl -H "Authorization: token $GITHUB_TOKEN" \
+        tag=$(curl -H "Authorization: token $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.set_version.outputs.version }})
+          https://api.github.com/repos/${{ github.repository }}/git/refs/tags/${{ steps.set_version.outputs.version }})
 
-        if echo "$release" | grep -q "message.*Not Found"; then
-          echo "Release does not exist"
+        if echo "$tag" | grep -q "message.*Not Found"; then
+          echo "Tag does not exist, will create release"
           echo "create_release=true" >> $GITHUB_OUTPUT
         else
-          echo "Release already exists"
+          echo "Tag already exists, skipping release creation"
           echo "create_release=false" >> $GITHUB_OUTPUT
         fi
+
+    - name: Create git tag
+      if: steps.check_release.outputs.create_release == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag ${{ steps.set_version.outputs.version }}
+        git push origin ${{ steps.set_version.outputs.version }}
 
     - name: Create release version file
       if: steps.check_release.outputs.create_release == 'true'
