@@ -351,8 +351,8 @@ class MTTS:
         self.acs_enabled = True
         self.ministathud = True
         # self.user_acc = ""
-        self.provider_id = None
-        self.provider_manager = mtts_provider_manager.MTTSProviderManager(self.provider_id)
+        # self.provider_id = None
+        self.provider_manager = mtts_provider_manager.MTTSProviderManager()
 
 
         self.workload_raw = {
@@ -661,6 +661,14 @@ class MTTS:
             error_msg = traceback.format_exc()
             logger.error("MTTS: Get version request encountered an error: {}".format(error_msg))
             return {"success": False, "exception": "MTTS: Get version request failed"}
+        
+    @property
+    def provider_id(self):
+        return self.provider_manager.get_provider_id()
+
+    @provider_id.setter
+    def provider_id(self, value):
+        self.provider_manager.set_provider_id(self.provider_id)
     
     def accessable(self):
         if self._ignore_accessable:
