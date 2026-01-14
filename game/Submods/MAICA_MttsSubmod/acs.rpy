@@ -76,6 +76,10 @@ init -1 python:
     @store.mas_submod_utils.functionplugin("ch30_loop", priority=-100)
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_firstloadacs():
+        if store.mtts_say.conditions:
+            store.mas_selspr.unlock_acs(mttsacs_headset)
+            store.mas_selspr.unlock_acs(mttsacs_headset)
+
         mtts_autoacs()
     #def mtts_autoacs():
     #    if persistent.mtts.get("acs_enabled") and persistent.mtts.get("enabled"):
