@@ -111,8 +111,13 @@ class RuleMatcher:
                 except UnicodeDecodeError:
                     # 回退：使用正则判断中英文数量
                     logger.warning("Failed to decode text with utf-8 and gbk, falling back to regex counting")
-                    count = len(re.findall(u'[\u4e00-\u9fff]+', text.decode('utf-8', errors='replace')))
-                    count += len(re.findall(u'[a-zA-Z0-9]+', text.decode('utf-8', errors='replace')))
+                    decoded_text = text.decode('utf-8', errors='replace')
+                    # 计算中文字符数量
+                    chinese_chars = re.findall(u'[\u4e00-\u9fff]', decoded_text)
+                    count = len(chinese_chars)
+                    # 计算英文字母和数字字符数量
+                    english_chars = re.findall(u'[a-zA-Z0-9]', decoded_text)
+                    count += len(english_chars)
                     return count
             elif not isinstance(text, unicode):
                 text = unicode(text)
@@ -125,8 +130,12 @@ class RuleMatcher:
                     # 回退：使用正则判断中英文数量
                     logger.warning("Failed to decode text with utf-8 and gbk, falling back to regex counting")
                     text = text.decode('utf-8', errors='replace')
-                    count = len(re.findall(r'[\u4e00-\u9fff]+', text))
-                    count += len(re.findall(r'[a-zA-Z0-9]+', text))
+                    # 计算中文字符数量
+                    chinese_chars = re.findall(r'[\u4e00-\u9fff]', text)
+                    count = len(chinese_chars)
+                    # 计算英文字母和数字字符数量
+                    english_chars = re.findall(r'[a-zA-Z0-9]', text)
+                    count += len(english_chars)
                     return count
             elif not isinstance(text, str):
                 text = str(text)
@@ -233,12 +242,15 @@ class RuleMatcher:
 
             if regex_pattern is not None:
                 try:
-                    result = re.sub(regex_pattern, replace_with, result)
-                    logger.debug("Applied replace rule '{}': {} -> {}".format(
-                        rule.get('name', 'unnamed'),
-                        regex_pattern,
-                        replace_with if replace_with else '(empty)'
-                    ))
+                    # 先检查是否有匹配
+                    if re.search(regex_pattern, result):
+                        new_result = re.sub(regex_pattern, replace_with, result)
+                        logger.debug("Applied replace rule '{}': {} -> {}".format(
+                            rule.get('name', 'unnamed'),
+                            regex_pattern,
+                            replace_with if replace_with else '(empty)'
+                        ))
+                        result = new_result
                 except Exception as e:
                     logger.warning("Replace rule '{}' failed: {}".format(
                         rule.get('name', 'unnamed'),

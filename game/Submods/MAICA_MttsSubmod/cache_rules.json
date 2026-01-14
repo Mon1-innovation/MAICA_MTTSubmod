@@ -45,6 +45,12 @@
                 "priority":0
             },
             {
+                "name":"Replace consecutive dots with braces",
+                "regex_text": "(\\.\\{[^}]*\\})+",
+                "replace_with": ".",
+                "priority":10
+            },
+            {
                 "name":"Replace consecutive dots",
                 "regex_text": "\\.+",
                 "replace_with": ".",

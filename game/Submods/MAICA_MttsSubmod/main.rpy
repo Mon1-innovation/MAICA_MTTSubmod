@@ -248,9 +248,21 @@ init python:
             
             if who != store.m:
                 return old_renpysay(who, what, interact, *args, **kwargs)
-            text = self.process_str(store.mtts.matcher.apply_replace_rules(renpy.substitute(what)))
-            rule = store.mtts.matcher.match_cache_rule(what, store.mas_submod_utils.current_label)
+            original_text = renpy.substitute(what)
+            replaced_text = store.mtts.matcher.apply_replace_rules(original_text)
+            text = self.process_str(replaced_text)
+            # 调试日志：记录文本替换过程
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(text)))
+            rule = store.mtts.matcher.match_cache_rule(text, store.mas_submod_utils.current_label)
+            # 添加字符计数调试日志
+            content_char_count = store.mtts.matcher._count_content_chars(text)
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Content char count: {0}".format(content_char_count))
             store.mtts_match_rule = rule.get('name', 'Default')
+            # 添加匹配规则调试日志
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Matched rule: {0}".format(store.mtts_match_rule))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Rule action: {0}".format(rule.get('action', [])))
 
             if not rule['action']:
                 store.mtts_status = renpy.substitute(_("规则为空"))
@@ -285,10 +297,22 @@ init python:
                     )
                 else:
                     # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
-                    renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
+                    error_msg = res.reason() if getattr(res, 'reason', None) else 'Unknown'
+                    renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(error_msg))
+                    # 添加详细日志：输出错误内容和输入文本
+                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Input text: {0}".format(repr(text)))
+                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Error reason: {0}".format(repr(error_msg)))
+                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Label: {0}".format(store.mas_submod_utils.current_label))
+                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Target language: {0}".format(target_lang))
             else:
                 # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
-                renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(task.exception))
+                exception_msg = str(task.exception)
+                renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(exception_msg))
+                # 添加详细日志：输出错误内容和输入文本
+                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Input text: {0}".format(repr(text)))
+                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Exception: {0}".format(repr(exception_msg)))
+                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Label: {0}".format(store.mas_submod_utils.current_label))
+                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Target language: {0}".format(target_lang))
 
             store.mtts_status = renpy.substitute(_("待机"))
 
