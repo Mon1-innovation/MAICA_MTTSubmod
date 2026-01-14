@@ -130,13 +130,13 @@ screen mtts_support():
     modal True
     zorder 92
 
-    use maica_setter_medium_frame(title=_("向 MTTS 捐赠"), ok_action=Hide("mtts_support")):
+    use maica_setter_medium_frame(title=_("向 MAICA 捐赠"), ok_action=Hide("mtts_support")):
         hbox:
             text _("首先很感谢你有心捐赠.\n我们收到的捐赠基本上不可能回本, 但你不必有任何压力."):
                 size 20
         hbox:
             style_prefix "maica_check_nohover"
-            text _("请注意, 向MTTS捐赠不会提供任何特权, 除了论坛捐赠页名单和捐赠徽章."):
+            text _("请注意, 向MAICA捐赠不会提供任何特权, 除了论坛捐赠页名单和捐赠徽章."):
                 size 15
         hbox:
             xalign 0.5

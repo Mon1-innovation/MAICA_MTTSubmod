@@ -68,7 +68,7 @@ screen mtts_settingpane():
                 action Show("mtts_settings")
 
             if os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation")):
-                textbutton _("> 向 MTTS 捐赠"):
+                textbutton _("> 向 MAICA 捐赠"):
                     action Show("mtts_support")
 
 screen mtts_settings():

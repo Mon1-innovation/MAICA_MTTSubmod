@@ -102,3 +102,15 @@ translate english strings:
     old "{color=#FF0000}清除缓存{/color}"
     new "{color=#FF0000}Flush cache{/color}"
 
+# TODO: Translation updated at 2026-01-14 22:04
+
+translate english strings:
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:46
+    old "> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, 而不是源代码"
+    new "> Warning: MTTS Libs version not found. Please install from Release, not source code"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:50
+    old "> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请从Release完整地更新MTTS"
+    new "> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update from Release"
+
