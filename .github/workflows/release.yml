@@ -98,7 +98,7 @@ jobs:
       run: |
         gh release create ${{ steps.set_version.outputs.version }} \
           --title "MAICA MTTSubmod ${{ steps.set_version.outputs.version }}" \
-          --body-file ${{ steps.generate_release_notes.outputs.RELEASE_NOTES_PATH }} \
+          --notes-file ${{ steps.generate_release_notes.outputs.RELEASE_NOTES_PATH }} \
           MAICA_MTTSubmod-${{ steps.set_version.outputs.version }}.zip
 
     - name: Skip release if already exists
