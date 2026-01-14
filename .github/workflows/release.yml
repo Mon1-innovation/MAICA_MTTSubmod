@@ -25,7 +25,7 @@ jobs:
     - name: Extract version from header.rpy
       id: get_version
       run: |
-        version=$(grep "mtts_version = '" game/Submods/MAICA_MttsSubmod/header.rpy | cut -d\' -f2)
+        version=$(grep 'mtts_version = "' game/Submods/MAICA_MttsSubmod/header.rpy | cut -d'"' -f2)
         echo "Extracted version: $version"
         echo "version=$version" >> $GITHUB_OUTPUT
 
