@@ -60,12 +60,12 @@ jobs:
       if: steps.check_release.outputs.create_release == 'true'
       run: |
         mkdir -p game/python-packages
-        echo "${{ steps.set_version.outputs.version }}" > game/python-packages/maica_release_version
+        echo "${{ steps.set_version.outputs.version }}" > game/python-packages/mtts_release_version
 
     - name: Create zip package
       if: steps.check_release.outputs.create_release == 'true'
       run: |
-        zip -r MAICA_MTTSubmod-${{ steps.set_version.outputs.version }}.zip . \
+        zip -r MAICA_MttsSubmod-${{ steps.set_version.outputs.version }}.zip . \
           -x '.git*' \
           -x '.github*' \
           -x '*.git*' \
@@ -80,7 +80,7 @@ jobs:
         # Convert release notes to GitHub Flavored Markdown
         echo "$release_notes" | sed 's/^/- /' > release_notes.md
         # Prepend version information
-        echo "## MAICA MTTSubmod ${{ steps.set_version.outputs.version }}" | cat - release_notes.md > temp && mv temp release_notes.md
+        echo "## MAICA MttsSubmod ${{ steps.set_version.outputs.version }}" | cat - release_notes.md > temp && mv temp release_notes.md
         echo "RELEASE_NOTES_PATH=release_notes.md" >> $GITHUB_OUTPUT
 
     - name: Create Release
@@ -90,7 +90,7 @@ jobs:
         tag_name: ${{ steps.set_version.outputs.version }}
         body_path: ${{ steps.generate_release_notes.outputs.RELEASE_NOTES_PATH }}
         files: |
-          MAICA_MTTSubmod-${{ steps.set_version.outputs.version }}.zip
+          MAICA_MttsSubmod-${{ steps.set_version.outputs.version }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
