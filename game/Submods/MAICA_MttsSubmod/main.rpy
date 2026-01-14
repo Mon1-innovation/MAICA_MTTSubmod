@@ -1,3 +1,8 @@
+init -1500 python:
+    if not config.language:
+        config.language = "english"
+    mtts_ver = '0.1.0'
+
 init -990 python:
     mtts_defaultsettings = {
         "enabled": False,
@@ -87,7 +92,16 @@ init -100 python in mtts:
         else:
             store.mas_submod_utils.submod_log.warning("")
 
-    
+    def validate_version():
+        # if not (config.debug or config.developer or store.maica.maica._ignore_accessable):
+        libv_path = os.path.normpath(os.path.join(renpy.config.basedir, "game", "python-packages", "mtts_release_version"))
+        if not os.path.exists(libv_path):
+            return None, None, None
+        else:
+            with open(libv_path, 'r') as libv_file:
+                libv = libv_file.read()
+        uiv = store.mtts_ver
+        return store.mas_utils.compareVersionLists(libv.strip().split('.'), uiv.strip().split('.')), libv, uiv
 
     def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
         # Calculate the number of filled positions in the progress bar
