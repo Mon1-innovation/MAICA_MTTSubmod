@@ -230,6 +230,7 @@ init python:
             for sentence in self._history:
                 if sentence in what and not sentence == what:
                     what = what.replace(sentence, '', 1)
+            what = what.strip()
             return what
 
         @staticmethod
