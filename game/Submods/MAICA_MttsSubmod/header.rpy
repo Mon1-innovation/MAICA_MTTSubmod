@@ -389,7 +389,7 @@ init python:
             setattr(store, var, True)
 
 
-define maica_confont = mas_ui.MONO_FONT
+define maica_confont = "mod_assets/font/SarasaMonoTC-SemiBold.ttf"
 screen maica_workload_stat():
     python:
         stat = {k: v for k, v in iterize(store.mtts.mtts.workload_raw) if k != "onliners"}
