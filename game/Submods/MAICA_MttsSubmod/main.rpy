@@ -1,7 +1,6 @@
 init -1500 python:
     if not config.language:
         config.language = "english"
-    mtts_ver = '0.1.0'
 
 init -990 python:
     mtts_defaultsettings = {
@@ -100,7 +99,7 @@ init -100 python in mtts:
         else:
             with open(libv_path, 'r') as libv_file:
                 libv = libv_file.read()
-        uiv = store.mtts_ver
+        uiv = store.mtts_version
         return store.mas_utils.compareVersionLists(libv.strip().split('.'), uiv.strip().split('.')), libv, uiv
 
     def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
