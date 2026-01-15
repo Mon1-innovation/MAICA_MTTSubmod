@@ -2,7 +2,7 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "0.1.6"
+    mtts_version = "0.1.7"
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
