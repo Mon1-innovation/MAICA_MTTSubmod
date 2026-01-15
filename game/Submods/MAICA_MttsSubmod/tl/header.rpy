@@ -7,12 +7,12 @@ translate english strings:
     new "MAICA-MTTS Official Submod Frontend"
 
     # game/Submods/MAICA_MTTSubmod/header.rpy:30
-    old "> 使用账号生成令牌 (未安装Blessland, 使用独立模式)"
-    new "> Generate token from account (Blessland not present, using standalone)"
+    old "> 使用账号生成令牌 (独立模式)"
+    new "> Generate token from account (Standalone)"
 
     # game/Submods/MAICA_MTTSubmod/header.rpy:33
-    old "> 使用 MAICA Blessland 生成令牌"
-    new "> Generate token with Blessland"
+    old "> 使用账号生成令牌 (Blessland)"
+    new "> Generate token from account (Blessland)"
 
     # game/Submods/MAICA_MTTSubmod/header.rpy:35
     old "> MTTS参数与设置"

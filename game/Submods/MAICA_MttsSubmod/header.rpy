@@ -2,7 +2,7 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "0.1.0"
+    mtts_version = "0.1.2"
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
@@ -59,10 +59,10 @@ screen mtts_settingpane():
             style_prefix "check"
 
             if not persistent.mtts["_chat_installed"]:
-                textbutton _("> 使用账号生成令牌 (未安装Blessland, 使用独立模式)"):
+                textbutton _("> 使用账号生成令牌 (独立模式)"):
                     action Show("mtts_login")
             else:
-                textbutton _("> 使用 MAICA Blessland 生成令牌"):
+                textbutton _("> 使用账号生成令牌 (Blessland)"):
                     action Show("maica_login")
             textbutton _("> MTTS参数与设置"):
                 action Show("mtts_settings")
@@ -306,7 +306,7 @@ init python:
             return
     
 init python:
-    from bot_interface import PY2, PY3
+    from MTTS import PY2, PY3
     def iterize(dict):
         if PY2:
             return dict.iteritems()
