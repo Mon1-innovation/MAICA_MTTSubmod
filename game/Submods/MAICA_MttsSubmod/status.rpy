@@ -73,37 +73,35 @@ screen maicatts_stat_lite():
                             size 14
                             font maica_confont
 
+                fixed:
+                    xysize (89, 24)
+                    xalign 1.0
+                    yalign 0.0
+                    xoffset -3
+                    yoffset 3
 
-                if (renpy.seen_label("mtts_greeting") and not mas_inEVL("mtts_greeting")):
-                    fixed:
-                        xysize (89, 24)
-                        xalign 1.0
-                        yalign 0.0
-                        xoffset -3
-                        yoffset 3
+                    python:
+                        if persistent.mtts.get("enabled", False) and store.mtts_say.conditions:
+                            beacon = "{color=#00FF00}"
+                        elif persistent.mtts.get("enabled", False):
+                            beacon = "{color=#FFFF00}"
+                        else:
+                            beacon = "{color=#FF0000}"
 
-                        python:
-                            if persistent.mtts.get("enabled", False) and store.mtts_say.conditions:
-                                beacon = "{color=#00FF00}"
-                            elif persistent.mtts.get("enabled", False):
-                                beacon = "{color=#FFFF00}"
-                            else:
-                                beacon = "{color=#FF0000}"
-
-                        button:
-                            xfill True
-                            yfill True
-                            background "mod_assets/console/cn_frame_tts_button.png"
-                            hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
-                            action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
-                            add Text(
-                                "{0}●{{/color}} I / O".format(beacon),
-                                font=maica_confont,
-                                size=14
-                            ): 
-                                xpos 34 
-                                ypos 10 
-                                xanchor 0.5 
-                                yanchor 0.5
+                    button:
+                        xfill True
+                        yfill True
+                        background "mod_assets/console/cn_frame_tts_button.png"
+                        hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
+                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
+                        add Text(
+                            "{0}●{{/color}} I / O".format(beacon),
+                            font=maica_confont,
+                            size=14
+                        ): 
+                            xpos 34 
+                            ypos 10 
+                            xanchor 0.5 
+                            yanchor 0.5
 
 
