@@ -89,7 +89,7 @@ init -1 python:
 
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_firstloadacs():
-        if store.mtts_say.conditions:
+        if renpy.seen_label("mtts_greeting"):
             store.mas_selspr.unlock_acs(mttsacs_headset)
 
         mtts_autoacs()
