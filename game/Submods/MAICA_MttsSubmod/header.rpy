@@ -306,7 +306,7 @@ init python:
             return
     
 init python:
-    from bot_interface import PY2, PY3
+    from MTTS import PY2, PY3
     def iterize(dict):
         if PY2:
             return dict.iteritems()
