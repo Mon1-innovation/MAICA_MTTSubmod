@@ -41,8 +41,11 @@ screen maicatts_stat_lite():
         python:
             mtts_instance = store.mtts.mtts
             bg = "mod_assets/console/cn_frame_tts_on.png" if persistent.mtts.get("enabled", False) and store.mtts_say.conditions else "mod_assets/console/cn_frame_tts_off.png"
-            chat_console_on = renpy.get_screen("mas_py_console_teaching") is not None
-            xoff, yoff = (960, 5) if chat_console_on else (5, 450)
+            alter_pos = (
+                renpy.get_screen("mas_py_console_teaching") is not None
+                or renpy.get_screen("mas_extramenu_area") is not None
+            )
+            xoff, yoff = (960, 5) if alter_pos else (5, 450)
         fixed:
             frame:
                 xsize 309
