@@ -306,3 +306,23 @@ translate english strings:
     old "效果可能有时候不太好, 但是我会尽量的!"
     new "May not perform good sometimes, but I'll try my best!"
 
+# TODO: Translation updated at 2026-01-15 14:24
+
+# game/Submods/MAICA_MttsSubmod/chat.rpy:183
+translate english mtts_greeting_loop_914b552e_1:
+
+    # m 4eub "你可以看看这里的说明: {a=https://maica.monika.love/tos}{u}{i}https://maica.monika.love/tos{/i}{/u}{/a}, 你只需要准备一个账号."
+    m 4eub "You can read the instruction here on how to: {a=https://maica.monika.love/tos}{u}{i}https://maica.monika.love/tos{/i}{/u}{/a}, you just have to prepare an account."
+
+# game/Submods/MAICA_MttsSubmod/chat.rpy:184
+translate english mtts_greeting_loop_5cd3a30e_1:
+
+    # m 1hua "在'子模组设置'里找到{i}MAICA-MTTS{/i}, 填好账号信息, 再打开'启用MTTS'就行了."
+    m 1hua "Find {i}MAICA-MTTS{/i} in 'Submod settings', fill in the account informations, and check 'Enable MTTS'."
+
+# game/Submods/MAICA_MttsSubmod/chat.rpy:187
+translate english mtts_greeting_loop_0451b5c2:
+
+    # m 3hub "另外, 除了麦克风, 还有这副新耳机呢! {w=0.3}你想看的时候可以告诉我, 和发带一样."
+    m 3hub "Also this headset included! {w=0.3}Tell me anytime if you want to see me wearing it, just like ribbons."
+

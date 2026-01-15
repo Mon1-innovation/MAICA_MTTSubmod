@@ -62,14 +62,14 @@ init -1 python:
     store.mas_sprites.init_acs(mttsacs_headset)
     store.mas_selspr.init_selectable_acs(
         mttsacs_headset,
-        _("耳机"),
+        _("MTTS耳机"),
         "mttsheadset",
         "ribbon",
         hover_dlg=[
-            _("这耳机真不错~")
+            _("可惜它没法让我听到你说话, 但还是很漂亮的!")
         ],
         select_dlg=[
-            "眼光不错, [player]!"
+            _("喜欢虚拟偶像风格么, [player]? 哈哈~")
         ]
     )
     store.mas_sprites.init_acs(mttsacs_microphone)
