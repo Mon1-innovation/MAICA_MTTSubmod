@@ -265,23 +265,28 @@ init python:
                 # or self.is_duplicated(what)
             ):
                 return old_renpysay(who, what, interact, *args, **kwargs)
-
-            what = self.remove_duplicated(what)
             
             if who != store.m:
                 return old_renpysay(who, what, interact, *args, **kwargs)
+
             original_text = renpy.substitute(what)
             replaced_text = store.mtts.matcher.apply_replace_rules(original_text)
-            text = self.process_str(replaced_text)
+            unduplicated_text = self.remove_duplicated(replaced_text)
+            text = self.process_str(unduplicated_text)
+
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(text)))
+
             rule = store.mtts.matcher.match_cache_rule(text, store.mas_submod_utils.current_label)
+
             # 添加字符计数调试日志
             content_char_count = store.mtts.matcher._count_content_chars(text)
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Content char count: {0}".format(content_char_count))
             store.mtts_match_rule = rule.get('name', 'Default')
+            
             # 添加匹配规则调试日志
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Matched rule: {0}".format(store.mtts_match_rule))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Rule action: {0}".format(rule.get('action', [])))
@@ -338,7 +343,7 @@ init python:
 
             store.mtts_status = renpy.substitute(_("待机"))
 
-            self._history.append(what)
+            self._history.append(text)
             old_renpysay(who, what, interact, *args, **kwargs)
 
     def mtts_refresh_status_once():
