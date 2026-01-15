@@ -37,6 +37,7 @@ init -1 python:
                 ),
                 **mph_kwargs
             )
+
             load_success = True
         except Exception as e:
             for kwargs in (hs_kwargs, mph_kwargs):
@@ -59,6 +60,18 @@ init -1 python:
     #    use_folders=False
     #)
     store.mas_sprites.init_acs(mttsacs_headset)
+    store.mas_selspr.init_selectable_acs(
+        mttsacs_headset,
+        _("耳机"),
+        "mttsheadset",
+        "ribbon",
+        hover_dlg=[
+            _("这耳机真不错~")
+        ],
+        select_dlg=[
+            "眼光不错, [player]!"
+        ]
+    )
     store.mas_sprites.init_acs(mttsacs_microphone)
     #store.mas_sprites.init_acs(mttsacs_giftbox)
 
@@ -77,7 +90,6 @@ init -1 python:
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_firstloadacs():
         if store.mtts_say.conditions:
-            store.mas_selspr.unlock_acs(mttsacs_headset)
             store.mas_selspr.unlock_acs(mttsacs_headset)
 
         mtts_autoacs()
