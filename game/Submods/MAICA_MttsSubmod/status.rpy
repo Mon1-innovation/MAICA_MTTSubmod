@@ -74,7 +74,7 @@ screen maicatts_stat_lite():
                             font maica_confont
 
 
-                if renpy.seen_label("mtts_greeting"):
+                if (renpy.seen_label("mtts_greeting") and not mas_inEVL("mtts_greeting")):
                     fixed:
                         xysize (89, 24)
                         xalign 1.0

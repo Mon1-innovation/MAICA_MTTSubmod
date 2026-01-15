@@ -205,7 +205,7 @@ init python:
             _acc = store.mtts._acc
             if _acc is not None:
                 _acc.wait()
-            if not renpy.seen_label("mtts_greeting"):
+            if not (renpy.seen_label("mtts_greeting") and not mas_inEVL("mtts_greeting")):
                 store.mtts_status = renpy.substitute(_("未解锁"))
                 return False
             elif not persistent.mtts["enabled"]:
@@ -334,7 +334,7 @@ init python:
 
     def mtts_refresh_status_once():
         # 一次性刷新，开关手动调用
-        if not renpy.seen_label("mtts_greeting"):
+        if not (renpy.seen_label("mtts_greeting") and not mas_inEVL("mtts_greeting")):
             store.mtts_status = renpy.substitute(_("未解锁"))
             return
 
