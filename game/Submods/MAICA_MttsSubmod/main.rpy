@@ -226,6 +226,12 @@ init python:
                     return True
             return False
 
+        def remove_duplicated(self, what):
+            for sentence in self._history:
+                if sentence in what and not sentence == what:
+                    what = what.replace(sentence, '', 1)
+            return what
+
         @staticmethod
         def process_str(srt):
             import re
@@ -255,9 +261,11 @@ init python:
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if (
                 not self.conditions
-                or self.is_duplicated(what)
+                # or self.is_duplicated(what)
             ):
                 return old_renpysay(who, what, interact, *args, **kwargs)
+
+            what = self.remove_duplicated(what)
             
             if who != store.m:
                 return old_renpysay(who, what, interact, *args, **kwargs)
