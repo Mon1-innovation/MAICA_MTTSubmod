@@ -2,7 +2,7 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "0.1.3"
+    mtts_version = "0.1.6"
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
@@ -123,7 +123,7 @@ screen mtts_settings():
             hbox:
                 use divider(_("行为与表现"))
 
-            if renpy.seen_label("mtts_greeting"):
+            if (renpy.seen_label("mtts_greeting") and not mas_inEVL("mtts_greeting")):
                 hbox:
                     style_prefix "generic_fancy_check"
                     textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
