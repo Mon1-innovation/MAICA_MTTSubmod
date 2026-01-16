@@ -24,7 +24,7 @@ init -100 python in mtts:
     MTTS.logger = store.mas_submod_utils.submod_log
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
-
+    _current_label = ""
     provider_id = store.persistent.mtts.get("provider_id", 1 if renpy.windows else 2)
     provider_manager = MTTSProviderManager(provider_id)
     try:
@@ -280,7 +280,9 @@ init python:
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(text)))
 
-            rule = store.mtts.matcher.match_cache_rule(text, store.mas_submod_utils.current_label)
+            if store.mas_submod_utils.current_label[0] != '_':
+                store.mtts._current_label = store.mas_submod_utils.current_label
+            rule = store.mtts.matcher.match_cache_rule(text, store.mtts._current_label)
 
             # 添加字符计数调试日志
             content_char_count = store.mtts.matcher._count_content_chars(text)
@@ -306,8 +308,8 @@ init python:
             mtts.mtts.local_cache = 'local' in rule['action']
             mtts.mtts.remote_cache = 'remote' in rule['action']
 
-            task = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mas_submod_utils.current_label, emotion=exp, target_lang=target_lang)
-            name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mas_submod_utils.current_label)
+            task = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mtts._current_label, emotion=exp, target_lang=target_lang)
+            name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mtts._current_label)
 
             while not task.is_finished:
                 old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
@@ -329,7 +331,7 @@ init python:
                     # 添加详细日志：输出错误内容和输入文本
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Input text: {0}".format(repr(text)))
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Error reason: {0}".format(repr(error_msg)))
-                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Label: {0}".format(store.mas_submod_utils.current_label))
+                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Label: {0}".format(store.mtts._current_label))
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Target language: {0}".format(target_lang))
             else:
                 # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
@@ -338,7 +340,7 @@ init python:
                 # 添加详细日志：输出错误内容和输入文本
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Input text: {0}".format(repr(text)))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Exception: {0}".format(repr(exception_msg)))
-                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Label: {0}".format(store.mas_submod_utils.current_label))
+                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Label: {0}".format(store.mtts._current_label))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Target language: {0}".format(target_lang))
 
             store.mtts_status = renpy.substitute(_("待机"))

@@ -64,7 +64,7 @@ screen maicatts_stat_lite():
                             size 15
 
                     hbox:
-                        text "CURR: [store.mas_submod_utils.current_label]":
+                        text "CURR: [store.mtts._current_label]":
                             size 14
                             font maica_confont
 
