@@ -1,7 +1,7 @@
 import json
-import requests, os
+import requests, os, chardet
 import re
-
+import unicodedata
 
 import sys
 PY2 = sys.version_info[0] == 2
@@ -92,60 +92,56 @@ class RuleMatcher:
 
     def _count_content_chars(self, text):
         """
-        计算文本中的非符号字符数（任何字母、数字，排除符号、标点、空白等）
-
-        Args:
-            text: 要计算的文本
-
-        Returns:
-            int: 非符号字符数
+        计算文本中的非符号字符数（字母、数字，排除符号、标点、空白等）
+        使用 chardet 自动识别字节编码
         """
-        import unicodedata
+        
+        # 1. 统一转换为 Unicode 字符串
+        decoded_text = text
+        
+        # 判断是否为字节流 (兼容 Python 2/3)
+        is_bytes = (sys.version_info[0] == 3 and isinstance(text, bytes)) or \
+                (sys.version_info[0] == 2 and isinstance(text, str))
 
-        # 确保 text 是 unicode 字符串（兼容 Python 2 和 3）
-        if PY2:
-            if isinstance(text, str):
-                # 尝试多种编码方式解码
-                try:
-                    text = text.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 回退：使用正则判断中英文数量
-                    logger.warning("Failed to decode text with utf-8 and gbk, falling back to regex counting")
+        if is_bytes and len(text) > 0:
+            try:
+                # 使用 chardet 检测编码
+                detection = chardet.detect(text)
+                encoding = detection.get('encoding')
+                confidence = detection.get('confidence', 0)
+
+                if encoding:
+                    # 如果检测到了编码，尝试解码
+                    # 注意：如果置信度太低，可以考虑增加逻辑，但通常 chardet 很准
+                    decoded_text = text.decode(encoding, errors='replace')
+                else:
+                    # 检测不到编码时的兜底逻辑
                     decoded_text = text.decode('utf-8', errors='replace')
-                    # 计算中文字符数量
-                    chinese_chars = re.findall(u'[\u4e00-\u9fff]', decoded_text)
-                    count = len(chinese_chars)
-                    # 计算英文字母和数字字符数量
-                    english_chars = re.findall(u'[a-zA-Z0-9]', decoded_text)
-                    count += len(english_chars)
-                    return count
-            elif not isinstance(text, unicode):
-                text = unicode(text)
-        else:  # PY3
-            if isinstance(text, bytes):
-                # 尝试多种编码方式解码
-                try:
-                    text = text.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 回退：使用正则判断中英文数量
-                    logger.warning("Failed to decode text with utf-8 and gbk, falling back to regex counting")
-                    text = text.decode('utf-8', errors='replace')
-                    # 计算中文字符数量
-                    chinese_chars = re.findall(r'[\u4e00-\u9fff]', text)
-                    count = len(chinese_chars)
-                    # 计算英文字母和数字字符数量
-                    english_chars = re.findall(r'[a-zA-Z0-9]', text)
-                    count += len(english_chars)
-                    return count
-            elif not isinstance(text, str):
-                text = str(text)
+                    
+            except Exception as e:
+                # 最后的防线：尝试 utf-8 强制解码
+                logger.warning("Encoding detection failed, fallback to utf-8 replace: %s", e)
+                decoded_text = text.decode('utf-8', errors='replace')
+        
+        # 如果是 Python 2 且已经是 unicode 类型，或者 Python 3 的 str 类型，直接进入计数逻辑
+        elif sys.version_info[0] == 2 and not isinstance(text, unicode):
+            # 兼容处理 Py2 某些奇怪的对象类型
+            decoded_text = unicode(text)
 
+        # 2. 核心计数逻辑
         count = 0
-        for char in text:
-            category = unicodedata.category(char)
-            # L*: 字母（任何语言），N*: 数字
-            if category[0] in ('L', 'N'):
-                count += 1
+        # 遍历解码后的每一个字符
+        for char in decoded_text:
+            # category(char) 返回字符的 Unicode 类别
+            # 'L' 代表 Letter (字母, 包括汉字、日文、韩文、英文字母等)
+            # 'N' 代表 Number (数字)
+            try:
+                cat = unicodedata.category(char)
+                if cat[0] in ('L', 'N'):
+                    count += 1
+            except TypeError:
+                continue
+                
         return count
 
     def _apply_text_replacement(self, text, rule):
