@@ -254,16 +254,20 @@ init python:
                     confidence = detection.get('confidence', 0)
 
                     if encoding:
-                        decoded_text = text.decode(encoding, errors='replace')
+                        decoded_text = text.decode(encoding.lower(), errors='strict')
                     else:
-                        decoded_text = text.decode('utf-8', errors='replace')
+                        decoded_text = text.decode('utf-8', errors='strict')
 
                 except Exception as e:
                     store.mas_submod_utils.submod_log.warning("Encoding detection failed, trying common encodings: %s", e)
-                    try:
-                        decoded_text = text.decode('gbk', errors='replace')
-                    except Exception:
-                        decoded_text = text.decode('utf-8', errors='replace')
+                    for enc in ('gbk', 'gb2312'):
+                        try:
+                            decoded_text = text.decode(enc, errors='strict')
+                        except Exception:
+                            continue
+                    else:
+                        decoded_text = text.decode('utf-8', errors='strict')
+
 
             elif sys.version_info[0] == 2 and not isinstance(text, unicode):
                 # 兼容处理 Py2 某些奇怪的对象类型

@@ -95,6 +95,7 @@ class RuleMatcher:
         计算文本中的非符号字符数（字母、数字，排除符号、标点、空白等）
         """
         try:
+            count = 0
             for char in text:
                 # category(char) 返回字符的 Unicode 类别
                 # 'L' 代表 Letter (字母, 包括汉字、日文、韩文、英文字母等)
