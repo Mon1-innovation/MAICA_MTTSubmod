@@ -93,44 +93,9 @@ class RuleMatcher:
     def _count_content_chars(self, text):
         """
         计算文本中的非符号字符数（字母、数字，排除符号、标点、空白等）
-        使用 chardet 自动识别字节编码
         """
         try:
-            # 1. 统一转换为 Unicode 字符串
-            decoded_text = text
-
-            # 判断是否为字节流 (兼容 Python 2/3)
-            is_bytes = (sys.version_info[0] == 3 and isinstance(text, bytes)) or \
-                    (sys.version_info[0] == 2 and isinstance(text, str))
-
-            if is_bytes and len(text) > 0:
-                try:
-                    # 使用 chardet 检测编码
-                    detection = chardet.detect(text)
-                    encoding = detection.get('encoding')
-                    confidence = detection.get('confidence', 0)
-
-                    if encoding:
-                        decoded_text = text.decode(encoding, errors='replace')
-                    else:
-                        decoded_text = text.decode('utf-8', errors='replace')
-
-                except Exception as e:
-                    logger.warning("Encoding detection failed, trying common encodings: %s", e)
-                    try:
-                        decoded_text = text.decode('gbk', errors='replace')
-                    except Exception:
-                        decoded_text = text.decode('utf-8', errors='replace')
-
-            # 如果是 Python 2 且已经是 unicode 类型，或者 Python 3 的 str 类型，直接进入计数逻辑
-            elif sys.version_info[0] == 2 and not isinstance(text, unicode):
-                # 兼容处理 Py2 某些奇怪的对象类型
-                decoded_text = unicode(text)
-
-            # 2. 核心计数逻辑
-            count = 0
-            # 遍历解码后的每一个字符
-            for char in decoded_text:
+            for char in text:
                 # category(char) 返回字符的 Unicode 类别
                 # 'L' 代表 Letter (字母, 包括汉字、日文、韩文、英文字母等)
                 # 'N' 代表 Number (数字)
