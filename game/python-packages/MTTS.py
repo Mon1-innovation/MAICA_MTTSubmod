@@ -111,17 +111,16 @@ class RuleMatcher:
                     confidence = detection.get('confidence', 0)
 
                     if encoding:
-                        # 如果检测到了编码，尝试解码
-                        # 注意：如果置信度太低，可以考虑增加逻辑，但通常 chardet 很准
                         decoded_text = text.decode(encoding, errors='replace')
                     else:
-                        # 检测不到编码时的兜底逻辑
                         decoded_text = text.decode('utf-8', errors='replace')
 
                 except Exception as e:
-                    # 最后的防线：尝试 utf-8 强制解码
-                    logger.warning("Encoding detection failed, fallback to utf-8 replace: %s", e)
-                    decoded_text = text.decode('utf-8', errors='replace')
+                    logger.warning("Encoding detection failed, trying common encodings: %s", e)
+                    try:
+                        decoded_text = text.decode('gbk', errors='replace')
+                    except Exception:
+                        decoded_text = text.decode('utf-8', errors='replace')
 
             # 如果是 Python 2 且已经是 unicode 类型，或者 Python 3 的 str 类型，直接进入计数逻辑
             elif sys.version_info[0] == 2 and not isinstance(text, unicode):
