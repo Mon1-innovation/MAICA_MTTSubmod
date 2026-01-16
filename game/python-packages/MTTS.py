@@ -714,6 +714,7 @@ class AsyncTask(object):
         self._kwargs = kwargs
         self.result = None
         self.exception = None
+        self.traceback = None
         self.is_finished = False
         self.is_success = False
         
@@ -725,8 +726,12 @@ class AsyncTask(object):
             self.result = self._func(*self._args, **self._kwargs)
             self.is_success = True
         except Exception as e:
+            import traceback
             self.exception = e
+            self.traceback = traceback.format_exc()
             self.is_success = False
+            logger.error("AsyncTask failed with exception: %s", e)
+            logger.debug("Traceback: %s", self.traceback)
         finally:
             self.is_finished = True
 
