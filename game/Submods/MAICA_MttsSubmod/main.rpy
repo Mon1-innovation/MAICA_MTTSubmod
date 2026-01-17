@@ -234,6 +234,39 @@ init python:
             return what
 
         @staticmethod
+        def decode_str(text):
+            import sys, MTTS
+            from cp936_decode import decode_cp936
+            # 1. 统一转换为 Unicode 字符串
+            decoded_text = text
+
+            # 判断是否为字节流 (兼容 Python 2/3)
+            is_bytes = (
+                (sys.version_info[0] == 3 and isinstance(text, bytes))
+                or
+                (sys.version_info[0] == 2 and isinstance(text, str))
+            )
+
+            if is_bytes and len(text) > 0:
+
+                # 使用 chardet 检测编码
+                detection = chardet.detect(text)
+                encoding = detection.get('encoding')
+                confidence = detection.get('confidence', 0)
+
+                if encoding.lower() in ('utf8', 'utf-8'):
+                    decoded_text = text.decode('utf-8', errors='strict')
+                else:
+                    store.mas_submod_utils.submod_log.warning("Encoding not utf-8 detected: %s, trying GBK", encoding)
+                    decoded_text = decode_cp936(text)
+
+            elif sys.version_info[0] == 2 and not isinstance(text, unicode):
+                # 兼容处理 Py2 某些奇怪的对象类型
+                decoded_text = unicode(text)
+
+            return decoded_text
+
+        @staticmethod
         def process_str(srt):
             import re
             # \{fast\}.*?\{fast\} , \{.*?\} 将匹配的str替换为空字符串
@@ -270,12 +303,14 @@ init python:
                 return old_renpysay(who, what, interact, *args, **kwargs)
 
             original_text = renpy.substitute(what)
-            replaced_text = store.mtts.matcher.apply_replace_rules(original_text)
+            decoded_text = self.decode_str(original_text)
+            replaced_text = store.mtts.matcher.apply_replace_rules(decoded_text)
             unduplicated_text = self.remove_duplicated(replaced_text)
             text = self.process_str(unduplicated_text)
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Decoded text: {0}".format(repr(decoded_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(text)))
