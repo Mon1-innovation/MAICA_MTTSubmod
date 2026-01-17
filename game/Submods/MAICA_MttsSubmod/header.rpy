@@ -202,7 +202,7 @@ screen mtts_settings():
             if not nvw_folded:
                 hbox:
                     xpos 30
-                    use maica_workload_stat()
+                    use mtts_workload_stat()
 
                     
     # hbox:
@@ -390,7 +390,7 @@ init python:
 
 
 define maica_confont = "mod_assets/font/SarasaMonoTC-SemiBold.ttf"
-screen maica_workload_stat():
+screen mtts_workload_stat():
     python:
         stat = {k: v for k, v in iterize(store.mtts.mtts.workload_raw) if k != "onliners"}
     python:
