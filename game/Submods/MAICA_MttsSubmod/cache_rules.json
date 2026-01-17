@@ -46,7 +46,7 @@
             },
             {
                 "name":"Link text",
-                "regex_text":"((?:http|https)://|www.*?[,.\\s])",
+                "regex_text":"(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]",
                 "replace_with": ".",
                 "priority":15
             },
