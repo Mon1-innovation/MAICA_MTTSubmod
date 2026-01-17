@@ -123,7 +123,7 @@ screen mtts_settings():
             hbox:
                 use divider(_("行为与表现"))
 
-            if (renpy.seen_label("mtts_greeting") and not mas_inEVL("mtts_greeting")):
+            if renpy.seen_label("mtts_greeting_end"):
                 hbox:
                     style_prefix "generic_fancy_check"
                     textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
