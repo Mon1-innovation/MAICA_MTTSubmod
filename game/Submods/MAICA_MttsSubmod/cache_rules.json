@@ -46,7 +46,7 @@
             },
             {
                 "name":"Link text",
-                "regex_text":"((?:http|https)://|www.*?[,.\\s])",
+                "regex_text":"((?:(?:http|https)://|www).*?[,\\s])",
                 "replace_with": ".",
                 "priority":15
             },
