@@ -26,6 +26,14 @@
                 "priority":100
             },
             {
+                "name":"Link text",
+                "regex_text":".*((http|https)://|www\\.).*",
+                "regex_label":null,
+                "action":[],
+                "min_len":3,
+                "priority":0
+            },
+            {
                 "name":"General text",
                 "regex_text":".*",
                 "regex_label":null,
