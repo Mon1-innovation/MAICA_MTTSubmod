@@ -83,6 +83,8 @@ init -1 python:
         if store.mtts_say.conditions and persistent.mtts.get("acs_enabled"):
             # monika_chr.wear_acs(mttsacs_headset)
             monika_chr.wear_acs(mttsacs_microphone)
+        elif renpy.seen_label("mtts_greeting") and not renpy.seen_label("mtts_greeting_end"):
+            pass
         else:
             # monika_chr.remove_acs(mttsacs_headset)
             monika_chr.remove_acs(mttsacs_microphone)
