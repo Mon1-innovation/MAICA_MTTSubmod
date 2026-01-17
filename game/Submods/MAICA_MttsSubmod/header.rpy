@@ -11,6 +11,7 @@ init -990 python:
         settings_pane="mtts_settingpane"
     )
 
+default persistent._mtts_last_version = "0.0.1"
 
 init -989 python:
     if store.mas_submod_utils.isSubmodInstalled("Submod Updater Plugin"):
@@ -439,3 +440,17 @@ screen mtts_workload_stat():
                     size 15
                     font maica_confont
                 timer 1.0 repeat True action Function(check_and_update)
+
+init 980 python:
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=0)
+    def mtts_migration():
+        def migration_0_1_10():
+            pass
+
+        import migrations
+        migration = migrations.migration_instance(persistent._mtts_last_version, store.mtts_version)
+        migration.migration_queue = [
+            ("0.1.10", migration_0_1_10),
+        ]
+        migration.migrate()
+        persistent._mtts_last_version = store.mtts_version
