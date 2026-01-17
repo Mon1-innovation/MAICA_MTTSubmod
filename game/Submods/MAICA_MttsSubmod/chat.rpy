@@ -194,4 +194,6 @@ label mtts_greeting:
         $ monika_chr.remove_acs(mttsacs_headset)
         show monika 1esc at ls32 zorder MAS_MONIKA_Z
         m 1eub "我们今天有什么安排呢, [player]? {w=0.5}要现在就去试试看吗?"
+# fallthrough
+label mtts_greeting_end:
     return
