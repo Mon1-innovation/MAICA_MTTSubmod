@@ -236,6 +236,7 @@ init python:
         @staticmethod
         def decode_str(text):
             import sys, MTTS
+            from cp936_decode import decode_cp936
             # 1. 统一转换为 Unicode 字符串
             decoded_text = text
 
@@ -247,27 +248,17 @@ init python:
             )
 
             if is_bytes and len(text) > 0:
-                try:
-                    # 使用 chardet 检测编码
-                    detection = chardet.detect(text)
-                    encoding = detection.get('encoding')
-                    confidence = detection.get('confidence', 0)
 
-                    if encoding:
-                        decoded_text = text.decode(encoding.lower(), errors='strict')
-                    else:
-                        decoded_text = text.decode('utf-8', errors='strict')
+                # 使用 chardet 检测编码
+                detection = chardet.detect(text)
+                encoding = detection.get('encoding')
+                confidence = detection.get('confidence', 0)
 
-                except Exception as e:
-                    store.mas_submod_utils.submod_log.warning("Encoding detection failed, trying common encodings: %s", e)
-                    for enc in ('gbk', 'gb2312'):
-                        try:
-                            decoded_text = text.decode(enc, errors='strict')
-                        except Exception:
-                            continue
-                    else:
-                        decoded_text = text.decode('utf-8', errors='strict')
-
+                if encoding.lower() in ('utf8', 'utf-8'):
+                    decoded_text = text.decode('utf-8', errors='strict')
+                else:
+                    store.mas_submod_utils.submod_log.warning("Encoding not utf-8 detected: %s, trying GBK", encoding)
+                    decoded_text = decode_cp936(text)
 
             elif sys.version_info[0] == 2 and not isinstance(text, unicode):
                 # 兼容处理 Py2 某些奇怪的对象类型
