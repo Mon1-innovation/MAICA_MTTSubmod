@@ -1,12 +1,7 @@
 import json
 import os
 
-_self_path = os.path.abspath(__file__)
-_map_path = os.path.join(os.path.dirname(_self_path), 'cp936_map.json')
-
-# 在 init python 或模块级加载
-with open(_map_path, "r") as f:
-    _CP936_MAP = json.load(f)
+from cp936_map import CP936_MAP as _CP936_MAP
 
 def decode_cp936(data):
     """
