@@ -46,7 +46,7 @@
             },
             {
                 "name": "Dash replace",
-                "regex_text": "[\\s*-\\s*]*",
+                "regex_text": "[\\s*-\\s*]+",
                 "replace_with": ".",
                 "priority": 15
             },
