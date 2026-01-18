@@ -45,6 +45,12 @@
                 "priority":0
             },
             {
+                "name": "Dash replace",
+                "regex_text": "[\\s*-\\s*]*",
+                "replace_with": ".",
+                "priority": 15
+            },
+            {
                 "name":"Link text",
                 "regex_text":"(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]",
                 "replace_with": ".",
@@ -60,7 +66,7 @@
                 "name":"Replace consecutive dots",
                 "regex_text": "\\.+",
                 "replace_with": ".",
-                "priority":0
+                "priority":5
             }
         ]
     }
