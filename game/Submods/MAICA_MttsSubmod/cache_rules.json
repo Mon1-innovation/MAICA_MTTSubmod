@@ -45,6 +45,12 @@
                 "priority":0
             },
             {
+                "name": "Esperanto replace",
+                "regex_text": "Ĉ",
+                "replace_with": "Ch",
+                "priority": 0
+            },
+            {
                 "name": "Dash replace",
                 "regex_text": "[\\s*-\\s*]+",
                 "replace_with": ".",
