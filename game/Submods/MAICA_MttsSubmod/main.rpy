@@ -305,15 +305,16 @@ init python:
             original_text = renpy.substitute(what)
             decoded_text = self.decode_str(original_text)
             replaced_text = store.mtts.matcher.apply_replace_rules(decoded_text)
-            unduplicated_text = self.remove_duplicated(replaced_text)
-            text = self.process_str(unduplicated_text)
+            clean_text = self.process_str(replaced_text)
+            unduplicated_text = self.remove_duplicated(clean_text)
+            text = unduplicated_text
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Decoded text: {0}".format(repr(decoded_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(clean_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(text)))
 
             if store.mas_submod_utils.current_label[0] != '_':
                 store.mtts._current_label = store.mas_submod_utils.current_label
