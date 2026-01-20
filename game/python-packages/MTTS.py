@@ -333,6 +333,8 @@ class MTTS:
         self.volume = 1.0
         self.acs_enabled = True
         self.ministathud = True
+        self.drift_statshud_l = False
+        self.drift_statshud_r = False
         # self.user_acc = ""
         # self.provider_id = None
         self.provider_manager = mtts_provider_manager.MTTSProviderManager()

@@ -10,7 +10,9 @@ init -990 python:
         "acs_enabled": True,
         "_outdated": False,
         "ministathud": True,
-        "provider_id": 1 if renpy.windows else 2
+        "provider_id": 1 if renpy.windows else 2,
+        "drift_statshud_l": False,
+        "drift_statshud_r": False
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -133,6 +135,8 @@ init 10 python in mtts:
         store.mtts.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
         store.mtts.mtts.ministathud = store.persistent.mtts["ministathud"]
         store.mtts.mtts.provider_id = store.persistent.mtts["provider_id"]
+        store.mtts.mtts.drift_statshud_l = store.persistent.mtts["drift_statshud_l"]
+        store.mtts.mtts.drift_statshud_r = store.persistent.mtts["drift_statshud_r"]
         
     def discard_settings():
         store.persistent.mtts["enabled"] = store.mtts.mtts.enabled
@@ -140,6 +144,8 @@ init 10 python in mtts:
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts.ministathud
         store.persistent.mtts["provider_id"] = store.mtts.mtts.provider_id
+        store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts.drift_statshud_l
+        store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts.drift_statshud_r
         
 
     def reset_settings():
@@ -306,8 +312,8 @@ init python:
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Decoded text: {0}".format(repr(decoded_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(clean_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(text)))
 
             if store.mas_submod_utils.current_label[0] != '_':
                 store.mtts._current_label = store.mas_submod_utils.current_label

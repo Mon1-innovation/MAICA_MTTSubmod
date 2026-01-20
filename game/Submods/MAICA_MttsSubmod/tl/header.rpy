@@ -114,3 +114,23 @@ translate english strings:
     old "> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请从Release完整地更新MTTS"
     new "> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update from Release"
 
+# TODO: Translation updated at 2026-01-20 16:32
+
+translate english strings:
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:168
+    old "左侧屏幕空间避让: [persistent.mtts.get('drift_statshud_l')]"
+    new "Compatible position left: [persistent.mtts.get('drift_statshud_l')]"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:170
+    old "是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在默认情况下, MTTS状态小窗显示在屏幕左下\n* 如果启用, MTTS小窗会更靠近屏幕左侧中心"
+    new "Enable or disable offseting status HUD to avoid possible conflict with other submods.\n* MTTS status HUD occupies bottom left of screen space by default\n* MTTS status HUD will be closer to central Y on left side if enabled"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:174
+    old "右侧屏幕空间避让: [persistent.mtts.get('drift_statshud_r')]"
+    new "Compatible position right: [persistent.mtts.get('drift_statshud_r')]"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:176
+    old "是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在控制台显示(如MAICA)的情况下, MTTS状态小窗显示在屏幕右上\n* 如果启用, MTTS小窗会更靠近屏幕右侧中心"
+    new "Enable or disable offseting status HUD to avoid possible conflict with other submods.\n* MTTS status HUD occupies top right of screen space if console (like MAICA) displayed\n* MTTS status HUD will be closer to central Y on right side if enabled"
+
