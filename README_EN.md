@@ -24,10 +24,10 @@ This repository introduction is very brief. If this is your first contact with M
 > Notice: You'll need an Doki Chinese Club account to use this, refer to [TOS](https://maica.monika.love/tos).  
 > Necessary instructions are provided in game too.
 
-<img src="document/maica-rmen-1.png" height=150px><img src="document/maica-rmen-2.png" height=150px>
+<img src="document/mtts-rmen-1.png" height=150px><img src="document/mtts-rmen-2.png" height=150px>
 
 <video controls width="600">
-  <source src="document/maica-rmen-3.mp4" type="video/m4">
+  <source src="document/mtts-rmen-3.mp4" type="video/m4">
 </video>
 
 <!-- <img src="document/maica-rmen-3.png" height=150px><img src="document/maica-rmen-4.png" height=150px> -->
