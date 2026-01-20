@@ -131,14 +131,13 @@ class RuleMatcher:
                 logger.warning("Text replacement failed: {}".format(e))
         return None
 
-    def match_cache_rule(self, text, label, original_text=None, store=None):
+    def match_cache_rule(self, text, label, store=None):
         """
         根据文本和标签匹配规则
 
         Args:
             text: 要匹配的文本（翻译后的文本）
             label: 标签名称
-            original_text: 原始文本（可选）
             store: Ren'Py store 对象，用于获取变量值（可选）
 
         Returns:
@@ -151,14 +150,8 @@ class RuleMatcher:
             # 检查最小长度要求（非符号字符长度）
             min_len = rule.get('min_len', 0)
 
-            # 确定要检查长度的文本
-            match_target = rule.get('match_target', ['translated'])
-            text_for_length = text
-            if 'original' in match_target and original_text is not None:
-                text_for_length = original_text
-
-            if self._count_content_chars(text_for_length) < min_len:
-                logger.warning("Text length is too short: {}".format(text_for_length))
+            if self._count_content_chars(text) < min_len:
+                logger.warning("Text length is too short: {}".format(text))
                 continue
 
             # 检查 variable 字段
@@ -169,29 +162,20 @@ class RuleMatcher:
                         var_value = getattr(store, var_name, None)
                         if var_value is not None and str(var_value) in text:
                             return rule
+                            return rule
                     except Exception as e:
                         logger.warning("Failed to get variable '{}': {}".format(var_name, e))
-
 
             # 尝试匹配 regex_text
             regex_text = rule.get('regex_text')
             if regex_text:
                 try:
-                    # 根据 match_target 决定匹配哪个文本
-                    if 'original' in match_target and original_text is not None:
-                        if re.search(regex_text, original_text):
-                            # 执行文本替换（如果规则包含替换字段）
-                            replaced_text = self._apply_text_replacement(text, rule)
-                            if replaced_text is not None:
-                                rule['replaced_text'] = replaced_text
-                            return rule
-                    elif 'translated' in match_target or not match_target:
-                        if re.search(regex_text, text):
-                            # 执行文本替换（如果规则包含替换字段）
-                            replaced_text = self._apply_text_replacement(text, rule)
-                            if replaced_text is not None:
-                                rule['replaced_text'] = replaced_text
-                            return rule
+                    if re.search(regex_text, text):
+                        # 执行文本替换（如果规则包含替换字段）
+                        replaced_text = self._apply_text_replacement(text, rule)
+                        if replaced_text is not None:
+                            rule['replaced_text'] = replaced_text
+                        return rule
                 except Exception as e:
                     logger.warning("Invalid regex_text pattern: {}".format(e))
 
@@ -275,7 +259,7 @@ class RuleMatcher:
         Returns:
             list: action列表
         """
-        rule = self.match_cache_rule(text, label, original_text, store)
+        rule = self.match_cache_rule(text, label, store)
         return rule.get('action', self.default_action)
 
 class MTTSAudio:
