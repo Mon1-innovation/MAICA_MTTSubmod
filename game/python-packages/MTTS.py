@@ -134,7 +134,7 @@ class RuleMatcher:
                 logger.warning("Text replacement failed: {}".format(e))
         return None
 
-    def match_cache_rule(self, text, label, original_text=None):
+    def match_cache_rule(self, text, label, original_text=None, store=None):
         """
         根据文本和标签匹配规则
 
@@ -142,6 +142,7 @@ class RuleMatcher:
             text: 要匹配的文本（翻译后的文本）
             label: 标签名称
             original_text: 原始文本（可选）
+            store: Ren'Py store 对象，用于获取变量值（可选）
 
         Returns:
             dict: 匹配到的规则，如果没有匹配则返回包含默认action的字典
@@ -162,6 +163,22 @@ class RuleMatcher:
             if self._count_content_chars(text_for_length) < min_len:
                 logger.warning("Text length is too short: {}".format(text_for_length))
                 continue
+
+            # 检查 variable 字段
+            variables = rule.get('variable', [])
+            if variables and store is not None:
+                variable_matched = False
+                for var_name in variables:
+                    try:
+                        var_value = getattr(store, var_name, None)
+                        if var_value is not None and str(var_value) in text:
+                            variable_matched = True
+                            break
+                    except Exception as e:
+                        logger.warning("Failed to get variable '{}': {}".format(var_name, e))
+
+                if not variable_matched:
+                    continue
 
             # 尝试匹配 regex_text
             regex_text = rule.get('regex_text')
@@ -204,12 +221,13 @@ class RuleMatcher:
             'is_default': True
         }
 
-    def apply_replace_rules(self, text):
+    def apply_replace_rules(self, text, store=None):
         """
         应用所有替换规则到文本
 
         Args:
             text: 原始文本
+            store: Ren'Py store 对象，用于获取变量值（可选）
 
         Returns:
             str: 应用替换后的文本
@@ -219,6 +237,17 @@ class RuleMatcher:
 
         result = text
         for rule in sorted_rules:
+            # 检查 variable 字段
+            variables = rule.get('variable', [])
+            if variables and store is not None:
+                for var_name in variables:
+                    try:
+                        var_value = getattr(store, var_name, None)
+                        if var_value is not None and str(var_value) in result:
+                            break
+                    except Exception as e:
+                        logger.warning("Failed to get variable '{}': {}".format(var_name, e))
+
             regex_pattern = rule.get('regex_text')
             replace_with = rule.get('replace_with', '')
 
@@ -240,7 +269,7 @@ class RuleMatcher:
                     ))
         return result
 
-    def get_action(self, text, label, original_text=None):
+    def get_action(self, text, label, original_text=None, store=None):
         """
         获取匹配规则的action
 
@@ -248,11 +277,12 @@ class RuleMatcher:
             text: 要匹配的文本
             label: 标签名称
             original_text: 原始文本（可选）
+            store: Ren'Py store 对象，用于获取变量值（可选）
 
         Returns:
             list: action列表
         """
-        rule = self.match_cache_rule(text, label, original_text)
+        rule = self.match_cache_rule(text, label, original_text, store)
         return rule.get('action', self.default_action)
 
 class MTTSAudio:

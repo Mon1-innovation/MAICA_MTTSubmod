@@ -304,7 +304,7 @@ init python:
 
             original_text = renpy.substitute(what)
             decoded_text = self.decode_str(original_text)
-            replaced_text = store.mtts.matcher.apply_replace_rules(decoded_text)
+            replaced_text = store.mtts.matcher.apply_replace_rules(decoded_text, store=store)
             unduplicated_text = self.remove_duplicated(replaced_text)
             text = unduplicated_text
 
@@ -317,7 +317,7 @@ init python:
 
             if store.mas_submod_utils.current_label[0] != '_':
                 store.mtts._current_label = store.mas_submod_utils.current_label
-            rule = store.mtts.matcher.match_cache_rule(text, store.mtts._current_label, original_text = what)
+            rule = store.mtts.matcher.match_cache_rule(text, store.mtts._current_label, original_text = what, store=store)
 
             # 添加字符计数调试日志
             content_char_count = store.mtts.matcher._count_content_chars(text)
