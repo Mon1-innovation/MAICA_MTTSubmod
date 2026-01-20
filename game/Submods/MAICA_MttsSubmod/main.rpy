@@ -266,13 +266,7 @@ init python:
 
             return decoded_text
 
-        @staticmethod
-        def process_str(srt):
-            import re
-            # \{fast\}.*?\{fast\} , \{.*?\} 将匹配的str替换为空字符串
-            srt = re.sub(r"\{fast\}.*?\{fast\}", "", srt)
-            srt = re.sub(r"\{.*?\}", "", srt)
-            return srt
+
 
         @staticmethod
         def escape_brackets_in_exceptions_and_ellipsis(err, max_chars=120):
@@ -306,7 +300,7 @@ init python:
             decoded_text = self.decode_str(original_text)
             replaced_text = store.mtts.matcher.apply_replace_rules(decoded_text)
             unduplicated_text = self.remove_duplicated(replaced_text)
-            text = self.process_str(unduplicated_text)
+            text = unduplicated_text
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
