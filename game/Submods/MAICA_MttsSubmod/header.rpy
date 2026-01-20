@@ -157,24 +157,24 @@ screen mtts_settings():
                     has vbox:
                         xmaximum 950
                         xfill True
-                hbox:
-                    style_prefix "generic_fancy_check"
-                    textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
-                        action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
-                        hovered SetField(_tooltip, "value", _("是否在游戏内显示MTTS状态小窗"))
-                        unhovered SetField(_tooltip, "value", _tooltip.default)
-                hbox:
-                    style_prefix "generic_fancy_check"
-                    textbutton _("左侧屏幕空间避让: [persistent.mtts.get('ministathud')]"):
-                        action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
-                        hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在默认情况下, MTTS状态小窗显示在屏幕左下\n* 如果启用, MTTS小窗会更靠近屏幕左侧中心"))
-                        unhovered SetField(_tooltip, "value", _tooltip.default)
-                hbox:
-                    style_prefix "generic_fancy_check"
-                    textbutton _("右侧屏幕空间避让: [persistent.mtts.get('ministathud')]"):
-                        action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
-                        hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在控制台显示(如MAICA)的情况下, MTTS状态小窗显示在屏幕右上\n* 如果启用, MTTS小窗会更靠近屏幕右侧中心"))
-                        unhovered SetField(_tooltip, "value", _tooltip.default)
+                    hbox:
+                        style_prefix "generic_fancy_check"
+                        textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
+                            action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
+                            hovered SetField(_tooltip, "value", _("是否在游戏内显示MTTS状态小窗"))
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
+                    hbox:
+                        style_prefix "generic_fancy_check"
+                        textbutton _("左侧屏幕空间避让: [persistent.mtts.get('drift_statshud_l')]"):
+                            action [ToggleDict(persistent.mtts, "drift_statshud_l", True, False), Function(renpy.restart_interaction)]
+                            hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在默认情况下, MTTS状态小窗显示在屏幕左下\n* 如果启用, MTTS小窗会更靠近屏幕左侧中心"))
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
+                    hbox:
+                        style_prefix "generic_fancy_check"
+                        textbutton _("右侧屏幕空间避让: [persistent.mtts.get('drift_statshud_r')]"):
+                            action [ToggleDict(persistent.mtts, "drift_statshud_r", True, False), Function(renpy.restart_interaction)]
+                            hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在控制台显示(如MAICA)的情况下, MTTS状态小窗显示在屏幕右上\n* 如果启用, MTTS小窗会更靠近屏幕右侧中心"))
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
                 style_prefix "generic_fancy_check"

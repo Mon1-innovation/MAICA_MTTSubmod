@@ -10,7 +10,9 @@ init -990 python:
         "acs_enabled": True,
         "_outdated": False,
         "ministathud": True,
-        "provider_id": 1 if renpy.windows else 2
+        "provider_id": 1 if renpy.windows else 2,
+        "drift_statshud_l": False,
+        "drift_statshud_r": False
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -133,6 +135,8 @@ init 10 python in mtts:
         store.mtts.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
         store.mtts.mtts.ministathud = store.persistent.mtts["ministathud"]
         store.mtts.mtts.provider_id = store.persistent.mtts["provider_id"]
+        store.mtts.mtts.drift_statshud_l = store.persistent.mtts["drift_statshud_l"]
+        store.mtts.mtts.drift_statshud_r = store.persistent.mtts["drift_statshud_r"]
         
     def discard_settings():
         store.persistent.mtts["enabled"] = store.mtts.mtts.enabled
@@ -140,6 +144,8 @@ init 10 python in mtts:
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts.ministathud
         store.persistent.mtts["provider_id"] = store.mtts.mtts.provider_id
+        store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts.drift_statshud_l
+        store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts.drift_statshud_r
         
 
     def reset_settings():

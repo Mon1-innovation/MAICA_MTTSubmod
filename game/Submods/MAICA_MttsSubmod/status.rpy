@@ -37,6 +37,8 @@ init -1 python:
         maicatts_enableWorkLoadScreen()
         renpy.restart_interaction()
 
+
+
 screen maicatts_stat_lite():
     zorder 90
     if not persistent.mtts.get("ministathud", False):
@@ -49,7 +51,22 @@ screen maicatts_stat_lite():
                 renpy.get_screen("mas_py_console_teaching") is not None
                 or renpy.get_screen("mas_extramenu_area") is not None
             )
-            xoff, yoff = (960, 5) if alter_pos else (5, 450)
+            # xoff, yoff = (960, 5) if alter_pos else (5, 450)
+            if alter_pos:
+                xoff = 965
+                if renpy.get_screen("maica_dscl_pvn_notify") is not None:
+                    yoff = 325
+                elif persistent.mtts.get("drift_statshud_r", False):
+                    yoff = 150
+                else:
+                    yoff = 5
+            else:
+                xoff = 5
+                if persistent.mtts.get("drift_statshud_l", False):
+                    yoff = 370
+                else:
+                    yoff = 450
+            
         fixed:
             frame:
                 xsize 309
