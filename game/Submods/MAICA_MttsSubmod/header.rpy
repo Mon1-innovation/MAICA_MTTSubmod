@@ -150,6 +150,13 @@ screen mtts_settings():
                 use divider(_("工具与功能"))
 
             hbox:
+                style_prefix "generic_fancy_check"
+                textbutton _("启用时显示道具: [persistent.mtts.get('acs_enabled')]"):
+                    action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
+                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+
+            hbox:
                 frame:
                     xmaximum 950
                     xpos 30
@@ -175,14 +182,6 @@ screen mtts_settings():
                             action [ToggleDict(persistent.mtts, "drift_statshud_r", True, False), Function(renpy.restart_interaction)]
                             hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在控制台显示(如MAICA)的情况下, MTTS状态小窗显示在屏幕右上\n* 如果启用, MTTS小窗会更靠近屏幕右侧中心"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
-
-            hbox:
-                style_prefix "generic_fancy_check"
-                textbutton _("启用时显示道具: [persistent.mtts.get('acs_enabled')]"):
-                    action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
-                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
-                    unhovered SetField(_tooltip, "value", _tooltip.default)
-
 
             hbox:
                 frame:
