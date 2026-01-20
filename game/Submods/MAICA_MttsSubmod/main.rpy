@@ -312,7 +312,7 @@ init python:
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Decoded text: {0}".format(repr(decoded_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(clean_text)))
+            # store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(clean_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
 
             if store.mas_submod_utils.current_label[0] != '_':
