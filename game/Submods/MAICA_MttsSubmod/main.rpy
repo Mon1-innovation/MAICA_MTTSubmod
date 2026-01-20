@@ -317,7 +317,7 @@ init python:
 
             if store.mas_submod_utils.current_label[0] != '_':
                 store.mtts._current_label = store.mas_submod_utils.current_label
-            rule = store.mtts.matcher.match_cache_rule(text, store.mtts._current_label)
+            rule = store.mtts.matcher.match_cache_rule(text, store.mtts._current_label, original_text = what)
 
             # 添加字符计数调试日志
             content_char_count = store.mtts.matcher._count_content_chars(text)
