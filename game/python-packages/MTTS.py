@@ -86,9 +86,6 @@ class RuleMatcher:
                     self.replace_rules = replace_rules_config.get('rules', [])
         except Exception as e:
             raise Exception("Failed to load cache rules: {}".format(e))
-            self.rules = []
-            self.default_action = []
-            self.replace_rules = []
 
     def _count_content_chars(self, text):
         """
@@ -167,18 +164,14 @@ class RuleMatcher:
             # 检查 variable 字段
             variables = rule.get('variable', [])
             if variables and store is not None:
-                variable_matched = False
                 for var_name in variables:
                     try:
                         var_value = getattr(store, var_name, None)
                         if var_value is not None and str(var_value) in text:
-                            variable_matched = True
-                            break
+                            return rule
                     except Exception as e:
                         logger.warning("Failed to get variable '{}': {}".format(var_name, e))
 
-                if not variable_matched:
-                    continue
 
             # 尝试匹配 regex_text
             regex_text = rule.get('regex_text')
