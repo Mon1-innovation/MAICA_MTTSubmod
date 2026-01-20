@@ -162,7 +162,6 @@ class RuleMatcher:
                         var_value = getattr(store, var_name, None)
                         if var_value is not None and str(var_value) in text:
                             return rule
-                            return rule
                     except Exception as e:
                         logger.warning("Failed to get variable '{}': {}".format(var_name, e))
 
