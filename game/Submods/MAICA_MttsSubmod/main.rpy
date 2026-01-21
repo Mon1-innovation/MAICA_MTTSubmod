@@ -36,13 +36,13 @@ init -100 python in mtts:
     # store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
     # if not store.mas_hasAPIKey("MTTS_endpoint"):
     #     store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
-    mtts = mtts.MTTS(
+    mtts_instance = mtts.MTTS(
         # url = store.mas_getAPIKey("MTTS_endpoint"),
         url = provider_manager.get_tts_url(),
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
-    mtts.user_acc = u""
+    mtts_instance.user_acc = u""
     matcher = mtts.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = mtts.AsyncTask
     def sync_provider_id(pid):
@@ -59,12 +59,12 @@ init -100 python in mtts:
         except Exception:
             pass
         provider_manager.set_provider_id(pid)
-        mtts.baseurl = provider_manager.get_tts_url()
-        mtts.provider_id = pid
+        mtts_instance.baseurl = provider_manager.get_tts_url()
+        mtts_instance.provider_id = pid
         # restart accessibility async task
         global _acc
         try:
-            _acc = AsyncTask(mtts.accessable)
+            _acc = AsyncTask(mtts_instance.accessable)
         except Exception:
             _acc = None
         try:
@@ -130,22 +130,22 @@ init -100 python in mtts:
 init 10 python in mtts:
     import store
     def apply_settings():
-        store.mtts.mtts.enabled = store.persistent.mtts["enabled"]
-        store.mtts.mtts.volume = store.persistent.mtts["volume"]
-        store.mtts.mtts.acs_enabled = store.persistent.mtts["acs_enabled"]
-        store.mtts.mtts.ministathud = store.persistent.mtts["ministathud"]
-        store.mtts.mtts.provider_id = store.persistent.mtts["provider_id"]
-        store.mtts.mtts.drift_statshud_l = store.persistent.mtts["drift_statshud_l"]
-        store.mtts.mtts.drift_statshud_r = store.persistent.mtts["drift_statshud_r"]
+        store.mtts.mtts_instance.enabled = store.persistent.mtts["enabled"]
+        store.mtts.mtts_instance.volume = store.persistent.mtts["volume"]
+        store.mtts.mtts_instance.acs_enabled = store.persistent.mtts["acs_enabled"]
+        store.mtts.mtts_instance.ministathud = store.persistent.mtts["ministathud"]
+        store.mtts.mtts_instance.provider_id = store.persistent.mtts["provider_id"]
+        store.mtts.mtts_instance.drift_statshud_l = store.persistent.mtts["drift_statshud_l"]
+        store.mtts.mtts_instance.drift_statshud_r = store.persistent.mtts["drift_statshud_r"]
         
     def discard_settings():
-        store.persistent.mtts["enabled"] = store.mtts.mtts.enabled
-        store.persistent.mtts["volume"] = store.mtts.mtts.volume
-        store.persistent.mtts["acs_enabled"] = store.mtts.mtts.acs_enabled
-        store.persistent.mtts["ministathud"] = store.mtts.mtts.ministathud
-        store.persistent.mtts["provider_id"] = store.mtts.mtts.provider_id
-        store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts.drift_statshud_l
-        store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts.drift_statshud_r
+        store.persistent.mtts["enabled"] = store.mtts.mtts_instance.enabled
+        store.persistent.mtts["volume"] = store.mtts.mtts_instance.volume
+        store.persistent.mtts["acs_enabled"] = store.mtts.mtts_instance.acs_enabled
+        store.persistent.mtts["ministathud"] = store.mtts.mtts_instance.ministathud
+        store.persistent.mtts["provider_id"] = store.mtts.mtts_instance.provider_id
+        store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts_instance.drift_statshud_l
+        store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts_instance.drift_statshud_r
         
 
     def reset_settings():
@@ -163,13 +163,12 @@ init -100 python:
             pass
         return "微笑"  # 无匹配时返回 None
 init python in mtts:
-    _acc = AsyncTask(mtts.accessable)
+    _acc = AsyncTask(mtts_instance.accessable)
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
-    import mtts
     old_renpysay = renpy.say
-    store.mtts = mtts
-    PY2, PY3 = mtts.PY2, mtts.PY3
+    import mtts as mtts_package
+    PY2, PY3 = mtts_package.PY2, mtts_package.PY3
 
     def hijack_build_gift_react_labels(function):
         def wrapper(
@@ -204,7 +203,7 @@ init python:
     class MttsSay(object):
 
         def __init__(self):
-            self._history = mtts.LimitedList(3)
+            self._history = mtts_package.LimitedList(3)
 
         @property
         def conditions(self):
@@ -220,7 +219,7 @@ init python:
             elif persistent.mtts["_outdated"]:
                 store.mtts_status = renpy.substitute(_("版本过旧"))
                 return False
-            elif not store.mtts.mtts.is_accessable:
+            elif not store.mtts.mtts_instance.is_accessable:
                 store.mtts_status = renpy.substitute(_("无连接"))
                 return False
             else:
@@ -340,11 +339,11 @@ init python:
             store.mtts_status = renpy.substitute(_("生成中"))
             exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
 
-            mtts.mtts.local_cache = 'local' in rule['action']
-            mtts.mtts.remote_cache = 'remote' in rule['action']
+            mtts.mtts_instance.local_cache = 'local' in rule['action']
+            mtts.mtts_instance.remote_cache = 'remote' in rule['action']
 
-            task = mtts.AsyncTask(mtts.mtts.generate, text=text, label_name=store.mtts._current_label, emotion=exp, target_lang=target_lang)
-            name = mtts.mtts.cache.get_cachename(text = text, label_name=store.mtts._current_label)
+            task = mtts.AsyncTask(mtts.mtts_instance.generate, text=text, label_name=store.mtts._current_label, emotion=exp, target_lang=target_lang)
+            name = mtts.mtts_instance.cache.get_cachename(text = text, label_name=store.mtts._current_label)
 
             while not task.is_finished:
                 old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
@@ -397,7 +396,7 @@ init python:
             store.mtts_status = renpy.substitute(_("版本过旧"))
             return
 
-        ok = store.mtts.mtts.is_accessable
+        ok = store.mtts.mtts_instance.is_accessable
         store.mtts_status = renpy.substitute(_("待机")) if ok else renpy.substitute(_("无连接"))
 
     mtts_say = MttsSay()

@@ -4,7 +4,7 @@ screen mtts_login():
     modal True
     zorder 92
     $ ok_action = [
-                    Function(store.mtts.mtts._gen_token, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
+                    Function(store.mtts.mtts_instance._gen_token, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
                     Function(_maica_verify_token),
                     Function(_maica_clear),
                     Hide("mtts_login")
@@ -123,7 +123,7 @@ screen mtts_node_setting():
                 action Hide("mtts_node_setting")
             
             textbutton _("测试当前节点可用性"):
-                action Function(store.mtts.mtts.accessable)
+                action Function(store.mtts.mtts_instance.accessable)
 
 screen mtts_support():
 

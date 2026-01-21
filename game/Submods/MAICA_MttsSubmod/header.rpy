@@ -114,7 +114,7 @@ screen mtts_settings():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
             hbox:
                 style_prefix "maica_check_nohover"
-                $ user_disp = store.mtts.mtts.user_acc or renpy.substitute(_("未登录"))
+                $ user_disp = store.mtts.mtts_instance.user_acc or renpy.substitute(_("未登录"))
                 textbutton _("当前用户: [user_disp]"):
                     action NullAction()
                     hovered SetField(_tooltip, "value", _("如需更换或退出账号, 请在Submods界面退出登录.\n* 要修改账号信息或密码, 请前往注册网站"))
@@ -196,7 +196,7 @@ screen mtts_settings():
                     hbox:
                         style_prefix "maica_check_nohover"
                         if not mtts_remove_cache_on_quit:
-                            textbutton _("当前缓存占用：[store.mtts.mtts.cache.cache_size]MB"):
+                            textbutton _("当前缓存占用：[store.mtts.mtts_instance.cache.cache_size]MB"):
                                 action NullAction()
                                 hovered SetField(_tooltip, "value", tooltip_tts_cache)
                                 unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -204,7 +204,7 @@ screen mtts_settings():
                     hbox:
                         style_prefix "maica_check"
                         textbutton _("{color=#FF0000}清除缓存{/color}"):
-                            action Function(store.mtts.mtts.cache.clear_cache)
+                            action Function(store.mtts.mtts_instance.cache.clear_cache)
                             hovered SetField(_tooltip, "value", tooltip_tts_cache)
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
@@ -264,7 +264,7 @@ init python:
         store._maica_LoginAcc = ""
         store._maica_LoginPw = ""
         store._maica_LoginEmail = ""
-        store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts.token})
+        store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts_instance.token})
         store.mas_api_keys.save_keys()
 
     def _is_str(x):
@@ -274,11 +274,11 @@ init python:
             return isinstance(x, str)
 
     def _maica_verify_token():
-        res = store.mtts.mtts._verify_token()
+        res = store.mtts.mtts_instance._verify_token()
         if res.get("success"):
             c = res.get("content", None)
             if _is_str(c) and c:
-                store.mtts.mtts.user_acc = c
+                store.mtts.mtts_instance.user_acc = c
 
             renpy.show_screen("maica_message", message=_("验证成功"))
         else:
@@ -293,7 +293,7 @@ init python:
         if not persistent.mtts.get("_chat_installed", False):
             return
 
-        m = store.mtts.mtts
+        m = store.mtts.mtts_instance
 
         # 拉取Chat侧的 user_acc (如有)
         acc = getattr(store.maica.maica, "user_acc", "")
@@ -412,13 +412,13 @@ init python:
 define maica_confont = "mod_assets/font/SarasaMonoTC-SemiBold.ttf"
 screen mtts_workload_stat():
     python:
-        stat = {k: v for k, v in iterize(store.mtts.mtts.workload_raw) if k != "onliners"}
+        stat = {k: v for k, v in iterize(store.mtts.mtts_instance.workload_raw) if k != "onliners"}
     python:
         store.update_interval = 15
 
         @store.workload_throttle
         def check_and_update():
-            store.mtts.mtts.update_workload()
+            store.mtts.mtts_instance.update_workload()
 
     modal True
     zorder 90

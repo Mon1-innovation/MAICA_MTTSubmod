@@ -45,7 +45,7 @@ screen maicatts_stat_lite():
         null
     else:    
         python:
-            mtts_instance = store.mtts.mtts
+            mtts_instance = store.mtts.mtts_instance
             bg = "mod_assets/console/cn_frame_tts_on.png" if persistent.mtts.get("enabled", False) and store.mtts_say.conditions else "mod_assets/console/cn_frame_tts_off.png"
             alter_pos = (
                 renpy.get_screen("mas_py_console_teaching") is not None

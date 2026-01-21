@@ -95,8 +95,8 @@ translate english strings:
     new "MTTS local cache to reduce resource consumption and latency.\n* Flush cache to apply new performance on model change\n! Do {color=#FF0000}NOT{/color} flush unless you know what you're doing"
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:143
-    old "当前缓存占用：[store.mtts.mtts.cache.cache_size]MB"
-    new "Current cache size: [store.mtts.mtts.cache.cache_size]MB"
+    old "当前缓存占用：[store.mtts.mtts_instance.cache.cache_size]MB"
+    new "Current cache size: [store.mtts.mtts_instance.cache.cache_size]MB"
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:150
     old "{color=#FF0000}清除缓存{/color}"
