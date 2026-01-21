@@ -8,7 +8,7 @@ import json
 # 添加当前目录到路径
 sys.path.insert(0, os.path.dirname(__file__))
 
-import MTTS
+import mtts
 
 def test_cache_rule_matcher():
     """测试缓存规则匹配器"""
@@ -25,7 +25,7 @@ def test_cache_rule_matcher():
         return False
 
     # 创建规则匹配器
-    matcher = MTTS.RuleMatcher(rules_path)
+    matcher = mtts.RuleMatcher(rules_path)
 
     print("\n=== 规则加载测试 ===")
     print("加载的规则数: {}".format(len(matcher.rules)))

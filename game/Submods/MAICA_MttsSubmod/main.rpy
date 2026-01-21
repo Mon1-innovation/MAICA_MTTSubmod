@@ -21,9 +21,9 @@ init -990 python:
     setting.update(persistent.mtts)
     persistent.mtts = setting
 init -100 python in mtts:
-    import MTTS, store, os
+    import mtts, store, os
     from mtts_provider_manager import MTTSProviderManager
-    MTTS.logger = store.mas_submod_utils.submod_log
+    mtts.logger = store.mas_submod_utils.submod_log
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
     _current_label = ""
@@ -36,15 +36,15 @@ init -100 python in mtts:
     # store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
     # if not store.mas_hasAPIKey("MTTS_endpoint"):
     #     store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
-    mtts = MTTS.MTTS(
+    mtts = mtts.MTTS(
         # url = store.mas_getAPIKey("MTTS_endpoint"),
         url = provider_manager.get_tts_url(),
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
     mtts.user_acc = u""
-    matcher = MTTS.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
-    AsyncTask = MTTS.AsyncTask
+    matcher = mtts.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
+    AsyncTask = mtts.AsyncTask
     def sync_provider_id(pid):
         """Switch provider node immediately (updates baseurl + reruns accessibility check)."""
         try:
@@ -71,8 +71,8 @@ init -100 python in mtts:
             renpy.notify(_("MTTS: 已切换节点, 正在重新检测可用性"))
         except Exception:
             pass
-    MTTS.logger = store.mas_submod_utils.submod_log
-    
+    mtts.logger = store.mas_submod_utils.submod_log
+
 
     
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
@@ -166,10 +166,10 @@ init python in mtts:
     _acc = AsyncTask(mtts.accessable)
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
-    import MTTS
+    import mtts
     old_renpysay = renpy.say
     store.mtts = mtts
-    PY2, PY3 = MTTS.PY2, MTTS.PY3
+    PY2, PY3 = mtts.PY2, mtts.PY3
 
     def hijack_build_gift_react_labels(function):
         def wrapper(
@@ -204,7 +204,7 @@ init python:
     class MttsSay(object):
 
         def __init__(self):
-            self._history = MTTS.LimitedList(3)
+            self._history = mtts.LimitedList(3)
 
         @property
         def conditions(self):
