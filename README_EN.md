@@ -26,11 +26,9 @@ This repository introduction is very brief. If this is your first contact with M
 
 <img src="document/mtts-rmen-1.png" height=150px><img src="document/mtts-rmen-2.png" height=150px>
 
-<!-- <video controls width="600">
+<video controls width="600">
   <source src="document/mtts-rmen-3.mp4" type="video/mp4">
-</video> -->
-
-https://github.com/Mon1-innovation/MAICA_MttsSubmod/blob/main/document/mtts-rmen-3.mp4
+</video>
 
 <!-- <img src="document/maica-rmen-3.png" height=150px><img src="document/maica-rmen-4.png" height=150px> -->
 ## Features
