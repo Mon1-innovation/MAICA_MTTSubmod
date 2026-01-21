@@ -131,6 +131,54 @@ class RuleMatcher:
                 logger.warning("Text replacement failed: {}".format(e))
         return None
 
+    def _evaluate_condition(self, condition_expr, text, label, store=None):
+        """
+        评估条件表达式
+
+        Args:
+            condition_expr: 条件表达式字符串（Python代码）
+            text: 要匹配的文本
+            label: 标签名称
+            store: Ren'Py store 对象，用于获取变量值（可选）
+
+        Returns:
+            bool: 表达式评估结果，如果出错返回False
+        """
+        if not condition_expr:
+            return False
+
+        try:
+            # 构建安全的求值上下文
+            safe_dict = {
+                'text': text,
+                'label': label,
+                'len': len,
+                're': re,
+            }
+
+            # 从store对象中提取变量到安全字典
+            if store is not None:
+                try:
+                    # 获取store对象的所有属性（变量）
+                    store_vars = {}
+                    for attr_name in dir(store):
+                        if not attr_name.startswith('_'):  # 跳过私有属性
+                            try:
+                                store_vars[attr_name] = getattr(store, attr_name)
+                            except:
+                                pass
+                    safe_dict.update(store_vars)
+                except Exception as e:
+                    logger.warning("Failed to extract variables from store: {}".format(e))
+
+            # 使用eval执行表达式（在受限的命名空间中）
+            result = eval(condition_expr, {"__builtins__": {}}, safe_dict)
+            return bool(result)
+
+        except Exception as e:
+            logger.warning("Failed to evaluate condition '{}': {}".format(condition_expr, e))
+            return False
+
     def match_cache_rule(self, text, label, store=None):
         """
         根据文本和标签匹配规则
@@ -190,6 +238,12 @@ class RuleMatcher:
                         return rule
                 except Exception as e:
                     logger.warning("Invalid regex_label pattern: {}".format(e))
+
+            # 尝试匹配 condition 表达式（新增）
+            condition = rule.get('condition')
+            if condition:
+                if self._evaluate_condition(condition, text, label, store):
+                    return rule
 
         # 如果没有匹配任何规则，返回默认action
         return {
