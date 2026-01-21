@@ -24,9 +24,11 @@ Synbrace(次元呼唤) 是 MAICA-MTTS 的前端, 基于 MAICA-MTTS 的文字声�
 > 注意: 需要一个 Doki Chinese Club 账号且必须验证邮箱才能使用, 具体要求请查看[TOS](https://maica.monika.love/tos).  
 > 游戏内也会对此提供必要的引导.
 
-<!-- <img src="document/maica-rm-1.png" height=150px><img src="document/maica-rm-2.png" height=150px>
+<img src="document/mtts-rm-1.png" height=150px><img src="document/mtts-rm-2.png" height=150px>
 
-<img src="document/maica-rm-3.png" height=150px><img src="document/maica-rm-4.png" height=150px> -->
+https://github.com/user-attachments/assets/7945dda1-da33-4d33-afe6-5a79b8ccb178
+
+<!-- <img src="document/maica-rm-3.png" height=150px><img src="document/maica-rm-4.png" height=150px> -->
 ## 特色
 
 * 全面的TTS支持, 兼容原版/MAICA/多数其它Submod对话
