@@ -24,9 +24,15 @@ This repository introduction is very brief. If this is your first contact with M
 > Notice: You'll need an Doki Chinese Club account to use this, refer to [TOS](https://maica.monika.love/tos).  
 > Necessary instructions are provided in game too.
 
-<!-- <img src="document/maica-rmen-1.png" height=150px><img src="document/maica-rmen-2.png" height=150px>
+<img src="document/mtts-rmen-1.png" height=150px><img src="document/mtts-rmen-2.png" height=150px>
 
-<img src="document/maica-rmen-3.png" height=150px><img src="document/maica-rmen-4.png" height=150px> -->
+
+
+https://github.com/user-attachments/assets/792a56f5-d559-4175-a754-f65dc0f71053
+
+
+
+<!-- <img src="document/maica-rmen-3.png" height=150px><img src="document/maica-rmen-4.png" height=150px> -->
 ## Features
 
 * Full TTS support of vanilla/MAICA/most other submods' dialogues
