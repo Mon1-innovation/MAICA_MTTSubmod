@@ -1,7 +1,7 @@
 import json
 import os
 
-from cp936_map import CP936_MAP as _CP936_MAP
+from .cp936_map import CP936_MAP as _CP936_MAP
 
 def decode_cp936(data):
     """
