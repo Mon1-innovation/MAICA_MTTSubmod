@@ -466,11 +466,19 @@ init 980 python:
         def migration_0_1_10():
             if renpy.seen_label("mtts_greeting"):
                 persistent._seen_ever.update({"mtts_greeting_end":True})
+        def migration_1_0_1():
+            if renpy.android:
+                import os
+                pkgdir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "python-packages"))
+                names = set(os.listdir(pkgdir))
+                if "MTTS.py" in names:
+                    os.remove(os.path.join(pkgdir, "MTTS.py"))
 
         import migrations
         migration = migrations.migration_instance(persistent._mtts_last_version, store.mtts_version)
         migration.migration_queue = [
             ("0.1.10", migration_0_1_10),
+            ("1.0.1", migration_1_0_1),
         ]
         migration.migrate()
         persistent._mtts_last_version = store.mtts_version
