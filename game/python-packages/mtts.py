@@ -7,6 +7,30 @@ import sys
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 import logging
+
+class TokenRedactionFilter(logging.Filter):
+    """Filter that redacts sensitive tokens from log messages."""
+    def filter(self, record):
+        # Redact access_token values in log messages
+        record.msg = self._redact_tokens(str(record.msg))
+        if record.args:
+            if isinstance(record.args, dict):
+                record.args = {k: self._redact_tokens(str(v)) for k, v in record.args.items()}
+            elif isinstance(record.args, tuple):
+                record.args = tuple(self._redact_tokens(str(arg)) for arg in record.args)
+        return True
+
+    def _redact_tokens(self, text):
+        """Replace token values with first 4 characters + ***"""
+        # Pattern: access_token=<value> where value is alphanumeric, +, /, or - (URL-safe base64)
+        def replace_token(match):
+            full_match = match.group(0)
+            token_value = match.group(1)
+            prefix = token_value[:4] if len(token_value) >= 4 else token_value
+            return f"access_token={prefix}***"
+
+        return re.sub(r'access_token=([a-zA-Z0-9+/_-]+)', replace_token, text)
+
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 BASIC_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
@@ -16,6 +40,7 @@ chlr = logging.StreamHandler() # 输出到控制台的handler
 chlr.setFormatter(formatter)
 chlr.setLevel(logging.DEBUG)  # 也可以不设置，不设置就默认用logger的level
 logger.addHandler(chlr)
+logger.addFilter(TokenRedactionFilter())
 
 import mtts_provider_manager
 
