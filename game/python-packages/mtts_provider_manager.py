@@ -56,50 +56,49 @@ class MTTSProviderManager:
     _provider_list = "https://maicadev.monika.love/api/servers"
     
 
-    def __init__(self, provider_id=None):
+    def __init__(self, pid=None):
         """
         初始化MTTSProviderManager实例
 
         Args:
-            provider_id: 服务提供商ID，如果为None则使用默认值
+            pid: 服务提供商ID，如果为None则使用默认值
         """
-        self.provider_id = provider_id
-        self._last_provider_id = provider_id
+        self._provider_id = pid
+        self._last_provider_id = pid
         self._servers = [self._fakelocalprovider]
         self._isMaicaNameServer = None
 
     def get_provider(self):
         """获取服务提供商列表"""
-        self._servers = []
         import requests
         try:
             res = requests.get(self._provider_list, json={})
             if res.status_code != 200:
                 logger.error("Cannot get providers because server return non 200: {}".format(res.content))
                 self._isfailedresponse["deviceName"] = "Cannot get providers because server {}".format(res.status_code)
-                self._servers.append(self._isfailedresponse)
-                self._servers.append(self._fakelocalprovider)
-                return False
-            res = res.json()
-
-            if res["success"]:
-                self._isMaicaNameServer = res["content"].get("isMaicaNameServer")
-                self._servers = res["content"].get("servers")
-                self._servers.append(self._fakelocalprovider)
-                if not self.provider_id:
-                    self.provider_id = self._last_provider_id
-                return True
+                new_servers = [self._isfailedresponse, self._fakelocalprovider]
             else:
-                self._isfailedresponse["deviceName"] = res["exception"]
-                self._servers.append(self._isfailedresponse)
-                self._servers.append(self._fakelocalprovider)
-                logger.error("Cannot get providers because server return: {}".format(res))
-                return False
+                res = res.json()
+                if res["success"]:
+                    self._isMaicaNameServer = res["content"].get("isMaicaNameServer")
+                    new_servers = res["content"].get("servers", [])
+                    new_servers.append(self._fakelocalprovider)
+
+                    if not self._provider_id:
+                        self._provider_id = self._last_provider_id
+
+                    self._servers = new_servers
+                    return True
+                else:
+                    self._isfailedresponse["description"] = res["exception"]
+                    new_servers = [self._isfailedresponse, self._fakelocalprovider]
+                    logger.error("Cannot get providers because server return: {}".format(res))
         except Exception as e:
             logger.error("Error getting providers: {}".format(e))
-            self._servers.append(self._isfailedresponse)
-            self._servers.append(self._fakelocalprovider)
-            return False
+            new_servers = [self._isfailedresponse, self._fakelocalprovider]
+
+        self._servers = new_servers
+        return False
 
     def _get_server_by_id(self, server_id):
         """根据ID获取服务器信息"""
@@ -109,19 +108,12 @@ class MTTSProviderManager:
         logger.error("Cannot find server by id: {}, returning default failed response".format(server_id))
         return self._isfailedresponse
 
-    # def get_wssurl(self):
-    #     """获取WebSocket URL"""
-    #     if self.provider_id is None:
-    #         logger.warning("Cannot find server by id: {}, returning default failed response".format(self.provider_id))
-    #         return self._isfailedresponse["wsInterface"] + "/"
-    #     return self._get_server_by_id(self.provider_id)["wsInterface"] + "/"
-
     def get_api_url(self):
         """获取API URL"""
-        if self.provider_id is None:
-            logger.warning("Cannot find server by id: {}, returning default failed response".format(self.provider_id))
+        if self._provider_id is None:
+            logger.warning("Cannot find server by id: {}, returning default failed response".format(self._provider_id))
             return self._isfailedresponse["httpInterface"] + "/"
-        return self._get_server_by_id(self.provider_id)["httpInterface"] + "/"
+        return self._get_server_by_id(self._provider_id)["httpInterface"] + "/"
 
     @staticmethod
     def _ensure_trailing_slash(url):
@@ -152,26 +144,26 @@ class MTTSProviderManager:
 
     def get_tts_url(self):
         # Get TTS base url (for MTTS).
-        if self.provider_id is None:
-            logger.warning("Cannot find server by id: {}, returning default failed response".format(self.provider_id))
+        if self._provider_id is None:
+            logger.warning("Cannot find server by id: {}, returning default failed response".format(self._provider_id))
             base = self._isfailedresponse.get("ttsInterface") or self._derive_tts_from_http(self._isfailedresponse.get("httpInterface"))
             return self._ensure_trailing_slash(base)
-        server = self._get_server_by_id(self.provider_id)
+        server = self._get_server_by_id(self._provider_id)
         base = server.get("ttsInterface") or self._derive_tts_from_http(server.get("httpInterface"))
         return self._ensure_trailing_slash(base)
     def get_server_info(self):
         """获取当前服务器信息"""
-        if self.provider_id is None:
-            logger.error("Cannot find server by id: {}, returning default failed response".format(self.provider_id))
+        if self._provider_id is None:
+            logger.error("Cannot find server by id: {}, returning default failed response".format(self._provider_id))
             return self._isfailedresponse
-        return self._get_server_by_id(self.provider_id)
+        return self._get_server_by_id(self._provider_id)
 
-    def set_provider_id(self, provider_id):
+    def set_provider_id(self, pid):
         """设置provider_id"""
-        self.provider_id = provider_id
-        if provider_id:
-            self._last_provider_id = provider_id
+        self._provider_id = pid
+        if pid:
+            self._last_provider_id = pid
 
     def get_provider_id(self):
         """获取provider_id"""
-        return self.provider_id
+        return self._provider_id
