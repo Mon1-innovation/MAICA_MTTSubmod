@@ -143,7 +143,7 @@ init 10 python in mtts:
         store.persistent.mtts["volume"] = store.mtts.mtts_instance.volume
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts_instance.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts_instance.ministathud
-        store.persistent.mtts["provider_id"] = store.mtts.mtts_instance.provider_id
+        store.persistent.mtts["provider_id"] = store.mtts.mtts_instance.provider_manager._provider_id
         store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts_instance.drift_statshud_l
         store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts_instance.drift_statshud_r
         
