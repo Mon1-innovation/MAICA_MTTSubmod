@@ -156,6 +156,7 @@ label mtts_greeting:
 
     $ menu_state = renpy.substitute(_("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了."))
     m 5eua "[menu_state]{nw}"#开心
+    $ _history_list.pop()
 
     $ has_asked = False
     jump mtts_greeting_loop
