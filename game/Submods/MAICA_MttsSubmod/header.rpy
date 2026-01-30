@@ -134,6 +134,7 @@ screen mtts_settings():
 
             else:
                 hbox:
+                    style_prefix "maica_check_nohover"
                     text _("! MTTS未解锁, 启用不会生效"):
                         color "#FF0000"
                 hbox:
