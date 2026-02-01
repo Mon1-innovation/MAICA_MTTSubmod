@@ -271,8 +271,6 @@ init python:
 
             return decoded_text
 
-
-
         @staticmethod
         def escape_brackets_in_exceptions_and_ellipsis(err, max_chars=120):
             #输入转可显示文本 + 转义Exception里的中括号 (如requests)
@@ -290,6 +288,32 @@ init python:
             s = s.replace(u"[", u"[[")
             s = s.replace(u"]", u"]]")
             return s
+
+        @staticmethod
+        def determ_lang(input, suppose='zh'):
+            # If the input is of correct lang
+            if PY2:
+                import datapy2_mtts
+                pattern_content_zh = datapy2_mtts.pattern_content_zh
+                # pattern_content_en = datapy2.pattern_content_en
+            else:
+                pattern_content_zh = re.compile(r'[一-龥]')
+                # pattern_content_en = re.compile(r'[A-Za-z]')
+
+            input_len = len(input)
+            zh_search = pattern_content_zh.search(input)
+            # zh_len = len(pattern_content_zh.findall(input))
+            if suppose == 'zh':
+                # zh_rate = zh_len / input_len
+                if input_len >= 5 and not zh_search:
+                    return 'en'
+                else:
+                    return 'zh'
+            else:
+                if zh_search:
+                    return 'zh'
+                else:
+                    return 'en'
 
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if (
@@ -335,6 +359,8 @@ init python:
                 target_lang = store.maica.maica.target_lang
             else:
                 target_lang = "zh" if config.language == 'chinese' else 'en'
+
+            target_lang = self.determ_lang(text, suppose=target_lang)
 
             store.mtts_status = renpy.substitute(_("生成中"))
             exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
