@@ -94,7 +94,7 @@ init -100 python in mtts:
             store.mas_submod_utils.submod_log.warning("")
 
     def validate_version():
-        # if not (config.debug or config.developer or store.maica.maica._ignore_accessable):
+        # if not (config.debug or config.developer or store.maica.maica_instance._ignore_accessable):
         libv_path = os.path.normpath(os.path.join(renpy.config.basedir, "game", "python-packages", "mtts_release_version"))
         if not os.path.exists(libv_path):
             return None, None, None
@@ -356,7 +356,7 @@ init python:
                 return old_renpysay(who, what, interact, *args, **kwargs)
 
             if rule['name'] == 'MAICA_Chat':
-                target_lang = store.maica.maica.target_lang
+                target_lang = store.maica.maica_instance.target_lang
             else:
                 target_lang = "zh" if config.language == 'chinese' else 'en'
 

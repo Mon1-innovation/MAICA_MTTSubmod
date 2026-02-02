@@ -297,7 +297,7 @@ init python:
         m = store.mtts.mtts_instance
 
         # 拉取Chat侧的 user_acc (如有)
-        acc = getattr(store.maica.maica, "user_acc", "")
+        acc = getattr(store.maica.maica_instance, "user_acc", "")
         if acc:
             if getattr(m, "user_acc", u"") != acc:
                 m.user_acc = acc
