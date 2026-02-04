@@ -94,7 +94,7 @@ init -100 python in mtts:
             store.mas_submod_utils.submod_log.warning("")
 
     def validate_version():
-        # if not (config.debug or config.developer or store.maica.maica._ignore_accessable):
+        # if not (config.debug or config.developer or store.maica.maica_instance._ignore_accessable):
         libv_path = os.path.normpath(os.path.join(renpy.config.basedir, "game", "python-packages", "mtts_release_version"))
         if not os.path.exists(libv_path):
             return None, None, None
@@ -143,7 +143,7 @@ init 10 python in mtts:
         store.persistent.mtts["volume"] = store.mtts.mtts_instance.volume
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts_instance.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts_instance.ministathud
-        store.persistent.mtts["provider_id"] = store.mtts.mtts_instance.provider_id
+        store.persistent.mtts["provider_id"] = store.mtts.mtts_instance.provider_manager._provider_id
         store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts_instance.drift_statshud_l
         store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts_instance.drift_statshud_r
         
@@ -271,8 +271,6 @@ init python:
 
             return decoded_text
 
-
-
         @staticmethod
         def escape_brackets_in_exceptions_and_ellipsis(err, max_chars=120):
             #输入转可显示文本 + 转义Exception里的中括号 (如requests)
@@ -290,6 +288,32 @@ init python:
             s = s.replace(u"[", u"[[")
             s = s.replace(u"]", u"]]")
             return s
+
+        @staticmethod
+        def determ_lang(input, suppose='zh'):
+            # If the input is of correct lang
+            if PY2:
+                import datapy2_mtts
+                pattern_content_zh = datapy2_mtts.pattern_content_zh
+                # pattern_content_en = datapy2.pattern_content_en
+            else:
+                pattern_content_zh = re.compile(r'[一-龥]')
+                # pattern_content_en = re.compile(r'[A-Za-z]')
+
+            input_len = len(input)
+            zh_search = pattern_content_zh.search(input)
+            # zh_len = len(pattern_content_zh.findall(input))
+            if suppose == 'zh':
+                # zh_rate = zh_len / input_len
+                if input_len >= 5 and not zh_search:
+                    return 'en'
+                else:
+                    return 'zh'
+            else:
+                if zh_search:
+                    return 'zh'
+                else:
+                    return 'en'
 
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if (
@@ -332,9 +356,11 @@ init python:
                 return old_renpysay(who, what, interact, *args, **kwargs)
 
             if rule['name'] == 'MAICA_Chat':
-                target_lang = store.maica.maica.target_lang
+                target_lang = store.maica.maica_instance.target_lang
             else:
                 target_lang = "zh" if config.language == 'chinese' else 'en'
+
+            target_lang = self.determ_lang(text, suppose=target_lang)
 
             store.mtts_status = renpy.substitute(_("生成中"))
             exp = store.get_emote_mood(store.mas_getCurrentMoniExp())

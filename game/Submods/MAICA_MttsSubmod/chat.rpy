@@ -8,7 +8,7 @@ init 5 python:
             rules={
                 "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
             },
-            conditional="renpy.seen_label('mas_gift_giving_instructs') and not renpy.seen_label('mtts_greeting') and not renpy.seen_label('mtts_prepend_1')",
+            conditional="(renpy.seen_label('mas_gift_giving_instructs') or persistent._mas_filereacts_historic) and not renpy.seen_label('mtts_greeting') and not renpy.seen_label('mtts_prepend_1')",
             action=EV_ACT_QUEUE,
             random=True,
             aff_range=(mas_aff.NORMAL, None)
@@ -156,6 +156,7 @@ label mtts_greeting:
 
     $ menu_state = renpy.substitute(_("很漂亮吧? 我{i}差不多{/i}弄清楚该怎么用了."))
     m 5eua "[menu_state]{nw}"#开心
+    $ _history_list.pop()
 
     $ has_asked = False
     jump mtts_greeting_loop

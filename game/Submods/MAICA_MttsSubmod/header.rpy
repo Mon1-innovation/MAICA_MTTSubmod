@@ -2,7 +2,7 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "1.0.2"
+    mtts_version = "1.0.3"
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
@@ -134,6 +134,7 @@ screen mtts_settings():
 
             else:
                 hbox:
+                    style_prefix "maica_check_nohover"
                     text _("! MTTS未解锁, 启用不会生效"):
                         color "#FF0000"
                 hbox:
@@ -296,7 +297,7 @@ init python:
         m = store.mtts.mtts_instance
 
         # 拉取Chat侧的 user_acc (如有)
-        acc = getattr(store.maica.maica, "user_acc", "")
+        acc = getattr(store.maica.maica_instance, "user_acc", "")
         if acc:
             if getattr(m, "user_acc", u"") != acc:
                 m.user_acc = acc
