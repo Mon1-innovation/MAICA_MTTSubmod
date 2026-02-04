@@ -326,7 +326,7 @@ init python:
             return
     
 init python:
-    from mtts import PY2, PY3
+    from mtts_package import PY2, PY3
     def iterize(dict):
         if PY2:
             return dict.iteritems()

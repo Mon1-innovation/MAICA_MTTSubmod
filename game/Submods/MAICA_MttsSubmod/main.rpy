@@ -21,9 +21,9 @@ init -990 python:
     setting.update(persistent.mtts)
     persistent.mtts = setting
 init -100 python in mtts:
-    import mtts, store, os
+    import mtts_package, store, os
     from mtts_provider_manager import MTTSProviderManager
-    mtts.logger = store.mas_submod_utils.submod_log
+    mtts_package.logger = store.mas_submod_utils.submod_log
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
     _current_label = ""
@@ -36,15 +36,15 @@ init -100 python in mtts:
     # store.mas_registerAPIKey("MTTS_endpoint", _("MTTS 服务器 (修改需要重启)"))
     # if not store.mas_hasAPIKey("MTTS_endpoint"):
     #     store.mas_api_keys.api_keys.update({"MTTS_endpoint":"https://maicadev.monika.love/tts/"})
-    mtts_instance = mtts.MTTS(
+    mtts_instance = mtts_package.MTTS(
         # url = store.mas_getAPIKey("MTTS_endpoint"),
         url = provider_manager.get_tts_url(),
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
     mtts_instance.user_acc = u""
-    matcher = mtts.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
-    AsyncTask = mtts.AsyncTask
+    matcher = mtts_package.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
+    AsyncTask = mtts_package.AsyncTask
     def sync_provider_id(pid):
         """Switch provider node immediately (updates baseurl + reruns accessibility check)."""
         try:
@@ -71,13 +71,13 @@ init -100 python in mtts:
             renpy.notify(_("MTTS: 已切换节点, 正在重新检测可用性"))
         except Exception:
             pass
-    mtts.logger = store.mas_submod_utils.submod_log
+    mtts_package.logger = store.mas_submod_utils.submod_log
 
 
     
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_check_outdated():
-        version = mtts.get_version()
+        version = mtts_instance.get_version()
         if version.get("success"):
             min_version = version['content']['fe_synbrace_version']
             if store.mas_utils.compareVersionLists(mtts_version.strip().split('.'), min_version.strip().split('.')) < 0:
@@ -167,7 +167,7 @@ init python in mtts:
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
     old_renpysay = renpy.say
-    import mtts as mtts_package
+    import mtts_package
     PY2, PY3 = mtts_package.PY2, mtts_package.PY3
 
     def hijack_build_gift_react_labels(function):

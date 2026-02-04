@@ -27,7 +27,7 @@ class TokenRedactionFilter(logging.Filter):
             full_match = match.group(0)
             token_value = match.group(1)
             prefix = token_value[:4] if len(token_value) >= 4 else token_value
-            return f"access_token={prefix}***"
+            return "access_token={}***".format(token_value)
 
         return re.sub(r'access_token=([a-zA-Z0-9+/_-]+)', replace_token, text)
 
