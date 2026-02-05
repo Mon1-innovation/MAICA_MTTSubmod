@@ -36,7 +36,7 @@ init python:
             "top_k": 15,
             "top_p": 0.9,
         }
-        persistent.mtts_advanced_setting.update(defaults)
+        persistent.mtts_advanced_setting.update(store.mtts.mtts_instance.default_settings)
         # Reset all status to False
         persistent.mtts_advanced_setting_status = {
             key: False for key in persistent.mtts_advanced_setting.keys()
