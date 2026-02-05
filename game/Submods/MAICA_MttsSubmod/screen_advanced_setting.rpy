@@ -91,7 +91,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("text_split_method"):
+                textbutton "text_split_method":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "text_split_method")
                     hovered SetField(_tooltip, "value", _("文本预切分模式, 一般只影响较长文本"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -108,7 +108,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("speed_factor"):
+                textbutton "speed_factor":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "speed_factor")
                     hovered SetField(_tooltip, "value", _("速度因子, 在推理过程中控制生成的语速.\n* 该数值与实际语速并非线性相关"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -123,7 +123,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("temperature"):
+                textbutton "temperature":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "temperature")
                     hovered SetField(_tooltip, "value", _("token选择的随机程度. 数值越高, 模型输出会越偏离普遍最佳情况"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -136,7 +136,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("top_k"):
+                textbutton "top_k":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "top_k")
                     hovered SetField(_tooltip, "value", _("token权重过滤数量. 非常不建议动这个"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -149,7 +149,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("top_p"):
+                textbutton "top_p":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "top_p")
                     hovered SetField(_tooltip, "value", _("token权重过滤范围. 非常不建议动这个"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -162,7 +162,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("repetition_penalty"):
+                textbutton "repetition_penalty":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "repetition_penalty")
                     hovered SetField(_tooltip, "value", _("token重复惩罚. 数值越高, token越不可能反复出现"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -175,7 +175,7 @@ screen mtts_advance_setting():
                 spacing 10
                 xpos 30
                 style_prefix "generic_fancy_check"
-                textbutton _("seed"):
+                textbutton "seed":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "seed")
                     hovered SetField(_tooltip, "value", _("生成种子. 一般而言影响很小且随机"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -217,7 +217,7 @@ screen mtts_text_split_selector():
     modal True
     zorder 95
 
-    use maica_setter_small_frame(title=_("选择文本分割方法"), ok_action=Hide("mtts_text_split_selector"), cancel_action=Hide("mtts_text_split_selector")):
+    use maica_setter_small_frame(title=_("选择文本预切分模式"), ok_action=Hide("mtts_text_split_selector"), cancel_action=Hide("mtts_text_split_selector")):
         vbox:
             spacing 5
             style_prefix "generic_fancy_check"
