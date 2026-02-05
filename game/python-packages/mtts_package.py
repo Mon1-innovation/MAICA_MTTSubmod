@@ -424,6 +424,8 @@ class MTTS:
         # self.provider_id = None
         self.provider_manager = mtts_provider_manager.MTTSProviderManager()
 
+        self.default_settings = {}
+
 
         self.workload_raw = {
             "None":{
@@ -474,7 +476,7 @@ class MTTS:
         else:
             self.rule_matcher = None
 
-    def generate(self, text, emotion=u"微笑", label_name="none", player_name="", target_lang="zh", **kwargs):
+    def generate(self, text, emotion=u"微笑", label_name="none", player_name="", target_lang="zh", kwargs = {}):
         if self.cache.is_cached(label_name, text) and self.local_cache:
             class FakeReqData:
                 def __init__(self, data):
@@ -734,7 +736,41 @@ class MTTS:
             error_msg = traceback.format_exc()
             logger.error("MTTS: Get version request encountered an error: {}".format(error_msg))
             return {"success": False, "exception": "MTTS: Get version request failed"}
-        
+
+    def get_defaults(self):
+        """
+        获取默认设置。
+
+        Returns: dict:
+            Dictionary containing default hyperparameters (parallel_infer, repetition_penalty, seed, etc.)
+            Returns empty dict if request fails or server not accessible.
+        """
+        import requests
+        import traceback
+
+        if not self.__accessable:
+            return {}
+
+        try:
+            res = requests.get(self.get_api_url("defaults"), params={"access_token": self.token})
+            if res.status_code == 200:
+                res = res.json()
+                if res.get("success", False):
+                    content = res.get("content", {})
+                    self.default_settings = content
+                    return content
+                else:
+                    logger.warning("MTTS: Get defaults failed: {}".format(res))
+                    return {}
+            else:
+                logger.error("MTTS: Get defaults request failed: Server returned {} - {}".format(res.status_code, res.text))
+                return {}
+
+        except Exception as e:
+            error_msg = traceback.format_exc()
+            logger.error("MTTS: Get defaults request encountered an error: {}".format(error_msg))
+            return {}
+
     @property
     def provider_id(self):
         return self.provider_manager.get_provider_id()
@@ -774,6 +810,9 @@ class MTTS:
         else:
             self.__accessable = False
             logger.error("accessable(): Maica is not serving: request failed: {}".format(d))
+
+        if self.__accessable:
+            self.get_defaults()
     
     @property
     def is_accessable(self):

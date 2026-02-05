@@ -12,7 +12,8 @@ init -990 python:
         "ministathud": True,
         "provider_id": 1 if renpy.windows else 2,
         "drift_statshud_l": False,
-        "drift_statshud_r": False
+        "drift_statshud_r": False,
+        "use_custom_model_config": False,
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -20,6 +21,38 @@ init -990 python:
     setting = copy.deepcopy(mtts_defaultsettings)
     setting.update(persistent.mtts)
     persistent.mtts = setting
+
+    # Initialize MTTS advanced settings
+    if not persistent.mtts_advanced_setting:
+        persistent.mtts_advanced_setting = {}
+    mtts_default_advanced_setting = {
+        "parallel_infer": False,
+        "repetition_penalty": 0.5,
+        "seed": 0,
+        "speed_factor": 1.0,
+        "temperature": 0.8,
+        "text_split_method": "cut2",
+        "top_k": 15,
+        "top_p": 0.9,
+    }
+    _conf = copy.deepcopy(mtts_default_advanced_setting)
+    _conf.update(persistent.mtts_advanced_setting)
+    persistent.mtts_advanced_setting = _conf
+
+    if persistent.mtts_advanced_setting_status is None or not isinstance(persistent.mtts_advanced_setting_status, dict):
+        persistent.mtts_advanced_setting_status = {}
+    for k in persistent.mtts_advanced_setting:
+        if k not in persistent.mtts_advanced_setting_status:
+            persistent.mtts_advanced_setting_status[k] = False
+
+    # Initialize backup dictionaries for advanced settings
+    if persistent.mtts_advanced_setting_backup is None or not isinstance(persistent.mtts_advanced_setting_backup, dict):
+        persistent.mtts_advanced_setting_backup = {}
+
+    if persistent.mtts_advanced_setting_status_backup is None or not isinstance(persistent.mtts_advanced_setting_status_backup, dict):
+        persistent.mtts_advanced_setting_status_backup = {}
+
+
 init -100 python in mtts:
     import mtts_package, store, os
     from mtts_provider_manager import MTTSProviderManager
@@ -368,7 +401,14 @@ init python:
             mtts.mtts_instance.local_cache = 'local' in rule['action']
             mtts.mtts_instance.remote_cache = 'remote' in rule['action']
 
-            task = mtts.AsyncTask(mtts.mtts_instance.generate, text=text, label_name=store.mtts._current_label, emotion=exp, target_lang=target_lang)
+            task = mtts.AsyncTask(
+                mtts.mtts_instance.generate, 
+                text=text, 
+                label_name=store.mtts._current_label, 
+                emotion=exp, 
+                target_lang=target_lang, 
+                kwargs=persistent.mtts_advance_params if persistent.mtts.get('use_custom_model_config', False) else {}
+            )
             name = mtts.mtts_instance.cache.get_cachename(text = text, label_name=store.mtts._current_label)
 
             while not task.is_finished:
