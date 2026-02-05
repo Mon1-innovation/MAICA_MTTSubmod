@@ -97,11 +97,12 @@ screen mtts_advance_setting():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("text_split_method", False):
-                    style_prefix "maica_check"
-                    textbutton _("切换: 当前为 [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"):
-                        action Show("mtts_text_split_selector")
-                        hovered SetField(_tooltip, "value", _("文本预切分模式, 一般只影响较长文本"))
-                        unhovered SetField(_tooltip, "value", _tooltip.default)
+                    hbox:
+                        style_prefix "maica_check"
+                        textbutton _("切换: 当前为 [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"):
+                            action Show("mtts_text_split_selector")
+                            hovered SetField(_tooltip, "value", _("文本预切分模式, 一般只影响较长文本"))
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
 
             # speed_factor - Float slider 0.5-2
             hbox:
