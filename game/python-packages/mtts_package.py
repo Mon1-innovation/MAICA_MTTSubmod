@@ -474,7 +474,7 @@ class MTTS:
         else:
             self.rule_matcher = None
 
-    def generate(self, text, emotion=u"微笑", label_name="none", player_name="", target_lang="zh"):
+    def generate(self, text, emotion=u"微笑", label_name="none", player_name="", target_lang="zh", **kwargs):
         if self.cache.is_cached(label_name, text) and self.local_cache:
             class FakeReqData:
                 def __init__(self, data):
@@ -491,14 +491,17 @@ class MTTS:
             rc_override = False
         else:
             rc_override = self.remote_cache
-        req = requests.get(self.get_api_url("generate"), params={"access_token": self.token,
-             "content": json.dumps({
+
+        params = {
                 "text": text,
                 "emotion": emotion,
                 "target_lang": target_lang,
                 "persistence": self.remote_cache,
                 "lossless": self.lossless
-            })
+            }
+        params.update(**kwargs)
+        req = requests.get(self.get_api_url("generate"), params={"access_token": self.token,
+             "content": json.dumps(params)
         })
         if req.status_code == 200:
             try:
