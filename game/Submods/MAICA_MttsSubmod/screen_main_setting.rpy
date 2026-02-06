@@ -248,5 +248,6 @@ screen mtts_purge_cache():
         hbox:
             text _("请{color=#FF0000}不要{/color}随意清除缓存, 这可能对服务器和你的数据流量造成大量额外开销"):
                 size 20
+        hbox:
             text _("请确认你明白自己在做什么, 或者已得到有资质的技术人员的指导"):
                 size 20
