@@ -26,16 +26,7 @@ init python:
 
     def mtts_reset_advanced_setting():
         """Reset all settings to server defaults"""
-        persistent.mtts_advanced_setting = {
-            "parallel_infer": False,
-            "repetition_penalty": 0.5,
-            "seed": 0,
-            "speed_factor": 1.0,
-            "temperature": 0.8,
-            "text_split_method": "cut2",
-            "top_k": 15,
-            "top_p": 0.9,
-        }
+        persistent.mtts_advanced_setting = store.mtts_default_advanced_setting.copy()
         persistent.mtts_advanced_setting.update(store.mtts.mtts_instance.default_settings)
         # Reset all status to False
         persistent.mtts_advanced_setting_status = {
@@ -115,7 +106,7 @@ screen mtts_advance_setting():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("speed_factor", False):
-                    use prog_bar(_("speed_factor"), 400, _("速度因子, 在推理过程中控制生成的语速.\n* 该数值与实际语速并非线性相关"), "speed_factor", 0.5, 2.0, sdict="mtts_advanced_setting")
+                    use prog_bar("speed_factor", 400, _("速度因子, 在推理过程中控制生成的语速.\n* 该数值与实际语速并非线性相关"), "speed_factor", 0.5, 2.0, sdict="mtts_advanced_setting")
 
             use divider_small(_("超参数"))
 
@@ -130,7 +121,7 @@ screen mtts_advance_setting():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("temperature", False):
-                    use prog_bar(_("temperature"), 400, _("token选择的随机程度. 数值越高, 模型输出会越偏离普遍最佳情况"), "temperature", 0.0, 2.0, sdict="mtts_advanced_setting")
+                    use prog_bar("temperature", 400, _("token选择的随机程度. 数值越高, 模型输出会越偏离普遍最佳情况"), "temperature", 0.0, 2.0, sdict="mtts_advanced_setting")
 
             # top_k - Integer slider 1-20
             hbox:
@@ -143,7 +134,7 @@ screen mtts_advance_setting():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("top_k", False):
-                    use prog_bar(_("top_k"), 400, _("token权重过滤数量. 非常不建议动这个"), "top_k", 1, 20, sdict="mtts_advanced_setting")
+                    use prog_bar("top_k", 400, _("token权重过滤数量. 非常不建议动这个"), "top_k", 1, 20, sdict="mtts_advanced_setting")
 
             # top_p - Float slider 0-1
             hbox:
@@ -156,7 +147,7 @@ screen mtts_advance_setting():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("top_p", False):
-                    use prog_bar(_("top_p"), 400, _("token权重过滤范围. 非常不建议动这个"), "top_p", 0.0, 1.0, sdict="mtts_advanced_setting")
+                    use prog_bar("top_p", 400, _("token权重过滤范围. 非常不建议动这个"), "top_p", 0.0, 1.0, sdict="mtts_advanced_setting")
 
             # repetition_penalty - Float slider 0-1
             hbox:
@@ -169,7 +160,7 @@ screen mtts_advance_setting():
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("repetition_penalty", False):
-                    use prog_bar(_("repetition_penalty"), 400, _("token重复惩罚. 数值越高, token越不可能反复出现"), "repetition_penalty", 0.0, 1.0, sdict="mtts_advanced_setting")
+                    use prog_bar("repetition_penalty", 400, _("token重复惩罚. 数值越高, token越不可能反复出现"), "repetition_penalty", 0.0, 1.0, sdict="mtts_advanced_setting")
 
             # seed - Integer input
             hbox:
@@ -218,7 +209,7 @@ screen mtts_text_split_selector():
     modal True
     zorder 95
 
-    use maica_setter_small_frame(title=_("选择文本预切分模式"), ok_action=Hide("mtts_text_split_selector"), cancel_action=Hide("mtts_text_split_selector")):
+    use maica_setter_small_frame(title=_("选择文本预切分模式"), ok_action=Hide("mtts_text_split_selector")):
         vbox:
             spacing 5
             style_prefix "generic_fancy_check"

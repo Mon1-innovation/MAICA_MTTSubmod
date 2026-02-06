@@ -160,7 +160,7 @@ screen mtts_settings():
                     hbox:
                         style_prefix "maica_check"
                         textbutton _("{color=#FF0000}清除缓存{/color}"):
-                            action Function(store.mtts.mtts_instance.cache.clear_cache)
+                            action Show("mtts_purge_cache")
                             hovered SetField(_tooltip, "value", tooltip_tts_cache)
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
@@ -184,6 +184,8 @@ screen mtts_settings():
                             textbutton _("设置高级参数"):
                                 style "maica_check_button"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
+                            text _("! 如果启用并调整了高级参数, 生成结果将无法被远程缓存, 每个请求都需要推理和传输\n! 这可能对服务器和你的数据流量造成大量额外开销, 请慎重考虑\n* 清除你的本地缓存以采用新的表现"):
+                                color "#FF0000"
                         else:
                             textbutton _("设置高级参数"):
                                 style "maica_check_button_disabled"
@@ -236,3 +238,15 @@ screen mtts_settings():
             yoffset -25
             text tooltip.value:
                 style "main_menu_version"
+
+screen mtts_purge_cache():
+    $ _tooltip = store._tooltip
+    modal True
+    zorder 95
+
+    use maica_setter_small_frame(title=_("清除缓存"), ok_action=[Function(store.mtts.mtts_instance.cache.clear_cache), Hide("mtts_purge_cache")], cancel_action=Hide("mtts_purge_cache")):
+        hbox:
+            text _("请{color=#FF0000}不要{/color}随意清除缓存, 这可能对服务器和你的数据流量造成大量额外开销"):
+                size 20
+            text _("请确认你明白自己在做什么, 或者已得到有资质的技术人员的指导"):
+                size 20
