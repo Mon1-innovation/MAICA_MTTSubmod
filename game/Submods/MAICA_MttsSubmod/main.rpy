@@ -273,7 +273,7 @@ init python:
 
         @staticmethod
         def decode_str(text):
-            import sys, MTTS
+            import sys
             from cp936_decode import decode_cp936
             # 1. 统一转换为 Unicode 字符串
             decoded_text = text
