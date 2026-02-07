@@ -178,15 +178,17 @@ screen mtts_settings():
                             action ToggleDict(persistent.mtts, "use_custom_model_config", True, False)
                             hovered SetField(_tooltip, "value", _("高级参数可能大幅影响MTTS的表现.\n* 默认的高级参数已经是实践中的普遍最优配置, 不建议启用"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
-                    hbox:
-                        style_prefix "maica_check"
-                        if persistent.mtts.get('use_custom_model_config', False):
+                    if persistent.mtts.get('use_custom_model_config', False):
+                        hbox:
+                            style_prefix "maica_check"
                             textbutton _("设置高级参数"):
                                 style "maica_check_button"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
+                        hbox:
                             text _("! 如果启用并调整了高级参数, 生成结果将无法被远程缓存, 每个请求都需要推理和传输\n! 这可能对服务器和你的数据流量造成大量额外开销, 请慎重考虑\n* 清除你的本地缓存以采用新的表现"):
                                 color "#FF0000"
-                        else:
+                    else:
+                        hbox:
                             textbutton _("设置高级参数"):
                                 style "maica_check_button_disabled"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
