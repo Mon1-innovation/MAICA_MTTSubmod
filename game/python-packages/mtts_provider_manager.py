@@ -23,7 +23,7 @@ class DefaultLogger(object):
 
 logger = DefaultLogger()
 
-class MTTSProviderManager:
+class MTTSProviderManager(object):
     """MTTS服务提供商管理器 - 实例化模式"""
 
     # 类级别的共享数据
@@ -87,7 +87,6 @@ class MTTSProviderManager:
                     if not self._provider_id:
                         self._provider_id = self._last_provider_id
 
-                    self._servers = new_servers
                     return True
                 else:
                     self._isfailedresponse["description"] = res["exception"]
