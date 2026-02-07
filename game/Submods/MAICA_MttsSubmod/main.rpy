@@ -56,7 +56,16 @@ init -990 python:
 init -100 python in mtts:
     import mtts_package, store, os
     from mtts_provider_manager import MTTSProviderManager
-    mtts_package.logger = store.mas_submod_utils.submod_log
+
+    from logger_manager import get_logger_manager
+    _logger_manager = get_logger_manager()
+    _logger_manager.set_logger(store.mas_submod_utils.submod_log)
+
+    _logger_manager.register_injected_reference("mtts_package.logger", mtts_package, "logger")
+
+    import mtts_provider_manager
+    _logger_manager.register_injected_reference("mtts_provider_manager.logger", mtts_provider_manager, "logger")
+
     basedir = os.path.normpath(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod"))
     store.mas_registerAPIKey("Maica_Token", "Maica Token")
     _current_label = ""
