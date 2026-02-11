@@ -4,6 +4,7 @@
             {
                 "name":"Song Detection",
                 "condition":"mtts._current_label in mas_songs.song_db",
+                "regex_text":"~.*~",
                 "action":[],
                 "priority":80
             },
