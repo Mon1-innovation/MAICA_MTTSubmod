@@ -376,7 +376,7 @@ init python:
 
             if persistent.mtts["ignore_playername"] and p_name in text:
                 text = text.replace(p_name, " ")
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name"))
+                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name")
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
