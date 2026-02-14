@@ -125,14 +125,14 @@ screen mtts_settings():
                         style_prefix "generic_fancy_check"
                         textbutton _("替换玩家名称: [persistent.mtts.get('replace_playername')]"):
                             action ToggleDict(persistent.mtts, "replace_playername", True, False)
-                            hovered SetField(_tooltip, "value", _("是否在MTTS生成中替换玩家名称. \n! 该替换直接通过正则实现, 若你的游戏内名称容易在正常词句中出现, 则不要使用"))
+                            hovered SetField(_tooltip, "value", _("是否在MTTS生成中替换玩家名称.\n! 该替换直接通过正则实现, 若你的游戏内名称容易在正常词句中出现, 则不要使用"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
                     hbox:
                         style_prefix "maica_check"
                         textbutton _("替换为: [persistent.mtts.get('playername_replacement') or 'Empty']"):
                             action Show("mtts_playername_replace_input")
-                            hovered SetField(_tooltip, "value", _("配置你希望使用的配音名称. \n* 设为空以不读名称, 但这更容易引发表现问题"))
+                            hovered SetField(_tooltip, "value", _("配置你希望使用的配音名称.\n* 设为空以不读名称, 但这更容易引发表现问题"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
