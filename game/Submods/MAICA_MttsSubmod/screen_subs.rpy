@@ -70,6 +70,14 @@ screen mtts_login_input(message, returnto, ok_action = Hide("mtts_login_input"))
         input default "" value VariableInputValue(returnto) length 64
 
 
+screen mtts_playername_replace_input():
+    modal True
+    zorder 92
+
+    use maica_setter_medium_frame(_("请输入玩家名称的替换字符串（留空表示不替换）"),ok_action=[Hide("mtts_playername_replace_input")]):
+        input default persistent.mtts.get("playername_replacement", "") value DictInputValue(persistent.mtts, "playername_replacement") length 64
+
+
 screen mtts_node_setting():
     $ _tooltip = store._tooltip
     # python:

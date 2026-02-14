@@ -14,7 +14,7 @@ init -990 python:
         "drift_statshud_l": False,
         "drift_statshud_r": False,
         "use_custom_model_config": False,
-        "ignore_playername":False
+        "playername_replacement": ""
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -374,9 +374,10 @@ init python:
             unduplicated_text = self.remove_duplicated(replaced_text)
             text = unduplicated_text
 
-            if persistent.mtts["ignore_playername"] and p_name in text:
-                text = text.replace(p_name, " ")
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name")
+            replacement_str = persistent.mtts.get("playername_replacement", "")
+            if replacement_str and p_name in text:
+                text = text.replace(p_name, replacement_str)
+                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name with: {0}".format(replacement_str))
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))

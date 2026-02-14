@@ -104,9 +104,10 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "generic_fancy_check"
-                textbutton _("忽略玩家名称: [persistent.mtts.get('ignore_playername')]"):
-                    action ToggleDict(persistent.mtts, "ignore_playername", True, False)
-                    hovered SetField(_tooltip, "value", _("是否在TTS中忽略玩家名称。如果启用，TTS将不会朗读玩家输入的名称。"))
+                $ _nickname = persistent.mtts.get('playername_replacement', 'None') if persistent.mtts.get('playername_replacement', 'None') else "None"
+                textbutton _("玩家名称替换: [persistent.mtts.get('playername_replacement', 'None')]"):
+                    action Show("mtts_playername_replace_input")
+                    hovered SetField(_tooltip, "value", _("点击自定义玩家名称的替换字符串。留空表示不替换。"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
