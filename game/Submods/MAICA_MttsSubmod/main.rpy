@@ -401,8 +401,8 @@ init python:
                 return old_renpysay(who, what, interact, *args, **kwargs)
             
             replacement_str = persistent.mtts.get("playername_replacement", "")
-            if persistent.mtts.get("replace_playername") and p_name in text:
-                text = text.replace(p_name, replacement_str)
+            if persistent.mtts.get("replace_playername") and player in text:
+                text = text.replace(player, replacement_str)
                 store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name with: {0}".format(replacement_str))
 
 
