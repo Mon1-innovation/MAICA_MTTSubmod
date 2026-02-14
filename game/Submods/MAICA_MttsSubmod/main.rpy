@@ -375,10 +375,6 @@ init python:
             unduplicated_text = self.remove_duplicated(replaced_text)
             text = unduplicated_text
 
-            replacement_str = persistent.mtts.get("playername_replacement", "")
-            if persistent.mtts.get("replace_playername") and p_name in text:
-                text = text.replace(p_name, replacement_str)
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name with: {0}".format(replacement_str))
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
@@ -403,6 +399,12 @@ init python:
             if not rule['action']:
                 store.mtts_status = renpy.substitute(_("规则为空"))
                 return old_renpysay(who, what, interact, *args, **kwargs)
+            
+            replacement_str = persistent.mtts.get("playername_replacement", "")
+            if persistent.mtts.get("replace_playername") and p_name in text:
+                text = text.replace(p_name, replacement_str)
+                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name with: {0}".format(replacement_str))
+
 
             if rule['name'] == 'MAICA_Chat':
                 target_lang = store.maica.maica_instance.target_lang
