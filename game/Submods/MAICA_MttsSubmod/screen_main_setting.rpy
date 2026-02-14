@@ -103,6 +103,13 @@ screen mtts_settings():
             use prog_bar(_("语音音量"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
 
             hbox:
+                style_prefix "generic_fancy_check"
+                textbutton _("忽略玩家名称: [persistent.mtts.get('ignore_playername')]"):
+                    action ToggleDict(persistent.mtts, "ignore_playername", True, False)
+                    hovered SetField(_tooltip, "value", _("是否在TTS中忽略玩家名称。如果启用，TTS将不会朗读玩家输入的名称。"))
+                    unhovered SetField(_tooltip, "value", _tooltip.default)
+
+            hbox:
                 use divider(_("工具与功能"))
 
             hbox:
