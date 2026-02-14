@@ -103,14 +103,6 @@ screen mtts_settings():
             use prog_bar(_("语音音量"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
 
             hbox:
-                style_prefix "generic_fancy_check"
-                $ _nickname = persistent.mtts.get('playername_replacement', 'None') if persistent.mtts.get('playername_replacement', 'None') else "None"
-                textbutton _("玩家名称替换: [persistent.mtts.get('playername_replacement', 'None')]"):
-                    action Show("mtts_playername_replace_input")
-                    hovered SetField(_tooltip, "value", _("点击自定义玩家名称的替换字符串。留空表示不替换。"))
-                    unhovered SetField(_tooltip, "value", _tooltip.default)
-
-            hbox:
                 use divider(_("工具与功能"))
 
             hbox:
@@ -119,6 +111,29 @@ screen mtts_settings():
                     action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
                     hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
+
+            hbox:
+                frame:
+                    xmaximum 950
+                    xpos 30
+                    xfill True
+                    has vbox:
+                        xmaximum 950
+                        xfill True
+
+                    hbox:
+                        style_prefix "generic_fancy_check"
+                        textbutton _("替换玩家名称: [persistent.mtts.get('replace_playername')]"):
+                            action ToggleDict(persistent.mtts, "replace_playername", True, False)
+                            hovered SetField(_tooltip, "value", _("是否在MTTS生成中替换玩家名称. \n! 该替换直接通过正则实现, 若你的游戏内名称容易在正常词句中出现, 则不要使用"))
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
+
+                    hbox:
+                        style_prefix "maica_check"
+                        textbutton _("替换为: [persistent.mtts.get('playername_replacement') or 'Empty']"):
+                            action Show("mtts_playername_replace_input")
+                            hovered SetField(_tooltip, "value", _("配置你希望使用的配音名称. \n* 设为空以不读名称, 但这更容易引发表现问题"))
+                            unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
                 frame:
