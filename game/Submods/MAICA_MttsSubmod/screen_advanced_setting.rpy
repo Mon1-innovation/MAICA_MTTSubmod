@@ -98,7 +98,7 @@ screen mtts_advance_setting():
             # speed_factor - Float slider 0.5-2
             hbox:
                 spacing 10
-                xpos 0
+                xpos 30
                 style_prefix "generic_fancy_check"
                 textbutton "speed_factor":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "speed_factor")

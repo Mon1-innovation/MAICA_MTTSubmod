@@ -115,7 +115,7 @@ screen mtts_settings():
             hbox:
                 frame:
                     xmaximum 950
-                    xpos 30
+                    xpos 0
                     xfill True
                     has vbox:
                         xmaximum 950
