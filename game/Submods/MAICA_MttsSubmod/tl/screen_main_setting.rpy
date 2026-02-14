@@ -30,3 +30,23 @@ translate english strings:
     old "请确认你明白自己在做什么, 或者已得到有资质的技术人员的指导"
     new "Please confirm you understand what this means, or instructed by a MAICA technician"
 
+# TODO: Translation updated at 2026-02-14 21:24
+
+translate english strings:
+
+    # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:126
+    old "替换玩家名称: [persistent.mtts.get('replace_playername')]"
+    new "Replace player name: [persistent.mtts.get('replace_playername')]"
+
+    # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:128
+    old "是否在MTTS生成中替换玩家名称.\n! 该替换直接通过正则实现, 若你的游戏内名称容易在正常词句中出现, 则不要使用"
+    new "Enable or disable player name replacement in speech generation.\n! Implemented directly through regex. Do not use if your in-game name commonly appears in unrelated context"
+
+    # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:133
+    old "替换为: [persistent.mtts.get('playername_replacement') or 'Empty']"
+    new "Replace to: [persistent.mtts.get('playername_replacement') or 'Empty']"
+
+    # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:135
+    old "配置你希望使用的配音名称.\n* 设为空以不读名称, 但这更容易引发表现问题"
+    new "Configure your spoken name.\n* Leave empty to not pronounce, but may lead to behaviour issue"
+
