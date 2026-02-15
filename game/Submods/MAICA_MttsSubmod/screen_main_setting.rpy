@@ -115,7 +115,7 @@ screen mtts_settings():
             hbox:
                 frame:
                     xmaximum 950
-                    xpos 2
+                    xpos 4
                     xfill True
                     has vbox:
                         xmaximum 950
@@ -138,7 +138,7 @@ screen mtts_settings():
             hbox:
                 frame:
                     xmaximum 950
-                    xpos 2
+                    xpos 4
                     xfill True
                     has vbox:
                         xmaximum 950
@@ -165,7 +165,7 @@ screen mtts_settings():
             hbox:
                 frame:
                     xmaximum 950
-                    xpos 2
+                    xpos 4
                     xfill True
                     has vbox:
                         xmaximum 950
@@ -190,7 +190,7 @@ screen mtts_settings():
             hbox:
                 frame:
                     xmaximum 950
-                    xpos 2
+                    xpos 4
                     xfill True
                     has vbox:
                         xmaximum 950
