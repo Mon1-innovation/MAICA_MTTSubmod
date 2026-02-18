@@ -87,6 +87,7 @@ class MTTSProviderManager(object):
                     if not self._provider_id:
                         self._provider_id = self._last_provider_id
 
+                    self._servers = new_servers
                     return True
                 else:
                     self._isfailedresponse["description"] = res["exception"]
