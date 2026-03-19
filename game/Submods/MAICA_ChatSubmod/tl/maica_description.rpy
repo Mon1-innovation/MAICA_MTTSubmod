@@ -2,11 +2,11 @@ translate english python in maica:
     try:
         from bot_interface import PY2, PY3
     except Exception:
-        from mtts_package import PY2, PY3
+        from mtts import PY2, PY3
     try:
         maica_instance.MaicaAiStatus._descriptions.update({
             maica_instance.MaicaAiStatus.NOT_READY: u"Waiting for account setup",
-            maica_instance.MaicaAiStatus.WAIT_AVAILABILITY:u"Service status acquiring failed, restart the game and check mas.log if issue persists",
+            maica_instance.MaicaAiStatus.WAIT_AVAILABILITY:u"Core not initialized, check mas.log if issue persists",
             maica_instance.MaicaAiStatus.WAIT_AUTH: u"Account acquired, verifying",
             maica_instance.MaicaAiStatus.WAIT_SERVER_TOKEN: u"Waiting for token verification",
             maica_instance.MaicaAiStatus.WAIT_USE_TOKEN: u"Waiting for token",
@@ -23,8 +23,8 @@ translate english python in maica:
             maica_instance.MaicaAiStatus.REQUEST_PING: u"Send PING",
             maica_instance.MaicaAiStatus.TOKEN_FAILED: u"Token verification failed",
             maica_instance.MaicaAiStatus.MODEL_NOT_FOUND: u"Model choice incorrect",
-            maica_instance.MaicaAiStatus.TOKEN_MAX_EXCEEDED:u"Session length over 28672 tokens, part of session is cut",
-            maica_instance.MaicaAiStatus.TOKEN_24000_EXCEEDED:u"Session length over 24576 tokens, will be cutted as exceeding 28672",
+            maica_instance.MaicaAiStatus.TOKEN_MAX_EXCEEDED:u"Session length exceeded, part of session is cropped",
+            maica_instance.MaicaAiStatus.TOKEN_24000_EXCEEDED:u"Session length near threshold, will be cropped when exceeding",
             maica_instance.MaicaAiStatus.WSS_CLOSED_UNEXCEPTED:u"Websocket closed unexpectedly, check submod_log for details" if PY2 else u"Websocket closed unexpectedly, please reconfirm datapack extraction, check submod_log for details",
             maica_instance.MaicaAiStatus.SAVEFILE_NOTFOUND:u"Savefile for current session not found",
             maica_instance.MaicaAiStatus.SERVER_MAINTAIN:u"Server is under maintaince, please wait for further announcement",
