@@ -107,12 +107,12 @@ translate english strings:
 translate english strings:
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:46
-    old "> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, 而不是源代码"
-    new "> Warning: MTTS Libs version not found. Please install from Release, not source code"
+    old "> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, {color=#ff0000}而不是源代码{/color}"
+    new "> Warning: MTTS Libs version not found. Please install from Release, {color=#ff0000}NOT source code{/color}"
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:50
-    old "> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请从Release完整地更新MTTS"
-    new "> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update from Release"
+    old "> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请{color=#ff0000}从Release{/color}完整地更新MTTS"
+    new "> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update {color=#ff0000}from Release{/color}"
 
 # TODO: Translation updated at 2026-01-20 16:32
 
