@@ -2,7 +2,7 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "1.2.3"
+    mtts_version = "1.2.5"
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
@@ -44,11 +44,11 @@ screen mtts_settingpane():
             $ res, libv, uiv = store.mtts.validate_version()
             if res is None:
                 hbox:
-                    text _("> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, 而不是源代码"):
+                    text _("> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, {color=#ff0000}而不是源代码{/color}"):
                         style "main_menu_version_l"
             elif res != 0:
                 hbox:
-                    text _("> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请从Release完整地更新MTTS"):
+                    text _("> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请{color=#ff0000}从Release{/color}完整地更新MTTS"):
                         style "main_menu_version_l"
 
             text "":
