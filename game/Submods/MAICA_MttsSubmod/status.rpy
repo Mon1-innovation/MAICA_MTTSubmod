@@ -41,7 +41,7 @@ init -1 python:
 
 screen maicatts_stat_lite():
     zorder 90
-    if not persistent.mtts.get("ministathud", False):
+    if not persistent.mtts.get("ministathud", False) or not mas_HKBIsVisible():
         null
     else:    
         python:
