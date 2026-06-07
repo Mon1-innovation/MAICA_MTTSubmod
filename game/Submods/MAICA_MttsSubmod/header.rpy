@@ -59,12 +59,12 @@ screen mtts_settingpane():
             xfill True
             style_prefix "check"
 
-            if not persistent.mtts["_chat_installed"]:
-                textbutton _("> 使用账号生成令牌 (独立模式)"):
-                    action Show("mtts_login")
-            else:
+            if persistent.mtts["_chat_installed"] and store.maica.maica_instance.is_accessable():
                 textbutton _("> 使用账号生成令牌 (Blessland)"):
                     action Show("maica_login")
+            else:
+                textbutton _("> 使用账号生成令牌 (独立模式)"):
+                    action Show("mtts_login")
             textbutton _("> MTTS参数与设置"):
                 action Show("mtts_settings")
 
