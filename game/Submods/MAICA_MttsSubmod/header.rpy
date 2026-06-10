@@ -74,7 +74,7 @@ screen mtts_settingpane():
 
 
 init python:
-    def _maica_clear():
+    def _mtts_clear():
         store._maica_LoginAcc = ""
         store._maica_LoginPw = ""
         store._maica_LoginEmail = ""
@@ -87,7 +87,7 @@ init python:
         except Exception:
             return isinstance(x, str)
 
-    def _maica_verify_token():
+    def _mtts_verify_token():
         res = store.mtts.mtts_instance._verify_token()
         if res.get("success"):
             c = res.get("content", None)

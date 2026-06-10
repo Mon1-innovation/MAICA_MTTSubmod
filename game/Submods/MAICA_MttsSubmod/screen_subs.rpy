@@ -5,11 +5,11 @@ screen mtts_login():
     zorder 92
     $ ok_action = [
                     Function(store.mtts.mtts_instance._gen_token, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
-                    Function(_maica_verify_token),
-                    Function(_maica_clear),
+                    Function(_mtts_verify_token),
+                    Function(_mtts_clear),
                     Hide("mtts_login")
                     ]
-    $ cancel_action = [Function(_maica_clear), Hide("mtts_login")]
+    $ cancel_action = [Function(_mtts_clear), Hide("mtts_login")]
 
     use maica_setter_medium_frame(ok_action=ok_action, cancel_action=cancel_action):
 
