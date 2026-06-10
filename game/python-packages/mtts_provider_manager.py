@@ -53,7 +53,7 @@ class MTTSProviderManager(object):
         "ttsInterface": "http://127.0.0.1:7000/tts"
     }
 
-    _provider_list = "https://maicadev.monika.love/api/servers"
+    _provider_list = "https://maicadev.monika.love/tts/servers"
     
 
     def __init__(self, pid=None):
