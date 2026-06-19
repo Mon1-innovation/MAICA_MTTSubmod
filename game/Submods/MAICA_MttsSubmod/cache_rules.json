@@ -14,7 +14,7 @@
                 "regex_label":null,
                 "variable":["player"],
                 "action":["local"],
-                "min_len":3,
+                "min_len":1,
                 "priority":0
             },
             {
@@ -22,7 +22,7 @@
                 "regex_text":null,
                 "regex_label":"maica_talking",
                 "action":["local"],
-                "min_len":3,
+                "min_len":1,
                 "priority":100
             },
             {
@@ -30,7 +30,7 @@
                 "regex_text":null,
                 "regex_label":"^test_match_rule$",
                 "action":[],
-                "min_len":3,
+                "min_len":1,
                 "priority":100
             },
             {
@@ -38,7 +38,7 @@
                 "regex_text":".*",
                 "regex_label":null,
                 "action":["local", "remote"],
-                "min_len":3,
+                "min_len":1,
                 "priority":-100
             }
         ],
