@@ -16,6 +16,7 @@ init -990 python:
         "use_custom_model_config": False,
         "replace_playername": False,
         "playername_replacement": "",
+        "generate_timeout": 15,
     }
     if persistent.mtts is None:
         persistent.mtts = mtts_defaultsettings
@@ -87,6 +88,7 @@ init -100 python in mtts:
         cache_path = basedir + "/cache",
     )
     mtts_instance.user_acc = u""
+    mtts_instance.generate_timeout = store.persistent.mtts.get("generate_timeout", 15)
     matcher = mtts_package.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
     AsyncTask = mtts_package.AsyncTask
     def sync_provider_id(pid):
@@ -181,6 +183,7 @@ init 10 python in mtts:
         store.mtts.mtts_instance.provider_id = store.persistent.mtts["provider_id"]
         store.mtts.mtts_instance.drift_statshud_l = store.persistent.mtts["drift_statshud_l"]
         store.mtts.mtts_instance.drift_statshud_r = store.persistent.mtts["drift_statshud_r"]
+        store.mtts.mtts_instance.generate_timeout = store.persistent.mtts["generate_timeout"]
         
     def discard_settings():
         store.persistent.mtts["enabled"] = store.mtts.mtts_instance.enabled
@@ -190,6 +193,7 @@ init 10 python in mtts:
         store.persistent.mtts["provider_id"] = store.mtts.mtts_instance.provider_manager._provider_id
         store.persistent.mtts["drift_statshud_l"] = store.mtts.mtts_instance.drift_statshud_l
         store.persistent.mtts["drift_statshud_r"] = store.mtts.mtts_instance.drift_statshud_r
+        store.persistent.mtts["generate_timeout"] = store.mtts.mtts_instance.generate_timeout
         
 
     def reset_settings():
@@ -429,11 +433,25 @@ init python:
             )
             name = mtts.mtts_instance.cache.get_cachename(text = text, label_name=store.mtts._current_label)
 
+            import time
+            generation_timed_out = False
+            try:
+                generate_timeout = max(1, int(persistent.mtts.get("generate_timeout", 15)))
+            except Exception:
+                generate_timeout = 15
+            wait_started_at = time.time()
+
             while not task.is_finished:
+                if time.time() - wait_started_at >= generate_timeout:
+                    generation_timed_out = True
+                    store.mas_submod_utils.submod_log.info("[MTTS TIMEOUT] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
+                    break
                 old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
                 _history_list.pop()
 
-            if task.is_success:
+            if generation_timed_out:
+                pass
+            elif task.is_success:
                 res = task.result
                 if res.is_success():
                     store.mtts_status = renpy.substitute(_("播放中"))

@@ -420,6 +420,7 @@ class MTTS:
         self.ministathud = True
         self.drift_statshud_l = False
         self.drift_statshud_r = False
+        self.generate_timeout = 15
         # self.user_acc = ""
         # self.provider_id = None
         self.provider_manager = mtts_provider_manager.MTTSProviderManager()
@@ -504,7 +505,7 @@ class MTTS:
         params.update(**kwargs)
         req = requests.get(self.get_api_url("generate"), params={"access_token": self.token,
              "content": json.dumps(params)
-        })
+        }, timeout=self.generate_timeout)
         if req.status_code == 200:
             try:
                 req.json()

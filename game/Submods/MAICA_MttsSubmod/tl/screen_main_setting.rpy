@@ -50,3 +50,13 @@ translate english strings:
     old "配置你希望使用的配音名称.\n* 设为空以不读名称, 但这更容易引发表现问题"
     new "Configure your spoken name.\n* Leave empty to not pronounce, but may lead to behaviour issue"
 
+# TODO: Translation updated at 2026-06-19
+
+translate english strings:
+
+    old "生成超时"
+    new "Generation timeout"
+
+    old "TTS生成超过该时间后将静默跳过并继续对话.\n* 设得太短可能导致语音经常被跳过"
+    new "Silently skip TTS and continue dialogue if generation exceeds this time.\n* Setting this too low may skip speech often"
+
