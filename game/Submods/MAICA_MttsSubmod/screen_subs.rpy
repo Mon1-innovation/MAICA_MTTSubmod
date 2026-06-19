@@ -28,13 +28,13 @@ screen mtts_login():
             if use_email:
                 textbutton _("> 改为用户名登录"):
                     text_size 15
-                    action [ToggleVariable("use_email"), Function(_maica_clear)]
+                    action [ToggleVariable("use_email"), Function(_mtts_clear)]
                     selected False
 
             else:
                 textbutton _("> 改为邮箱登录"):
                     text_size 15
-                    action [ToggleVariable("use_email"), Function(_maica_clear)]
+                    action [ToggleVariable("use_email"), Function(_mtts_clear)]
                     selected False
 
         hbox:
