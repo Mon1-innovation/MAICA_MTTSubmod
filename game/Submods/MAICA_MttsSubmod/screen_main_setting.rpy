@@ -104,8 +104,8 @@ screen mtts_settings():
             $ tooltip_volume = _("TTS的语音音量")
             use prog_bar(_("语音音量"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
 
-            $ tooltip_generate_timeout = _("TTS生成超过该时间后将静默跳过并继续对话.\n* 设得太短可能导致语音经常被跳过")
-            use prog_bar(_("生成超时"), 400, tooltip_generate_timeout, "generate_timeout", 1, 120, istime=True, sdict="mtts")
+            $ tooltip_generate_timeout = _("若超过指定时间仍未收到响应, 则跳过本句语音.\n* 请不要设置得太短")
+            use prog_bar(_("等待限制(秒)"), 400, tooltip_generate_timeout, "generate_timeout", 1, 120, istime=True, sdict="mtts")
 
             hbox:
                 use divider(_("工具与功能"))

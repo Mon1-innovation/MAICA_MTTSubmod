@@ -54,9 +54,9 @@ translate english strings:
 
 translate english strings:
 
-    old "生成超时"
-    new "Generation timeout"
+    old "等待限制(秒)"
+    new "Generation timeout (s)"
 
-    old "TTS生成超过该时间后将静默跳过并继续对话.\n* 设得太短可能导致语音经常被跳过"
-    new "Silently skip TTS and continue dialogue if generation exceeds this time.\n* Setting this too low may skip speech often"
+    old "若超过指定时间仍未收到响应, 则跳过本句语音.\n* 请不要设置得太短"
+    new "Skip current sentence if response time exceeds.\n* Do not set this too low"
 
