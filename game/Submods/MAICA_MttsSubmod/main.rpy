@@ -139,16 +139,22 @@ init -100 python in mtts:
         else:
             store.mas_submod_utils.submod_log.warning("")
 
+    _cached_version_result = None
+
     def validate_version():
+        global _cached_version_result
+        if _cached_version_result is not None:
+            return _cached_version_result
         # if not (config.debug or config.developer or store.maica.maica_instance._ignore_accessable):
         libv_path = os.path.normpath(os.path.join(renpy.config.basedir, "game", "python-packages", "mtts_release_version"))
         if not os.path.exists(libv_path):
-            return None, None, None
+            _cached_version_result = (None, None, None)
         else:
             with open(libv_path, 'r') as libv_file:
                 libv = libv_file.read()
-        uiv = store.mtts_version
-        return store.mas_utils.compareVersionLists(libv.strip().split('.'), uiv.strip().split('.')), libv, uiv
+            uiv = store.mtts_version
+            _cached_version_result = (store.mas_utils.compareVersionLists(libv.strip().split('.'), uiv.strip().split('.')), libv, uiv)
+        return _cached_version_result
 
     def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
         # Calculate the number of filled positions in the progress bar

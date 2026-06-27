@@ -3,6 +3,7 @@ init -990 python:
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
     mtts_version = "1.2.10"
+    store._mtts_donation_dir = os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation"))
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
@@ -68,7 +69,7 @@ screen mtts_settingpane():
             textbutton _("> MTTS参数与设置"):
                 action Show("mtts_settings")
 
-            if os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation")):
+            if store._mtts_donation_dir:
                 textbutton _("> 向 MAICA 捐赠"):
                     action Show("mtts_support")
 
