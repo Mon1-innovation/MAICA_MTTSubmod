@@ -11,11 +11,16 @@ init 980 python:
             except:
                 pass
 
+        def m_1_2_10():
+            if renpy.android and config.language != "chinese":
+                persistent.mtts["provider_id"] = 1
+
         import migrations
         migration = migrations.migration_instance(persistent._mtts_last_version, store.mtts_version)
         migration.migration_queue = [
             ("0.1.10", migration_0_1_10),
-            ("1.0.4", m_1_0_4)
+            ("1.0.4", m_1_0_4),
+            ("1.2.10", m_1_2_10)
         ]
         migration.migrate()
         persistent._mtts_last_version = store.mtts_version
