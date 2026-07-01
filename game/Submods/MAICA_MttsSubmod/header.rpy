@@ -60,7 +60,7 @@ screen mtts_settingpane():
             xfill True
             style_prefix "check"
 
-            if persistent.mtts["_chat_installed"] and store.maica.maica_instance.is_accessable():
+            if mtts_can_use_blessland_login():
                 textbutton _("> 使用账号生成令牌 (Blessland)"):
                     action Show("maica_login")
             else:
@@ -88,6 +88,19 @@ init python:
         except Exception:
             return isinstance(x, str)
 
+    def mtts_has_maica_instance():
+        if not persistent.mtts.get("_chat_installed", False):
+            return False
+        return hasattr(store, "maica") and hasattr(store.maica, "maica_instance")
+
+    def mtts_can_use_blessland_login():
+        if not mtts_has_maica_instance():
+            return False
+        try:
+            return store.maica.maica_instance.is_accessable()
+        except Exception:
+            return False
+
     def _mtts_verify_token():
         res = store.mtts.mtts_instance._verify_token()
         if res.get("success"):
@@ -106,6 +119,8 @@ init python:
         """
         
         if not persistent.mtts.get("_chat_installed", False):
+            return
+        if not mtts_has_maica_instance():
             return
 
         m = store.mtts.mtts_instance
@@ -274,4 +289,3 @@ screen mtts_workload_stat():
                     size 15
                     font maica_confont
                 timer 1.0 repeat True action Function(check_and_update)
-

@@ -416,7 +416,7 @@ init python:
                 store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name with: {0}".format(replacement_str))
 
 
-            if rule['name'] == 'MAICA_Chat':
+            if rule['name'] == 'MAICA_Chat' and mtts_has_maica_instance():
                 target_lang = store.maica.maica_instance.target_lang
             else:
                 target_lang = "zh" if config.language == 'chinese' else 'en'
