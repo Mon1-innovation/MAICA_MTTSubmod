@@ -101,3 +101,26 @@ def test_main_queues_extend_voice_segments_without_clearing_voice_queue():
 
     assert "renpy.music.queue(" in text
     assert "clear_queue=False" in text
+
+
+def test_extend_generation_indicator_keeps_previous_text_visible():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert "define MTTS_GENERATION_WAIT_SECONDS = 0.3" in text
+    assert "def build_generation_wait_text(self, is_extend):" in text
+    assert 'u" {image=mtts_spinner}{fast}{w=%s}{nw}" % MTTS_GENERATION_WAIT_SECONDS' in text
+    assert "return self._last_raw_text + spinner" in text
+    assert 'return spinner' in text
+    assert 'u" {color=#9a9a9a}"' not in text
+    assert "mtts_spinner_0" not in text
+    assert '"...{w=0.3}{nw}"' not in text
+
+
+def test_generation_indicator_uses_single_filmstrip_image():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert 'image mtts_spinner = renpy.display.anim.Filmstrip(' in text
+    assert '"mod_assets/mtts_img/mtts_spinner_strip.png"' in text
+    assert "(20, 20)" in text
+    assert "(8, 1)" in text
+    assert "MTTS_GENERATION_WAIT_SECONDS / 8.0" in text

@@ -1,3 +1,12 @@
+define MTTS_GENERATION_WAIT_SECONDS = 0.3
+
+image mtts_spinner = renpy.display.anim.Filmstrip(
+    "mod_assets/mtts_img/mtts_spinner_strip.png",
+    (20, 20),
+    (8, 1),
+    MTTS_GENERATION_WAIT_SECONDS / 8.0
+)
+
 init -1500 python:
     if not config.language:
         config.language = "english"
@@ -270,6 +279,12 @@ init python:
             kw["interact"] = interact
             return old_renpysay(who, what, *args, **kw)
 
+        def build_generation_wait_text(self, is_extend):
+            spinner = u" {image=mtts_spinner}{fast}{w=%s}{nw}" % MTTS_GENERATION_WAIT_SECONDS
+            if is_extend and self._last_raw_text:
+                return self._last_raw_text + spinner
+            return spinner
+
         @property
         def conditions(self):
             _acc = store.mtts._acc
@@ -470,7 +485,7 @@ init python:
                     generation_timed_out = True
                     store.mas_submod_utils.submod_log.info("[MTTS TIMEOUT] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
                     break
-                self.call_old_say(who, "...{w=0.3}{nw}", interact, args, kwargs)
+                self.call_old_say(who, self.build_generation_wait_text(is_extend), interact, args, kwargs)
                 _history_list.pop()
 
             if generation_timed_out:
