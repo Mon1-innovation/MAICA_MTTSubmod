@@ -372,7 +372,7 @@ init python:
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if (
                 not self.conditions
-                # or self.is_duplicated(what)
+                or self.is_duplicated(what)
             ):
                 return old_renpysay(who, what, interact, *args, **kwargs)
             
