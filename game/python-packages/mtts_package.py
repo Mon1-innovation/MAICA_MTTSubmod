@@ -78,6 +78,29 @@ class LimitedList(list):
         # return f"LimitedList(max_size={self.max_size}, {super().__repr__()})"
         return "LimitedList(max_size={}, {})".format(self.max_size, super(LimitedList, self).__repr__())
 
+
+class ExtendTextTracker(object):
+    def __init__(self, default_interjection="{fast}"):
+        self.default_interjection = default_interjection
+        self.pending_raw = None
+
+    def begin_extend(self, raw_text):
+        self.pending_raw = raw_text
+
+    def resolve(self, text, previous_text=None, interjection=None):
+        if self.pending_raw is not None:
+            raw_text = self.pending_raw
+            self.pending_raw = None
+            return True, raw_text
+
+        marker = interjection if interjection is not None else self.default_interjection
+        if previous_text:
+            prefix = previous_text + marker
+            if text.startswith(prefix):
+                return True, text[len(prefix):]
+
+        return False, text
+
 class RuleMatcher:
     """缓存规则匹配器，用于根据文本和标签匹配缓存规则"""
 
@@ -855,5 +878,4 @@ class AsyncTask(object):
     def wait(self, timeout=None):
         """等待任务完成（可选超时时间）"""
         self._thread.join(timeout=timeout)
-
 

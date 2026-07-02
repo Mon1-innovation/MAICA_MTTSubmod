@@ -220,7 +220,7 @@ init python in mtts:
     _acc = AsyncTask(mtts_instance.accessable)
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
-    old_renpysay = renpy.say
+    old_renpysay = renpy.exports.say
     import mtts_package
     PY2, PY3 = mtts_package.PY2, mtts_package.PY3
 
@@ -258,6 +258,17 @@ init python:
 
         def __init__(self):
             self._history = mtts_package.LimitedList(3)
+            self._extend_tracker = mtts_package.ExtendTextTracker()
+            self._last_raw_text = None
+
+        def begin_extend(self, what):
+            self._extend_tracker.begin_extend(what)
+
+        @staticmethod
+        def call_old_say(who, what, interact, args, kwargs):
+            kw = dict(kwargs)
+            kw["interact"] = interact
+            return old_renpysay(who, what, *args, **kw)
 
         @property
         def conditions(self):
@@ -372,14 +383,19 @@ init python:
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if (
                 not self.conditions
-                or self.is_duplicated(what)
             ):
-                return old_renpysay(who, what, interact, *args, **kwargs)
+                return self.call_old_say(who, what, interact, args, kwargs)
             
             if who != store.m:
-                return old_renpysay(who, what, interact, *args, **kwargs)
+                self._extend_tracker.pending_raw = None
+                return self.call_old_say(who, what, interact, args, kwargs)
 
-            original_text = renpy.substitute(what)
+            is_extend, raw_tts_text = self._extend_tracker.resolve(
+                what,
+                self._last_raw_text,
+                getattr(config, "extend_interjection", "{fast}")
+            )
+            original_text = renpy.substitute(raw_tts_text)
             decoded_text = self.decode_str(original_text)
             replaced_text = store.mtts.matcher.apply_replace_rules(decoded_text, store=store)
             unduplicated_text = self.remove_duplicated(replaced_text)
@@ -388,6 +404,7 @@ init python:
 
             # 调试日志：记录文本替换过程
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
+            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Is extend: {0}".format(is_extend))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Decoded text: {0}".format(repr(decoded_text)))
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
             # store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(clean_text)))
@@ -408,7 +425,8 @@ init python:
 
             if not rule['action']:
                 store.mtts_status = renpy.substitute(_("规则为空"))
-                return old_renpysay(who, what, interact, *args, **kwargs)
+                self._last_raw_text = what
+                return self.call_old_say(who, what, interact, args, kwargs)
             
             replacement_str = persistent.mtts.get("playername_replacement", "")
             if persistent.mtts.get("replace_playername") and player in text:
@@ -452,7 +470,7 @@ init python:
                     generation_timed_out = True
                     store.mas_submod_utils.submod_log.info("[MTTS TIMEOUT] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
                     break
-                old_renpysay(who, "...{w=0.3}{nw}", interact, *args, **kwargs)
+                self.call_old_say(who, "...{w=0.3}{nw}", interact, args, kwargs)
                 _history_list.pop()
 
             if generation_timed_out:
@@ -462,10 +480,18 @@ init python:
                 if res.is_success():
                     store.mtts_status = renpy.substitute(_("播放中"))
                     renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
-                    renpy.music.play(
-                        store.MASAudioData(res.data, name),#os.path.join(mtts.mtts.cache_path, "test.ogg"),
-                        channel="voice",
-                    )
+                    audio_data = store.MASAudioData(res.data, name)
+                    if is_extend:
+                        renpy.music.queue(
+                            audio_data,
+                            channel="voice",
+                            clear_queue=False
+                        )
+                    else:
+                        renpy.music.play(
+                            audio_data,#os.path.join(mtts.mtts.cache_path, "test.ogg"),
+                            channel="voice",
+                        )
                 else:
                     # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
                     error_msg = res.reason() if getattr(res, 'reason', None) else 'Unknown'
@@ -488,7 +514,8 @@ init python:
             store.mtts_status = renpy.substitute(_("待机"))
 
             self._history.append(text)
-            old_renpysay(who, what, interact, *args, **kwargs)
+            self._last_raw_text = what
+            self.call_old_say(who, what, interact, args, kwargs)
 
     def mtts_refresh_status_once():
         # 一次性刷新，开关手动调用
@@ -509,3 +536,13 @@ init python:
 
     mtts_say = MttsSay()
     renpy.say = mtts_say
+    renpy.exports.say = mtts_say
+
+    _mtts_original_extend = extend
+    def mtts_extend(what, interact=True, *args, **kwargs):
+        store.mtts_say.begin_extend(what)
+        kw = dict(kwargs)
+        kw["interact"] = interact
+        return _mtts_original_extend(what, *args, **kw)
+    mtts_extend.record_say = False
+    extend = mtts_extend
