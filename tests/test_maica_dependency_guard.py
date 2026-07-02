@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import struct
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,7 +107,7 @@ def test_main_queues_extend_voice_segments_without_clearing_voice_queue():
 def test_extend_generation_indicator_keeps_previous_text_visible():
     text = MAIN.read_text(encoding="utf-8")
 
-    assert "define MTTS_GENERATION_WAIT_SECONDS = 0.3" in text
+    assert "define MTTS_SPINNER_CYCLE_SECONDS = 1.2" in text
     assert "def build_generation_wait_text(self, is_extend, wait_seconds):" in text
     assert 'u" {image=mtts_spinner}{fast}{w=%s}{nw}" % wait_seconds' in text
     assert "return self._last_raw_text + spinner" in text
@@ -116,14 +117,34 @@ def test_extend_generation_indicator_keeps_previous_text_visible():
     assert '"...{w=0.3}{nw}"' not in text
 
 
-def test_generation_indicator_uses_single_filmstrip_image():
+def test_generation_indicator_uses_scaled_frames_from_single_strip_image():
     text = MAIN.read_text(encoding="utf-8")
 
-    assert 'image mtts_spinner = renpy.display.anim.Filmstrip(' in text
+    assert "def mtts_build_spinner_animation():" in text
+    assert "renpy.display.anim.Animation(*args)" in text
+    assert "renpy.display.layout.Position(" in text
     assert '"mod_assets/mtts_img/mtts_spinner_strip.png"' in text
-    assert "(20, 20)" in text
-    assert "(8, 1)" in text
-    assert "MTTS_GENERATION_WAIT_SECONDS / 8.0" in text
+    assert "frame_width = 260" in text
+    assert "frame_height = 320" in text
+    assert "frame_count = 12" in text
+    assert "define MTTS_SPINNER_DISPLAY_SIZE = 20" in text
+    assert "MTTS_SPINNER_CYCLE_SECONDS / float(frame_count)" in text
+    assert "im.Crop(source, index * frame_width, 0, frame_width, frame_height)" in text
+    assert "im.Scale(frame, MTTS_SPINNER_DISPLAY_SIZE, MTTS_SPINNER_DISPLAY_SIZE)" in text
+    assert "yanchor=0.5" in text
+    assert "ypos=0.5" in text
+    assert "maxsize=" not in text
+
+
+def test_generation_indicator_strip_keeps_twelve_source_frames():
+    spinner_path = ROOT / "game" / "mod_assets" / "mtts_img" / "mtts_spinner_strip.png"
+
+    with spinner_path.open("rb") as handle:
+        header = handle.read(24)
+
+    assert header[:8] == b"\x89PNG\r\n\x1a\n"
+    width, height = struct.unpack(">II", header[16:24])
+    assert (width, height) == (3120, 320)
 
 
 def test_async_task_is_renamed_and_supports_done_callbacks():

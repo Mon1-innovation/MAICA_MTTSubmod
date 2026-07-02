@@ -1,11 +1,27 @@
-define MTTS_GENERATION_WAIT_SECONDS = 0.3
+define MTTS_SPINNER_CYCLE_SECONDS = 1.2
+define MTTS_SPINNER_DISPLAY_SIZE = 20
 
-image mtts_spinner = renpy.display.anim.Filmstrip(
-    "mod_assets/mtts_img/mtts_spinner_strip.png",
-    (20, 20),
-    (8, 1),
-    MTTS_GENERATION_WAIT_SECONDS / 8.0
-)
+init -1500 python:
+    def mtts_build_spinner_animation():
+        source = "mod_assets/mtts_img/mtts_spinner_strip.png"
+        frame_width = 260
+        frame_height = 320
+        frame_count = 12
+        frame_delay = MTTS_SPINNER_CYCLE_SECONDS / float(frame_count)
+        args = []
+
+        for index in range(frame_count):
+            frame = im.Crop(source, index * frame_width, 0, frame_width, frame_height)
+            args.append(im.Scale(frame, MTTS_SPINNER_DISPLAY_SIZE, MTTS_SPINNER_DISPLAY_SIZE))
+            args.append(frame_delay)
+
+        return renpy.display.layout.Position(
+            renpy.display.anim.Animation(*args),
+            yanchor=0.5,
+            ypos=0.5
+        )
+
+image mtts_spinner = mtts_build_spinner_animation()
 
 init -1500 python:
     if not config.language:
