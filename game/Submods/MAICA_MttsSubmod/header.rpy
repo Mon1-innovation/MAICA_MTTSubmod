@@ -2,7 +2,7 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "1.2.10"
+    mtts_version = "1.2.11"
     store._mtts_donation_dir = os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation"))
     store.mas_submod_utils.Submod(
         author="P",
