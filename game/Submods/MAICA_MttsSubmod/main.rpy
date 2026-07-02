@@ -99,7 +99,7 @@ init -100 python in mtts:
     mtts_instance.user_acc = u""
     mtts_instance.generate_timeout = store.persistent.mtts.get("generate_timeout", 15)
     matcher = mtts_package.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
-    AsyncTask = mtts_package.AsyncTask
+    MTTSAsyncTask = mtts_package.MTTSAsyncTask
     def sync_provider_id(pid):
         """Switch provider node immediately (updates baseurl + reruns accessibility check)."""
         try:
@@ -119,7 +119,7 @@ init -100 python in mtts:
         # restart accessibility async task
         global _acc
         try:
-            _acc = AsyncTask(mtts_instance.accessable)
+            _acc = MTTSAsyncTask(mtts_instance.accessable)
         except Exception:
             _acc = None
         try:
@@ -226,7 +226,7 @@ init -100 python:
             pass
         return "微笑"  # 无匹配时返回 None
 init python in mtts:
-    _acc = AsyncTask(mtts_instance.accessable)
+    _acc = MTTSAsyncTask(mtts_instance.accessable)
 init python:
     persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
     old_renpysay = renpy.exports.say
@@ -269,6 +269,8 @@ init python:
             self._history = mtts_package.LimitedList(3)
             self._extend_tracker = mtts_package.ExtendTextTracker()
             self._last_raw_text = None
+            self._generation_wait_id = 0
+            self._active_generation_wait_id = None
 
         def begin_extend(self, what):
             self._extend_tracker.begin_extend(what)
@@ -279,8 +281,8 @@ init python:
             kw["interact"] = interact
             return old_renpysay(who, what, *args, **kw)
 
-        def build_generation_wait_text(self, is_extend):
-            spinner = u" {image=mtts_spinner}{fast}{w=%s}{nw}" % MTTS_GENERATION_WAIT_SECONDS
+        def build_generation_wait_text(self, is_extend, wait_seconds):
+            spinner = u" {image=mtts_spinner}{fast}{w=%s}{nw}" % wait_seconds
             if is_extend and self._last_raw_text:
                 return self._last_raw_text + spinner
             return spinner
@@ -462,7 +464,7 @@ init python:
             mtts.mtts_instance.local_cache = 'local' in rule['action']
             mtts.mtts_instance.remote_cache = 'remote' in rule['action']
 
-            task = mtts.AsyncTask(
+            task = mtts.MTTSAsyncTask(
                 mtts.mtts_instance.generate, 
                 text=text, 
                 label_name=store.mtts._current_label, 
@@ -479,14 +481,43 @@ init python:
             except Exception:
                 generate_timeout = 15
             wait_started_at = time.time()
+            self._generation_wait_id += 1
+            generation_wait_id = self._generation_wait_id
 
-            while not task.is_finished:
-                if time.time() - wait_started_at >= generate_timeout:
+            def wake_generation_wait(finished_task):
+                if self._generation_wait_id != generation_wait_id:
+                    return
+                if self._active_generation_wait_id != generation_wait_id:
+                    return
+                try:
+                    renpy.queue_event("dismiss")
+                except Exception as e:
+                    store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed to wake generation wait: {0}".format(e))
+
+            task.add_done_callback(wake_generation_wait)
+
+            while True:
+                if task.is_finished:
+                    break
+                elapsed = time.time() - wait_started_at
+                if elapsed >= generate_timeout:
                     generation_timed_out = True
+                    self._generation_wait_id += 1
+                    self._active_generation_wait_id = None
                     store.mas_submod_utils.submod_log.info("[MTTS TIMEOUT] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
                     break
-                self.call_old_say(who, self.build_generation_wait_text(is_extend), interact, args, kwargs)
+                remaining_wait = max(0.1, generate_timeout - elapsed)
+                self._active_generation_wait_id = generation_wait_id
+                if task.is_finished:
+                    self._active_generation_wait_id = None
+                    break
+                self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
+                self._active_generation_wait_id = None
                 _history_list.pop()
+
+            self._active_generation_wait_id = None
+            if task.is_finished and self._generation_wait_id == generation_wait_id:
+                self._generation_wait_id += 1
 
             if generation_timed_out:
                 pass

@@ -107,8 +107,8 @@ def test_extend_generation_indicator_keeps_previous_text_visible():
     text = MAIN.read_text(encoding="utf-8")
 
     assert "define MTTS_GENERATION_WAIT_SECONDS = 0.3" in text
-    assert "def build_generation_wait_text(self, is_extend):" in text
-    assert 'u" {image=mtts_spinner}{fast}{w=%s}{nw}" % MTTS_GENERATION_WAIT_SECONDS' in text
+    assert "def build_generation_wait_text(self, is_extend, wait_seconds):" in text
+    assert 'u" {image=mtts_spinner}{fast}{w=%s}{nw}" % wait_seconds' in text
     assert "return self._last_raw_text + spinner" in text
     assert 'return spinner' in text
     assert 'u" {color=#9a9a9a}"' not in text
@@ -124,3 +124,45 @@ def test_generation_indicator_uses_single_filmstrip_image():
     assert "(20, 20)" in text
     assert "(8, 1)" in text
     assert "MTTS_GENERATION_WAIT_SECONDS / 8.0" in text
+
+
+def test_async_task_is_renamed_and_supports_done_callbacks():
+    assert hasattr(mtts_package, "MTTSAsyncTask")
+    assert not hasattr(mtts_package, "AsyncTask")
+
+    callback_seen = []
+    task = mtts_package.MTTSAsyncTask(lambda: "ok")
+    task.add_done_callback(lambda finished_task: callback_seen.append(finished_task.result))
+    task.wait(2)
+
+    assert task.is_finished
+    assert task.is_success
+    assert callback_seen == ["ok"]
+
+
+def test_async_task_runs_callback_registered_after_completion():
+    callback_seen = []
+    task = mtts_package.MTTSAsyncTask(lambda: "late")
+    task.wait(2)
+
+    task.add_done_callback(lambda finished_task: callback_seen.append(finished_task.result))
+
+    assert callback_seen == ["late"]
+
+
+def test_main_uses_event_wakeup_for_generation_wait_instead_of_fixed_polling():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert "MTTSAsyncTask = mtts_package.MTTSAsyncTask" in text
+    assert "task = mtts.MTTSAsyncTask(" in text
+    assert "def wake_generation_wait" in text
+    assert 'renpy.queue_event("dismiss")' in text
+    assert "while not task.is_finished:" not in text
+
+
+def test_generation_wait_uses_remaining_timeout_not_spinner_period():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert "def build_generation_wait_text(self, is_extend, wait_seconds):" in text
+    assert 'u" {image=mtts_spinner}{fast}{w=%s}{nw}" % wait_seconds' in text
+    assert "remaining_wait = max(0.1, generate_timeout - elapsed)" in text

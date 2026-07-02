@@ -843,7 +843,7 @@ class MTTS:
         return self.__accessable
 import threading
 
-class AsyncTask(object):
+class MTTSAsyncTask(object):
     def __init__(self, func, *args, **kwargs):
         self._func = func
         self._args = args
@@ -853,6 +853,9 @@ class AsyncTask(object):
         self.traceback = None
         self.is_finished = False
         self.is_success = False
+        self._done_event = threading.Event()
+        self._callbacks = []
+        self._callback_lock = threading.RLock()
         
         self._thread = threading.Thread(target=self._run)
         self._thread.start()
@@ -866,10 +869,43 @@ class AsyncTask(object):
             self.exception = e
             self.traceback = traceback.format_exc()
             self.is_success = False
-            logger.error("AsyncTask failed with exception: %s", e)
+            logger.error("MTTSAsyncTask failed with exception: %s", e)
             logger.debug("Traceback: %s", self.traceback)
         finally:
             self.is_finished = True
+            self._run_done_callbacks()
+            self._done_event.set()
+
+    def add_done_callback(self, callback):
+        should_call_now = False
+        self._callback_lock.acquire()
+        try:
+            if self.is_finished:
+                should_call_now = True
+            else:
+                self._callbacks.append(callback)
+        finally:
+            self._callback_lock.release()
+
+        if should_call_now:
+            self._call_done_callback(callback)
+
+    def _run_done_callbacks(self):
+        self._callback_lock.acquire()
+        try:
+            callbacks = self._callbacks
+            self._callbacks = []
+        finally:
+            self._callback_lock.release()
+
+        for callback in callbacks:
+            self._call_done_callback(callback)
+
+    def _call_done_callback(self, callback):
+        try:
+            callback(self)
+        except Exception as e:
+            logger.error("MTTSAsyncTask done callback failed with exception: %s", e)
 
     @property
     def is_alive(self):
@@ -877,5 +913,4 @@ class AsyncTask(object):
 
     def wait(self, timeout=None):
         """等待任务完成（可选超时时间）"""
-        self._thread.join(timeout=timeout)
-
+        self._done_event.wait(timeout)
