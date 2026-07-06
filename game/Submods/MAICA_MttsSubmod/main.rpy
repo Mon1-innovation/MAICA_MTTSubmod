@@ -303,6 +303,53 @@ init python:
                 return self._last_raw_text + spinner
             return spinner
 
+        def begin_generation_wait_afm_scope(self):
+            try:
+                prefs = renpy.game.preferences
+                should_restore = (
+                    getattr(prefs, "using_afm_enable", False)
+                    and getattr(prefs, "afm_enable", False)
+                    and not getattr(prefs, "afm_after_click", False)
+                )
+                if should_restore:
+                    prefs.afm_after_click = True
+                return should_restore
+            except Exception as e:
+                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed entering AFM wait scope: {0}".format(e))
+                return False
+
+        def end_generation_wait_afm_scope(self, should_restore):
+            if not should_restore:
+                return
+
+            try:
+                prefs = renpy.game.preferences
+                prefs.afm_after_click = False
+                if getattr(prefs, "using_afm_enable", False):
+                    prefs.afm_enable = True
+                    renpy.restart_interaction()
+            except Exception as e:
+                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed leaving AFM wait scope: {0}".format(e))
+
+        def should_wait_for_voice_before_extend(self, what, is_extend, interact):
+            if is_extend or not interact or "{nw}" not in what:
+                return False
+
+            try:
+                prefs = renpy.game.preferences
+                return (
+                    getattr(prefs, "using_afm_enable", False)
+                    and getattr(prefs, "afm_enable", False)
+                    and getattr(prefs, "afm_time", 0)
+                )
+            except Exception as e:
+                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed checking AFM extend wait state: {0}".format(e))
+                return False
+
+        @staticmethod
+        def strip_no_wait_tags(what):
+            return what.replace("{nw}", "")
+
         @property
         def conditions(self):
             _acc = store.mtts._acc
@@ -527,7 +574,11 @@ init python:
                 if task.is_finished:
                     self._active_generation_wait_id = None
                     break
-                self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
+                restore_afm_scope = self.begin_generation_wait_afm_scope()
+                try:
+                    self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
+                finally:
+                    self.end_generation_wait_afm_scope(restore_afm_scope)
                 self._active_generation_wait_id = None
                 _history_list.pop()
 
@@ -577,7 +628,8 @@ init python:
 
             self._history.append(text)
             self._last_raw_text = what
-            self.call_old_say(who, what, interact, args, kwargs)
+            display_what = self.strip_no_wait_tags(what) if self.should_wait_for_voice_before_extend(what, is_extend, interact) else what
+            self.call_old_say(who, display_what, interact, args, kwargs)
 
     def mtts_refresh_status_once():
         # 一次性刷新，开关手动调用

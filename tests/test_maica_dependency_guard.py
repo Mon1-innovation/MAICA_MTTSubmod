@@ -181,6 +181,34 @@ def test_main_uses_event_wakeup_for_generation_wait_instead_of_fixed_polling():
     assert "while not task.is_finished:" not in text
 
 
+def test_programmatic_generation_wakeup_preserves_auto_forward_during_wait():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert "def begin_generation_wait_afm_scope(self):" in text
+    assert "def end_generation_wait_afm_scope(self, should_restore):" in text
+    assert "prefs.afm_after_click = True" in text
+    assert "prefs.afm_after_click = False" in text
+    assert "prefs.afm_enable = True" in text
+
+    wait_start = text.index("restore_afm_scope = self.begin_generation_wait_afm_scope()")
+    wait_call = text.index("self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)")
+    wait_end = text.index("self.end_generation_wait_afm_scope(restore_afm_scope)")
+    assert wait_start < wait_call < wait_end
+    assert "finally:" in text[wait_call:wait_end]
+
+
+def test_auto_forward_extend_lead_line_waits_for_voice_before_no_wait():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert "def should_wait_for_voice_before_extend(self, what, is_extend, interact):" in text
+    assert "def strip_no_wait_tags(what):" in text
+    assert "display_what = self.strip_no_wait_tags(what) if self.should_wait_for_voice_before_extend(what, is_extend, interact) else what" in text
+    assert "self.call_old_say(who, display_what, interact, args, kwargs)" in text
+
+    final_say_block = text[text.index("self._history.append(text)") :]
+    assert "self.call_old_say(who, what, interact, args, kwargs)" not in final_say_block
+
+
 def test_generation_wait_uses_remaining_timeout_not_spinner_period():
     text = MAIN.read_text(encoding="utf-8")
 
