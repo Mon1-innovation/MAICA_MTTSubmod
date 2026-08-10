@@ -7,11 +7,11 @@
 - [x] Regenerate and reconcile Chinese dialogue/string translations.
 - [x] Verify source contracts, repository tests, Ren'Py lint/compile, and generator output.
 - [x] Request advisory review and commit the branch.
-- [ ] Fast-forward merge the branch into `main` and rerun merged-result checks.
+- [x] Fast-forward merge the branch into `main` and rerun merged-result checks.
 
 ## Active slice
 
-Review completed; final branch integration is active.
+Review completed; final branch integration is recorded.
 
 ## Evidence refs
 
@@ -38,4 +38,4 @@ No implementation blockers. The SDK launcher patch is removed; recursive deletio
 
 ## Next step
 
-Merge the reviewed implementation into `main`, rerun the verification suite on the merged result, and report the retained Temp staging path for manual cleanup.
+Report the final evidence and the retained Temp staging path for manual cleanup.
