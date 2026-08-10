@@ -1,14 +1,14 @@
-translate english python:
+translate chinese python:
 
     import mtts_provider_manager as mpm
 
     mpm.MTTSProviderManager._isfailedresponse.update(
         {
-            "name":"ERROR: Unable to retrieve node information.",
-            "description": "Check the update log to get the current service status, or check submod_log.log for the cause of the failure.",
+            "name":"错误：无法获取节点信息",
+            "description": "查看更新日志以获取当前服务状态，或查看 submod_log.log 获取失败原因",
             "isOfficial": False,
             "portalPage": "https://forum.monika.love/d/3954",
-            "servingModel": "Check the update log to get the current service status, or check submod_log.log for the cause of the failure.",
+            "servingModel": "查看更新日志以获取当前服务状态，或查看 submod_log.log 获取失败原因",
             "modelLink": "",
             "wsInterface": "wss://maicadev.monika.love/websocket",
             "httpInterface": "https://maicadev.monika.love/api"
@@ -16,8 +16,8 @@ translate english python:
     )
     mpm.MTTSProviderManager._fakelocalprovider.update(
         {
-            "name":"Local Deployment",
-            "description": "When you have an available local deployment, select this node.",
+            "name":"本地部署",
+            "description": "当你有可用的本地部署时，选择此节点",
             "isOfficial": False,
             "portalPage": "https://github.com/PencilMario/MAICA",
             "servingModel": "None",

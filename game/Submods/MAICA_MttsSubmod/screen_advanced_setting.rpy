@@ -45,21 +45,21 @@ screen mtts_advance_setting():
             style_prefix "generic_fancy_check"
             hbox:
                 style_prefix "maica_check"
-                text _("关于这些参数的详细解释, 参见 "):
+                text _("For detailed explanations of these parameters, see "):
                     size 20
-                textbutton _("{u}MTTS 官方文档{/u}"):
+                textbutton _("{u}MTTS official documents{/u}"):
                     action OpenURL("https://github.com/Mon1-innovation/MAICA_MTTS/blob/main/document/API%20Document.txt")
                     text_size 20
-                text _(" 和 "):
+                text _(" and "):
                     size 20
-                textbutton _("{u}GPT-SoVITS 文档{/u}"):
+                textbutton _("{u}GPT-SoVITS documents{/u}"):
                     action OpenURL("https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api_v2.py")
                     text_size 20
             hbox:
-                text _("{size=-10}注意: 只有被勾选的高级参数才会被使用, 未勾选的参数将使用服务端默认设置")
+                text _("{size=-10}Only checked advanced parameters will be used; unchecked parameters use server defaults")
             hbox:
                 if not persistent.mtts.get('use_custom_model_config'):
-                    text _("{size=-10}你当前未启用'使用高级参数', 该页的所有设置都不会生效!")
+                    text _("{size=-10}You have not enabled 'Use advanced parameters'; none of the settings on this page will take effect!")
 
             # Basic Parameters (基础参数)
             #use divider_small(_("基础参数"))
@@ -75,7 +75,7 @@ screen mtts_advance_setting():
             #        unhovered SetField(_tooltip, "value", _tooltip.default)
 
             # Sampling Parameters (采样参数)
-            use divider_small(_("基础表现"))
+            use divider_small(_("Basic performance"))
 
             # text_split_method - Dropdown selection
             hbox:
@@ -84,15 +84,15 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "text_split_method":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "text_split_method")
-                    hovered SetField(_tooltip, "value", _("文本预切分模式, 一般只影响较长文本"))
+                    hovered SetField(_tooltip, "value", _("Text pre-split method, normally only affects long text"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("text_split_method", False):
                     hbox:
                         style_prefix "maica_check"
-                        textbutton _("切换: 当前为 [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"):
+                        textbutton _("Change: currently [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"):
                             action Show("mtts_text_split_selector")
-                            hovered SetField(_tooltip, "value", _("文本预切分模式, 一般只影响较长文本"))
+                            hovered SetField(_tooltip, "value", _("Text pre-split method, normally only affects long text"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
             # speed_factor - Float slider 0.5-2
@@ -102,13 +102,13 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "speed_factor":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "speed_factor")
-                    hovered SetField(_tooltip, "value", _("速度因子, 在推理过程中控制生成的语速.\n* 该数值与实际语速并非线性相关"))
+                    hovered SetField(_tooltip, "value", _("Speed factor, affects speaking speed in inference phrase.\n* Is not linear correlative with actual speaking speed"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("speed_factor", False):
-                    use prog_bar("speed_factor", 400, _("速度因子, 在推理过程中控制生成的语速.\n* 该数值与实际语速并非线性相关"), "speed_factor", 0.5, 2.0, sdict="mtts_advanced_setting")
+                    use prog_bar("speed_factor", 400, _("Speed factor, affects speaking speed in inference phrase.\n* Is not linear correlative with actual speaking speed"), "speed_factor", 0.5, 2.0, sdict="mtts_advanced_setting")
 
-            use divider_small(_("超参数"))
+            use divider_small(_("Hyperparameters"))
 
             # temperature - Float slider 0-2
             hbox:
@@ -117,11 +117,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "temperature":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "temperature")
-                    hovered SetField(_tooltip, "value", _("token选择的随机程度. 数值越高, 模型输出会越偏离普遍最佳情况"))
+                    hovered SetField(_tooltip, "value", _("Token sampling randomness. Higher values make the model output less like the generally optimal result"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("temperature", False):
-                    use prog_bar("temperature", 400, _("token选择的随机程度. 数值越高, 模型输出会越偏离普遍最佳情况"), "temperature", 0.0, 2.0, sdict="mtts_advanced_setting")
+                    use prog_bar("temperature", 400, _("Token sampling randomness. Higher values make the model output less like the generally optimal result"), "temperature", 0.0, 2.0, sdict="mtts_advanced_setting")
 
             # top_k - Integer slider 1-20
             hbox:
@@ -130,11 +130,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "top_k":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "top_k")
-                    hovered SetField(_tooltip, "value", _("token权重过滤数量. 非常不建议动这个"))
+                    hovered SetField(_tooltip, "value", _("Token weight filter count. Seriously do not touch this"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("top_k", False):
-                    use prog_bar("top_k", 400, _("token权重过滤数量. 非常不建议动这个"), "top_k", 1, 20, sdict="mtts_advanced_setting")
+                    use prog_bar("top_k", 400, _("Token weight filter count. Seriously do not touch this"), "top_k", 1, 20, sdict="mtts_advanced_setting")
 
             # top_p - Float slider 0-1
             hbox:
@@ -143,11 +143,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "top_p":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "top_p")
-                    hovered SetField(_tooltip, "value", _("token权重过滤范围. 非常不建议动这个"))
+                    hovered SetField(_tooltip, "value", _("Token weight filter range. Seriously do not touch this"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("top_p", False):
-                    use prog_bar("top_p", 400, _("token权重过滤范围. 非常不建议动这个"), "top_p", 0.0, 1.0, sdict="mtts_advanced_setting")
+                    use prog_bar("top_p", 400, _("Token weight filter range. Seriously do not touch this"), "top_p", 0.0, 1.0, sdict="mtts_advanced_setting")
 
             # repetition_penalty - Float slider 0-1
             hbox:
@@ -156,11 +156,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "repetition_penalty":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "repetition_penalty")
-                    hovered SetField(_tooltip, "value", _("token重复惩罚. 数值越高, token越不可能反复出现"))
+                    hovered SetField(_tooltip, "value", _("Token repetition penalty. Higher this value, less likely tokens appear repeatedly"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("repetition_penalty", False):
-                    use prog_bar("repetition_penalty", 400, _("token重复惩罚. 数值越高, token越不可能反复出现"), "repetition_penalty", 0.0, 1.0, sdict="mtts_advanced_setting")
+                    use prog_bar("repetition_penalty", 400, _("Token repetition penalty. Higher this value, less likely tokens appear repeatedly"), "repetition_penalty", 0.0, 1.0, sdict="mtts_advanced_setting")
 
             # seed - Integer input
             hbox:
@@ -169,29 +169,29 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "seed":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "seed")
-                    hovered SetField(_tooltip, "value", _("生成种子. 一般而言影响很小且随机"))
+                    hovered SetField(_tooltip, "value", _("Generation seed. Usually has little and random impact"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("seed", False):
-                    use num_bar("seed", 200, _("生成种子. 一般而言影响很小且随机"), "seed", -2147483648, 2147483647, sdict="mtts_advanced_setting")
+                    use num_bar("seed", 200, _("Generation seed. Usually has little and random impact"), "seed", -2147483648, 2147483647, sdict="mtts_advanced_setting")
 
 
         hbox:
             xpos 10
             style_prefix "confirm"
-            textbutton _("保存设置"):
+            textbutton _("Save settings"):
                 action [
                     Function(mtts_apply_advanced_setting),
                     Hide("mtts_advance_setting"),
-                    Function(renpy.notify, _("MTTS: 已保存高级设置"))
+                    Function(renpy.notify, _("MTTS: Advanced settings saved"))
                 ]
-            textbutton _("重置设置"):
+            textbutton _("Reset settings"):
                 action [
                     Function(mtts_reset_advanced_setting),
                     Hide("mtts_advance_setting"),
-                    Function(renpy.notify, _("MTTS: 已重置高级设置"))
+                    Function(renpy.notify, _("MTTS: Advanced settings reset"))
                 ]
-            textbutton _("取消"):
+            textbutton _("Cancel"):
                 action [
                     Function(mtts_discard_advanced_setting),
                     Hide("mtts_advance_setting")
@@ -209,7 +209,7 @@ screen mtts_text_split_selector():
     modal True
     zorder 95
 
-    use maica_setter_small_frame(title=_("选择文本预切分模式"), ok_action=Hide("mtts_text_split_selector")):
+    use maica_setter_small_frame(title=_("Choose text pre-split method"), ok_action=Hide("mtts_text_split_selector")):
         vbox:
             spacing 5
             style_prefix "generic_fancy_check"
@@ -226,7 +226,7 @@ screen mtts_text_split_selector():
                     SetDict(persistent.mtts_advanced_setting, "text_split_method", "cut0"),
                     Hide("mtts_text_split_selector")
                 ]
-                hovered SetField(_tooltip, "value", _("完全不进行预切分"))
+                hovered SetField(_tooltip, "value", _("No pre-splitting at all"))
                 unhovered SetField(_tooltip, "value", _tooltip.default)
 
             textbutton "cut1":
@@ -234,7 +234,7 @@ screen mtts_text_split_selector():
                     SetDict(persistent.mtts_advanced_setting, "text_split_method", "cut1"),
                     Hide("mtts_text_split_selector")
                 ]
-                hovered SetField(_tooltip, "value", _("每4个完整句子切分一次"))
+                hovered SetField(_tooltip, "value", _("Split every 4 complete sentences"))
                 unhovered SetField(_tooltip, "value", _tooltip.default)
 
             textbutton "cut2":
@@ -242,7 +242,7 @@ screen mtts_text_split_selector():
                     SetDict(persistent.mtts_advanced_setting, "text_split_method", "cut2"),
                     Hide("mtts_text_split_selector")
                 ]
-                hovered SetField(_tooltip, "value", _("每满50字的完整句子切分一次"))
+                hovered SetField(_tooltip, "value", _("Split complete sentences when reaches 50 characters"))
                 unhovered SetField(_tooltip, "value", _tooltip.default)
 
             textbutton "cut3":
@@ -250,7 +250,7 @@ screen mtts_text_split_selector():
                     SetDict(persistent.mtts_advanced_setting, "text_split_method", "cut3"),
                     Hide("mtts_text_split_selector")
                 ]
-                hovered SetField(_tooltip, "value", _("只按中文句号进行切分"))
+                hovered SetField(_tooltip, "value", _("Split only respecting em periods"))
                 unhovered SetField(_tooltip, "value", _tooltip.default)
 
             textbutton "cut4":
@@ -258,7 +258,7 @@ screen mtts_text_split_selector():
                     SetDict(persistent.mtts_advanced_setting, "text_split_method", "cut4"),
                     Hide("mtts_text_split_selector")
                 ]
-                hovered SetField(_tooltip, "value", _("只按英文句号进行切分"))
+                hovered SetField(_tooltip, "value", _("Split only respecting en periods"))
                 unhovered SetField(_tooltip, "value", _tooltip.default)
 
             textbutton "cut5":
@@ -266,5 +266,5 @@ screen mtts_text_split_selector():
                     SetDict(persistent.mtts_advanced_setting, "text_split_method", "cut5"),
                     Hide("mtts_text_split_selector")
                 ]
-                hovered SetField(_tooltip, "value", _("按所有标点智能切分.\n* 实战表现往往并不好"))
+                hovered SetField(_tooltip, "value", _("Automatically respect all symbols.\n* Usually does not perform well in actual usage"))
                 unhovered SetField(_tooltip, "value", _tooltip.default)

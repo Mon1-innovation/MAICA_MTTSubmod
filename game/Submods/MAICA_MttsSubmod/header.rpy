@@ -8,7 +8,7 @@ init -990 python:
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
-        description=_("MAICA-MTTS官方前端子模组"),
+        description=_("MAICA-MTTS Official Submod Frontend"),
         version=mtts_version,
         dependencies={"Ignore Translation Conflicts": (None, None)},
         settings_pane="mtts_settingpane"
@@ -41,17 +41,17 @@ screen mtts_settingpane():
                 size 0
             if persistent.mtts["_outdated"]:
                 hbox:
-                    text _("> 当前版本支持已终止, 请更新至最新版"):
+                    text _("> Support for this version has ended, please update to the latest version"):
                         style "main_menu_version_l"
 
             $ res, libv, uiv = store.mtts.validate_version()
             if res is None:
                 hbox:
-                    text _("> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, {color=#ff0000}而不是源代码{/color}"):
+                    text _("> Warning: MTTS Libs version not found. Please install from Release, {color=#ff0000}NOT source code{/color}"):
                         style "main_menu_version_l"
             elif res != 0:
                 hbox:
-                    text _("> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请{color=#ff0000}从Release{/color}完整地更新MTTS"):
+                    text _("> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update {color=#ff0000}from Release{/color}"):
                         style "main_menu_version_l"
 
             text "":
@@ -63,16 +63,16 @@ screen mtts_settingpane():
             style_prefix "check"
 
             if mtts_can_use_blessland_login():
-                textbutton _("> 使用账号生成令牌 (Blessland)"):
+                textbutton _("> Generate token from account (Blessland)"):
                     action Show("maica_login")
             else:
-                textbutton _("> 使用账号生成令牌 (独立模式)"):
+                textbutton _("> Generate token from account (Standalone)"):
                     action Show("mtts_login")
-            textbutton _("> MTTS参数与设置"):
+            textbutton _("> MTTS params and settings"):
                 action Show("mtts_settings")
 
             if store._mtts_donation_dir:
-                textbutton _("> 向 MAICA 捐赠"):
+                textbutton _("> Donate to MAICA"):
                     action Show("mtts_support")
 
 
@@ -110,10 +110,10 @@ init python:
             if _is_str(c) and c:
                 store.mtts.mtts_instance.user_acc = c
 
-            renpy.show_screen("maica_message", message=_("验证成功"))
+            renpy.show_screen("maica_message", message=_("Verification successful"))
         else:
             store.mas_api_keys.api_keys.update({"Maica_Token":""})
-            renpy.show_screen("maica_message", message=renpy.substitute(_("验证失败, 请检查账号密码")) + "\n" + renpy.substitute(_("失败原因: ")) + res.get("exception"))
+            renpy.show_screen("maica_message", message=renpy.substitute(_("Verification failed, please check your account and password")) + "\n" + renpy.substitute(_("Reason: ")) + res.get("exception"))
     
     def mtts_try_sync_user_acc_from_blessland():
         """
@@ -280,12 +280,12 @@ screen mtts_workload_stat():
 
                         text "VRAM: " + str(stat[server][card]["mean_memory"]) + " / " + str(stat[server][card]["vram"]):
                             size 10
-                        text renpy.substitute(_("平均功耗: ")) + str(stat[server][card]["mean_consumption"]) + "W":
+                        text renpy.substitute(_("Average power consumption: ")) + str(stat[server][card]["mean_consumption"]) + "W":
                             size 10
                 text ""
 
             hbox:
-                text renpy.substitute(_("下次更新数据")):
+                text renpy.substitute(_("Next data update")):
                     size 15
                 text store.mtts.progress_bar(((store.workload_throttle.remain / store.update_interval)) * 100, bar_length = 78, total=store.update_interval, unit="s"):
                     size 15

@@ -29,11 +29,11 @@ class MTTSProviderManager(object):
     # 类级别的共享数据
     _isfailedresponse = {
         "id": 0,
-        "name": u"ERROR: 无法获取节点信息",
-        "deviceName": u"查看更新日志来获取当前的服务状态, 或者查看submod_log.log获取失败原因",
+        "name": "ERROR: Unable to retrieve node information.",
+        "description": "Check the update log to get the current service status, or check submod_log.log for the cause of the failure.",
         "isOfficial": False,
         "portalPage": "https://forum.monika.love/d/3954",
-        "servingModel": u"查看更新日志来获取当前的服务状态, 或者查看submod_log.log获取失败原因",
+        "servingModel": "Check the update log to get the current service status, or check submod_log.log for the cause of the failure.",
         "modelLink": "",
         # "wsInterface": "wss://maicadev.monika.love/websocket",
         "httpInterface": "https://maicadev.monika.love/api",
@@ -42,8 +42,8 @@ class MTTSProviderManager(object):
 
     _fakelocalprovider = {
         "id": 9999,
-        "name": u"本地部署",
-        "deviceName": u"当你有可用的本地部署时, 选择此节点",
+        "name": "Local Deployment",
+        "description": "When you have an available local deployment, select this node.",
         "isOfficial": False,
         "portalPage": "https://github.com/PencilMario/MAICA",
         "servingModel": "None",
@@ -75,7 +75,7 @@ class MTTSProviderManager(object):
             res = requests.get(self._provider_list, json={})
             if res.status_code != 200:
                 logger.error("Cannot get providers because server return non 200: {}".format(res.content))
-                self._isfailedresponse["deviceName"] = "Cannot get providers because server {}".format(res.status_code)
+                self._isfailedresponse["description"] = "Cannot get providers because server {}".format(res.status_code)
                 new_servers = [self._isfailedresponse, self._fakelocalprovider]
             else:
                 res = res.json()

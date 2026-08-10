@@ -139,7 +139,7 @@ init -100 python in mtts:
         except Exception:
             _acc = None
         try:
-            renpy.notify(_("MTTS: 已切换节点, 正在重新检测可用性"))
+            renpy.notify(_("MTTS: Provider applied, reinitializing"))
         except Exception:
             pass
     mtts_package.logger = store.mas_submod_utils.submod_log
@@ -356,16 +356,16 @@ init python:
             if _acc is not None:
                 _acc.wait()
             if not renpy.seen_label("mtts_greeting_end"):
-                store.mtts_status = renpy.substitute(_("未解锁"))
+                store.mtts_status = renpy.substitute(_("Not revealed"))
                 return False
             elif not persistent.mtts["enabled"]:
-                store.mtts_status = renpy.substitute(_("未启用"))
+                store.mtts_status = renpy.substitute(_("Not enabled"))
                 return False
             elif persistent.mtts["_outdated"]:
-                store.mtts_status = renpy.substitute(_("版本过旧"))
+                store.mtts_status = renpy.substitute(_("Outdated"))
                 return False
             elif not store.mtts.mtts_instance.is_accessable:
-                store.mtts_status = renpy.substitute(_("无连接"))
+                store.mtts_status = renpy.substitute(_("No connection"))
                 return False
             else:
                 return True
@@ -504,7 +504,7 @@ init python:
             store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Rule action: {0}".format(rule.get('action', [])))
 
             if not rule['action']:
-                store.mtts_status = renpy.substitute(_("规则为空"))
+                store.mtts_status = renpy.substitute(_("Blank rule"))
                 self._last_raw_text = what
                 return self.call_old_say(who, what, interact, args, kwargs)
             
@@ -521,7 +521,7 @@ init python:
 
             target_lang = self.determ_lang(text, suppose=target_lang)
 
-            store.mtts_status = renpy.substitute(_("生成中"))
+            store.mtts_status = renpy.substitute(_("Generating"))
             exp = store.get_emote_mood(store.mas_getCurrentMoniExp())
 
             mtts.mtts_instance.local_cache = 'local' in rule['action']
@@ -591,7 +591,7 @@ init python:
             elif task.is_success:
                 res = task.result
                 if res.is_success():
-                    store.mtts_status = renpy.substitute(_("播放中"))
+                    store.mtts_status = renpy.substitute(_("Playing"))
                     renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
                     audio_data = store.MASAudioData(res.data, name)
                     if is_extend:
@@ -608,7 +608,7 @@ init python:
                 else:
                     # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(res.reason() if getattr(res, 'reason', None) else 'Unknown'))
                     error_msg = res.reason() if getattr(res, 'reason', None) else 'Unknown'
-                    renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(error_msg))
+                    renpy.notify(renpy.substitute(_("MTTS: Generation failed -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(error_msg))
                     # 添加详细日志：输出错误内容和输入文本
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Input text: {0}".format(repr(text)))
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Error reason: {0}".format(repr(error_msg)))
@@ -617,14 +617,14 @@ init python:
             else:
                 # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
                 exception_msg = str(task.exception)
-                renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(exception_msg))
+                renpy.notify(renpy.substitute(_("MTTS: Generation failed -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(exception_msg))
                 # 添加详细日志：输出错误内容和输入文本
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Input text: {0}".format(repr(text)))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Exception: {0}".format(repr(exception_msg)))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Label: {0}".format(store.mtts._current_label))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Target language: {0}".format(target_lang))
 
-            store.mtts_status = renpy.substitute(_("待机"))
+            store.mtts_status = renpy.substitute(_("Standing by"))
 
             self._history.append(text)
             self._last_raw_text = what
@@ -634,19 +634,19 @@ init python:
     def mtts_refresh_status_once():
         # 一次性刷新，开关手动调用
         if not renpy.seen_label("mtts_greeting_end"):
-            store.mtts_status = renpy.substitute(_("未解锁"))
+            store.mtts_status = renpy.substitute(_("Not revealed"))
             return
 
         if not persistent.mtts.get("enabled", False):
-            store.mtts_status = renpy.substitute(_("未启用"))
+            store.mtts_status = renpy.substitute(_("Not enabled"))
             return
 
         if persistent.mtts.get("_outdated", False):
-            store.mtts_status = renpy.substitute(_("版本过旧"))
+            store.mtts_status = renpy.substitute(_("Outdated"))
             return
 
         ok = store.mtts.mtts_instance.is_accessable
-        store.mtts_status = renpy.substitute(_("待机")) if ok else renpy.substitute(_("无连接"))
+        store.mtts_status = renpy.substitute(_("Standing by")) if ok else renpy.substitute(_("No connection"))
 
     mtts_say = MttsSay()
     renpy.say = mtts_say

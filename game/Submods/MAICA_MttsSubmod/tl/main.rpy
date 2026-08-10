@@ -1,44 +1,43 @@
-﻿# TODO: Translation updated at 2026-01-08 22:58
+﻿
+translate chinese strings:
 
-translate english strings:
+    # game/Submods/MAICA_MttsSubmod/main.rpy:142
+    old "MTTS: Provider applied, reinitializing"
+    new "MTTS: 已切换节点, 正在重新检测可用性"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:65
-    old "MTTS: 已切换节点, 正在重新检测可用性"
-    new "MTTS: Provider applied, reinitializing"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:359
+    old "Not revealed"
+    new "未解锁"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:196
-    old "未解锁"
-    new "Not revealed"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:362
+    old "Not enabled"
+    new "未启用"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:199
-    old "未启用"
-    new "Not enabled"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:365
+    old "Outdated"
+    new "版本过旧"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:202
-    old "版本过旧"
-    new "Outdated"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:368
+    old "No connection"
+    new "无连接"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:205
-    old "无连接"
-    new "No connection"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:507
+    old "Blank rule"
+    new "规则为空"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:238
-    old "规则为空"
-    new "Blank rule"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:524
+    old "Generating"
+    new "生成中"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:246
-    old "生成中"
-    new "Generating"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:594
+    old "Playing"
+    new "播放中"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:262
-    old "播放中"
-    new "Playing"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:611
+    old "MTTS: Generation failed -- "
+    new "MTTS: 语音生成失败 -- "
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:269
-    old "MTTS: 语音生成失败 -- "
-    new "MTTS: Generation failed -- "
-
-    # game/Submods/MAICA_MTTSubmod/main.rpy:273
-    old "待机"
-    new "Standing by"
+    # game/Submods/MAICA_MttsSubmod/main.rpy:627
+    old "Standing by"
+    new "待机"
 

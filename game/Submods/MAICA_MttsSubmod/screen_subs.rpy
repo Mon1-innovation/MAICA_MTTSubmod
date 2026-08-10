@@ -15,48 +15,48 @@ screen mtts_login():
 
         hbox:
             if use_email:
-                textbutton _("输入DCC账号邮箱"):
+                textbutton _("Enter DCC account email"):
                     style "confirm_button"
-                    action Show("mtts_login_input",message = _("请输入DCC账号邮箱"),returnto = "_maica_LoginEmail")
+                    action Show("mtts_login_input",message = _("Please enter DCC account email"),returnto = "_maica_LoginEmail")
             else:
-                textbutton _("输入DCC账号用户名"):
+                textbutton _("Enter DCC account username"):
                     style "confirm_button"
-                    action Show("mtts_login_input",message = _("请输入DCC账号用户名") ,returnto = "_maica_LoginAcc")
+                    action Show("mtts_login_input",message = _("Please enter DCC account username") ,returnto = "_maica_LoginAcc")
 
         hbox:
             style_prefix "maica_check"
             if use_email:
-                textbutton _("> 改为用户名登录"):
+                textbutton _("> Switch to username login"):
                     text_size 15
                     action [ToggleVariable("use_email"), Function(_mtts_clear)]
                     selected False
 
             else:
-                textbutton _("> 改为邮箱登录"):
+                textbutton _("> Switch to email login"):
                     text_size 15
                     action [ToggleVariable("use_email"), Function(_mtts_clear)]
                     selected False
 
         hbox:
-            textbutton _("输入密码"):
+            textbutton _("Enter password"):
                 style "confirm_button"
-                action Show("mtts_login_input",message = _("请输入密码"),returnto = "_maica_LoginPw")
+                action Show("mtts_login_input",message = _("Please enter password"),returnto = "_maica_LoginPw")
         hbox:
             text ""
 
         hbox:
             style_prefix "small_expl"
-            text _("※ 使用MAICA-MTTS Synbrace, 即认为你同意 "):
+            text _("※ By using MAICA-MTTS Synbrace, you agree to "):
                 size 15
-            textbutton _("{u}MAICA服务条款{/u}"):
+            textbutton _("{u}MAICA Terms of Service{/u}"):
                 action OpenURL("https://maica.monika.love/tos")
                 yalign 1.0
 
         hbox:
             style_prefix "small_expl"
-            text _("※ 还没有DCC账号? "):
+            text _("※ Don't have a DCC account? "):
                 size 15
-            textbutton _("{u}注册一个{/u}"):
+            textbutton _("{u}Register one{/u}"):
                 action OpenURL("https://maica.monika.love/tos")
                 yalign 1.0
 
@@ -74,7 +74,7 @@ screen mtts_playername_replace_input():
     modal True
     zorder 92
 
-    use maica_setter_small_frame(_("请输入你希望使用的配音名称"), ok_action=[Hide("mtts_playername_replace_input")]):
+    use maica_setter_small_frame(_("Enter your spoken name"), ok_action=[Hide("mtts_playername_replace_input")]):
         input default persistent.mtts.get("playername_replacement", "") value DictInputValue(persistent.mtts, "playername_replacement") length 30
 
 
@@ -96,15 +96,15 @@ screen mtts_node_setting():
                     
 
                     hbox:
-                        text renpy.substitute(_("说明: ")) + provider.get('description', 'Device not provided')
+                        text renpy.substitute(_("Description: ")) + provider.get('description', 'Device not provided')
                     hbox:
-                        text renpy.substitute(_("当前模型: ")) + provider.get('servingModel', 'No model provided')
+                        text renpy.substitute(_("Current model: ")) + provider.get('servingModel', 'No model provided')
 
 
                 hbox:
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("使用该节点"):
+                        textbutton _("Use this provider"):
                             action [
                                 # Function(set_provider, provider.get('id')),
                                 Function(store.mtts.sync_provider_id, provider.get('id')),
@@ -113,24 +113,24 @@ screen mtts_node_setting():
                             selected persistent.mtts["provider_id"] == provider.get('id')
                     hbox:
                         style_prefix "maica_check"
-                        textbutton renpy.substitute(_("> 打开官网")) + "(" + provider.get('portalPage') + ")":
+                        textbutton renpy.substitute(_("> Open website")) + "(" + provider.get('portalPage') + ")":
                             action OpenURL(provider.get('portalPage'))
 
                     if provider.get("isOfficial", False):
                         hbox:
                             style_prefix "maica_check_nohover"
-                            textbutton _(" <官方服务>")
+                            textbutton _(" <Official service>")
                         
         hbox:
             xpos 10
             style_prefix "confirm"
-            textbutton _("刷新节点列表"):
+            textbutton _("Refresh provider list"):
                 action Function(store.mtts.provider_manager.get_provider)
 
-            textbutton _("关闭"):
+            textbutton _("Close"):
                 action Hide("mtts_node_setting")
             
-            textbutton _("测试当前节点可用性"):
+            textbutton _("Test current provider availability"):
                 action Function(store.mtts.mtts_instance.accessable)
 
 screen mtts_support():
@@ -138,13 +138,13 @@ screen mtts_support():
     modal True
     zorder 92
 
-    use maica_setter_medium_frame(title=_("向 MAICA 捐赠"), ok_action=Hide("mtts_support")):
+    use maica_setter_medium_frame(title=_("Donate to MAICA"), ok_action=Hide("mtts_support")):
         hbox:
-            text _("首先很感谢你有心捐赠.\n我们收到的捐赠基本上不可能回本, 但你不必有任何压力."):
+            text _("First of all, thank you for considering a donation.\nWe are very unlikely to recover the costs of running MAICA, but please do not feel pressured."):
                 size 20
         hbox:
             style_prefix "maica_check_nohover"
-            text _("请注意, 向MAICA捐赠不会提供任何特权, 除了论坛捐赠页名单和捐赠徽章."):
+            text _("Please note that donating to MAICA provides no privileges, except for a name on the forum donation page and a donor badge."):
                 size 15
             text "\n":
                 size 15

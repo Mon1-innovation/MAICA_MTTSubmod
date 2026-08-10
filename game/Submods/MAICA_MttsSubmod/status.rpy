@@ -2,10 +2,10 @@
 
 init -1 python:
     if not hasattr(store, "mtts_status"):
-        store.mtts_status = renpy.substitute(_("待机"))
+        store.mtts_status = renpy.substitute(_("Standing by"))
     if not hasattr(store, "mtts_match_rule"):
         store.mtts_match_rule = "Unknown"
-    # default store.mtts_status = renpy.substitute(_("待机"))
+    # default store.mtts_status = renpy.substitute(_("Standing by"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
         if not maicatts_isWorkLoadScreenVisible():
@@ -77,7 +77,7 @@ screen maicatts_stat_lite():
                 vbox:
                     xoffset 5
                     hbox:
-                        text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
+                        text renpy.substitute(_("MTTS status: [store.mtts_status]")):
                             size 15
 
                     hbox:
@@ -120,5 +120,4 @@ screen maicatts_stat_lite():
                             ypos 10 
                             xanchor 0.5 
                             yanchor 0.5
-
 
