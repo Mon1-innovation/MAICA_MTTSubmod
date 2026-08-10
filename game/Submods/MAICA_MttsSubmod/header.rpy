@@ -4,11 +4,13 @@ init -990 python:
     store._maica_LoginEmail = ""
     mtts_version = "1.2.12"
     store._mtts_donation_dir = os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation"))
+    # dependencies - dictionary in the following structure: {"name": ("minimum_version", "maximum_version")}
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
         description=_("MAICA-MTTS官方前端子模组"),
         version=mtts_version,
+        dependencies={"Ignore Translation Conflicts": (None, None)},
         settings_pane="mtts_settingpane"
     )
 

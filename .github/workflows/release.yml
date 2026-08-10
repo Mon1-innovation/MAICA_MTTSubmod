@@ -56,6 +56,23 @@ jobs:
           echo "create_release=false" >> $GITHUB_OUTPUT
         fi
 
+    - name: Download Ignore Translation Conflicts dependency
+      if: steps.check_release.outputs.create_release == 'true'
+      run: |
+        dependency_url="https://github.com/MAS-Submod-MoyuTeam/MAS_ignore_tl_conficts_submod/archive/refs/tags/v1.0.0.zip"
+        dependency_dir=$(mktemp -d)
+        trap 'rm -rf "$dependency_dir"' EXIT
+
+        curl --fail --location --retry 3 --silent --show-error \
+          "$dependency_url" --output "$dependency_dir/dependency.zip"
+        mkdir -p "$dependency_dir/source"
+        unzip -q "$dependency_dir/dependency.zip" -d "$dependency_dir/source"
+
+        source_dir=$(find "$dependency_dir/source" -mindepth 1 -maxdepth 1 -type d -print -quit)
+        test -n "$source_dir"
+        test -f "$source_dir/game/Submods/IgnoreTranslationConflicts/zz_ignore_translation_conflicts.rpy"
+        cp -R "$source_dir/game/." game/
+
     - name: Create release version file
       if: steps.check_release.outputs.create_release == 'true'
       run: |

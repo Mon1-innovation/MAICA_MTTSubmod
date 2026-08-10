@@ -11,6 +11,26 @@ import mtts_package
 
 HEADER = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.rpy"
 MAIN = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "main.rpy"
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
+
+
+def test_mtts_registers_unbounded_ignore_translation_conflicts_dependency():
+    text = HEADER.read_text(encoding="utf-8")
+
+    assert 'dependencies={"Ignore Translation Conflicts": (None, None)},' in text
+
+
+def test_release_workflow_downloads_dependency_into_game_tree():
+    text = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+    download_block = text[
+        text.index("Download Ignore Translation Conflicts dependency") :
+        text.index("Create release version file")
+    ]
+
+    assert "https://github.com/MAS-Submod-MoyuTeam/MAS_ignore_tl_conficts_submod/archive/refs/tags/v1.0.0.zip" in download_block
+    assert "unzip -q" in download_block
+    assert 'cp -R "$source_dir/game/." game/' in download_block
+    assert "zz_ignore_translation_conflicts.rpy" in download_block
 
 
 def test_mtts_declares_maica_runtime_guard():
