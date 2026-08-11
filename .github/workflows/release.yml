@@ -82,13 +82,9 @@ jobs:
     - name: Create zip package
       if: steps.check_release.outputs.create_release == 'true'
       run: |
-        zip -r MAICA_MttsSubmod-${{ steps.set_version.outputs.version }}.zip . \
-          -x '.git*' \
-          -x '.github*' \
-          -x '*.git*' \
-          -x '.vscode/*' \
-          -x 'document/*' \
-          -x 'tests/*'
+        zip -r MAICA_MttsSubmod-${{ steps.set_version.outputs.version }}.zip \
+          game \
+          lib
 
     - name: Generate Release Notes
       id: generate_release_notes
