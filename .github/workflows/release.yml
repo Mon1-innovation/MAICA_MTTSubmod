@@ -79,6 +79,11 @@ jobs:
         mkdir -p game/python-packages
         echo "${{ steps.set_version.outputs.version }}" > game/python-packages/mtts_release_version
 
+    - name: Copy documentation into submod package
+      if: steps.check_release.outputs.create_release == 'true'
+      run: |
+        cp README.md README_EN.md LICENSE game/Submods/MAICA_MttsSubmod/
+
     - name: Create zip package
       if: steps.check_release.outputs.create_release == 'true'
       run: |
