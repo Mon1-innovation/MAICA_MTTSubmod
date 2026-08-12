@@ -4,9 +4,7 @@ screen mtts_login():
     modal True
     zorder 92
     $ ok_action = [
-                    Function(store.mtts.mtts_instance._gen_token, store._maica_LoginAcc, store._maica_LoginPw, "", store._maica_LoginEmail if store._maica_LoginEmail != "" else None),
-                    Function(_mtts_verify_token),
-                    Function(_mtts_clear),
+                    Function(_mtts_submit_login),
                     Hide("mtts_login")
                     ]
     $ cancel_action = [Function(_mtts_clear), Hide("mtts_login")]

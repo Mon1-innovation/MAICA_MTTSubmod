@@ -5,6 +5,13 @@ init -1 python:
         store.mtts_status = renpy.substitute(_("Standing by"))
     if not hasattr(store, "mtts_match_rule"):
         store.mtts_match_rule = "Unknown"
+
+    def mtts_failure_status_text():
+        instance = getattr(getattr(store, "mtts", None), "mtts_instance", None)
+        if instance is not None and instance.has_error():
+            return renpy.substitute(_(instance.get_status_description()))
+        return renpy.substitute(_("No connection"))
+
     # default store.mtts_status = renpy.substitute(_("Standing by"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
@@ -78,7 +85,8 @@ screen maicatts_stat_lite():
                     xoffset 5
                     hbox:
                         text renpy.substitute(_("MTTS status: [store.mtts_status]")):
-                            size 15
+                            size 13
+                            xmaximum 205
 
                     hbox:
                         text "CURR: [store.mtts._current_label]":

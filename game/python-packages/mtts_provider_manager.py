@@ -26,6 +26,8 @@ logger = DefaultLogger()
 class MTTSProviderManager(object):
     """MTTS服务提供商管理器 - 实例化模式"""
 
+    REQUEST_TIMEOUT = 10
+
     # 类级别的共享数据
     _isfailedresponse = {
         "id": 0,
@@ -45,12 +47,12 @@ class MTTSProviderManager(object):
         "name": "Local Deployment",
         "description": "When you have an available local deployment, select this node.",
         "isOfficial": False,
-        "portalPage": "https://github.com/PencilMario/MAICA",
+        "portalPage": "https://github.com/Mon1-innovation/MAICA_MTTS",
         "servingModel": "None",
         "modelLink": "",
         # "wsInterface": "ws://127.0.0.1:5000",
         "httpInterface": "http://127.0.0.1:7000",
-        "ttsInterface": "http://127.0.0.1:7000/tts"
+        "ttsInterface": "http://127.0.0.1:7000"
     }
 
     _provider_list = "https://maicadev.monika.love/tts/servers"
@@ -67,44 +69,105 @@ class MTTSProviderManager(object):
         self._last_provider_id = pid
         self._servers = [self._fakelocalprovider]
         self._isMaicaNameServer = None
+        self.last_error = None
+
+    @staticmethod
+    def _normalize_failure(data, fallback_status="client_provider_unavailable"):
+        try:
+            string_types = (basestring,)
+        except NameError:
+            string_types = (str,)
+        if not isinstance(data, dict):
+            data = {"exception": u"{}".format(data)}
+        status = data.get("status")
+        message = data.get("exception")
+        if not status and isinstance(message, string_types) and ":" in message:
+            candidate, detail = message.split(":", 1)
+            if candidate.startswith("maica_"):
+                status = candidate.strip()
+                message = detail.strip()
+        return {
+            "success": False,
+            "status": status or fallback_status,
+            "exception": message or "Failed to retrieve service providers",
+            "code": data.get("code"),
+        }
+
+    def _set_failed_servers(self, error):
+        self.last_error = error
+        failed = dict(self._isfailedresponse)
+        failed["description"] = error.get("exception") or failed["description"]
+        self._servers = [failed, self._fakelocalprovider]
 
     def get_provider(self):
         """获取服务提供商列表"""
         import requests
         try:
-            res = requests.get(self._provider_list, json={})
-            if res.status_code != 200:
-                logger.error("Cannot get providers because server return non 200: {}".format(res.content))
-                self._isfailedresponse["description"] = "Cannot get providers because server {}".format(res.status_code)
-                new_servers = [self._isfailedresponse, self._fakelocalprovider]
-            else:
-                res = res.json()
-                if res["success"]:
-                    self._isMaicaNameServer = res["content"].get("isMaicaNameServer")
-                    new_servers = res["content"].get("servers", [])
-                    new_servers.append(self._fakelocalprovider)
+            response = requests.get(self._provider_list, timeout=self.REQUEST_TIMEOUT)
+            try:
+                data = response.json()
+            except Exception:
+                error = self._normalize_failure(
+                    {"exception": "Provider server returned invalid JSON", "code": response.status_code},
+                    "client_response_invalid",
+                )
+                self._set_failed_servers(error)
+                logger.error("Cannot get providers because the response is invalid")
+                return False
 
-                    if not self._provider_id:
-                        self._provider_id = self._last_provider_id
+            if not isinstance(data, dict):
+                error = self._normalize_failure(
+                    {"exception": "Provider server returned an invalid response"},
+                    "client_response_invalid",
+                )
+                error["code"] = response.status_code
+                self._set_failed_servers(error)
+                logger.error("Cannot get providers because the response is not an object")
+                return False
 
-                    self._servers = new_servers
-                    return True
-                else:
-                    self._isfailedresponse["description"] = res["exception"]
-                    new_servers = [self._isfailedresponse, self._fakelocalprovider]
-                    logger.error("Cannot get providers because server return: {}".format(res))
+            if response.status_code == 200 and data.get("success", False):
+                content = data.get("content")
+                if not isinstance(content, dict) or not isinstance(content.get("servers"), list):
+                    error = self._normalize_failure(
+                        {"exception": "Provider response has no server list"},
+                        "client_response_invalid",
+                    )
+                    self._set_failed_servers(error)
+                    logger.error("Cannot get providers because the response has no server list")
+                    return False
+
+                self._isMaicaNameServer = content.get("isMaicaNameServer")
+                new_servers = list(content.get("servers", []))
+                new_servers.append(self._fakelocalprovider)
+
+                if not self._provider_id:
+                    self._provider_id = self._last_provider_id
+
+                self._servers = new_servers
+                self.last_error = None
+                return True
+
+            error = self._normalize_failure(data)
+            error["code"] = response.status_code
+            self._set_failed_servers(error)
+            logger.error("Cannot get providers because server returned: {}".format(data))
         except Exception as e:
             logger.error("Error getting providers: {}".format(e))
-            new_servers = [self._isfailedresponse, self._fakelocalprovider]
+            self._set_failed_servers(self._normalize_failure(
+                {"exception": u"{}".format(e)},
+                "client_network_error",
+            ))
 
-        self._servers = new_servers
         return False
 
     def _get_server_by_id(self, server_id):
         """根据ID获取服务器信息"""
         for server in self._servers:
-            if int(server["id"]) == server_id:
-                return server
+            try:
+                if int(server["id"]) == int(server_id):
+                    return server
+            except (KeyError, TypeError, ValueError):
+                continue
         logger.error("Cannot find server by id: {}, returning default failed response".format(server_id))
         return self._isfailedresponse
 

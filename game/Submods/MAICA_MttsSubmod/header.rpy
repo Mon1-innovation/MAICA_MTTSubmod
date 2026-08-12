@@ -77,12 +77,13 @@ screen mtts_settingpane():
 
 
 init python:
-    def _mtts_clear():
+    def _mtts_clear(save_token=False):
         store._maica_LoginAcc = ""
         store._maica_LoginPw = ""
         store._maica_LoginEmail = ""
-        store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts_instance.token})
-        store.mas_api_keys.save_keys()
+        if save_token:
+            store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts_instance.token})
+            store.mas_api_keys.save_keys()
 
     def _is_str(x):
         try:
@@ -103,17 +104,55 @@ init python:
         except Exception:
             return False
 
-    def _mtts_verify_token():
-        res = store.mtts.mtts_instance._verify_token()
+    def _mtts_verify_token(result=None):
+        instance = store.mtts.mtts_instance
+        res = result if result is not None else instance._verify_token()
         if res.get("success"):
             c = res.get("content", None)
             if _is_str(c) and c:
-                store.mtts.mtts_instance.user_acc = c
+                instance.user_acc = c
 
+            store.mtts_status = renpy.substitute(_("Standing by"))
             renpy.show_screen("maica_message", message=_("Verification successful"))
+            return True
         else:
-            store.mas_api_keys.api_keys.update({"Maica_Token":""})
-            renpy.show_screen("maica_message", message=renpy.substitute(_("Verification failed, please check your account and password")) + "\n" + renpy.substitute(_("Reason: ")) + res.get("exception"))
+            if instance.status in (
+                instance.MttsStatus.TOKEN_CORRUPTED,
+                instance.MttsStatus.TOKEN_INVALID,
+            ):
+                store.mas_api_keys.api_keys.update({"Maica_Token":""})
+                instance.token = ""
+                store.mas_api_keys.save_keys()
+            store.mtts_status = mtts_failure_status_text()
+            message = renpy.substitute(_("Verification failed: ")) + store.mtts_status
+            detail = u"{}".format(res.get("exception") or "")
+            if detail:
+                detail = detail.replace(u"[", u"[[").replace(u"]", u"]]")
+                message += "\n" + renpy.substitute(_("Reason: ")) + detail
+            renpy.show_screen("maica_message", message=message)
+            return False
+
+    def _mtts_submit_login():
+        instance = store.mtts.mtts_instance
+        previous_token = instance.token
+        instance._gen_token(
+            store._maica_LoginAcc,
+            store._maica_LoginPw,
+            "",
+            store._maica_LoginEmail if store._maica_LoginEmail != "" else None,
+        )
+        if instance.has_error():
+            result = instance.get_error_result()
+            instance.token = previous_token
+            success = _mtts_verify_token(result)
+        else:
+            success = _mtts_verify_token()
+            if not success and instance.status not in (
+                instance.MttsStatus.TOKEN_CORRUPTED,
+                instance.MttsStatus.TOKEN_INVALID,
+            ):
+                instance.token = previous_token
+        _mtts_clear(save_token=success)
     
     def mtts_try_sync_user_acc_from_blessland():
         """

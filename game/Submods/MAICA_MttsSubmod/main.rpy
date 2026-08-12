@@ -112,6 +112,7 @@ init -100 python in mtts:
         token = store.mas_getAPIKey("Maica_Token"),
         cache_path = basedir + "/cache",
     )
+    mtts_instance.provider_manager = provider_manager
     mtts_instance.user_acc = u""
     mtts_instance.generate_timeout = store.persistent.mtts.get("generate_timeout", 15)
     matcher = mtts_package.RuleMatcher(os.path.join(basedir, "cache_rules.json"))
@@ -163,6 +164,14 @@ init -100 python in mtts:
                     store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
         else:
             store.mas_submod_utils.submod_log.warning("")
+
+        if not version.get("success") and mtts_instance.is_accessable and not mtts_instance.has_error():
+            mtts_instance.set_error(
+                version.get("status") or "client_server_unavailable",
+                version.get("exception"),
+                version.get("code"),
+            )
+            store.mtts_status = store.mtts_failure_status_text()
 
     _cached_version_result = None
 
@@ -365,9 +374,11 @@ init python:
                 store.mtts_status = renpy.substitute(_("Outdated"))
                 return False
             elif not store.mtts.mtts_instance.is_accessable:
-                store.mtts_status = renpy.substitute(_("No connection"))
+                store.mtts_status = mtts_failure_status_text()
                 return False
             else:
+                if store.mtts.mtts_instance.has_error():
+                    store.mtts_status = mtts_failure_status_text()
                 return True
 
         def is_duplicated(self, what):
@@ -587,7 +598,13 @@ init python:
                 self._generation_wait_id += 1
 
             if generation_timed_out:
-                pass
+                mtts.mtts_instance.set_error(
+                    "client_response_timeout",
+                    "Speech generation timed out after {0} seconds".format(generate_timeout),
+                    fallback=mtts.mtts_instance.MttsStatus.CONNECT_PROBLEM,
+                )
+                store.mtts_status = mtts_failure_status_text()
+                renpy.notify(renpy.substitute(_("MTTS: Generation failed -- ")) + store.mtts_status)
             elif task.is_success:
                 res = task.result
                 if res.is_success():
@@ -614,6 +631,9 @@ init python:
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Error reason: {0}".format(repr(error_msg)))
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Label: {0}".format(store.mtts._current_label))
                     store.mas_submod_utils.submod_log.info("[MTTS ERROR] Target language: {0}".format(target_lang))
+                    if not mtts.mtts_instance.has_error():
+                        mtts.mtts_instance.set_error("client_generation_failed", error_msg)
+                    store.mtts_status = mtts_failure_status_text()
             else:
                 # renpy.notify(renpy.substitute(_("MTTS: 语音生成失败 -- ")) + "{}".format(task.exception))
                 exception_msg = str(task.exception)
@@ -623,8 +643,12 @@ init python:
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Exception: {0}".format(repr(exception_msg)))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Label: {0}".format(store.mtts._current_label))
                 store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Target language: {0}".format(target_lang))
+                if not mtts.mtts_instance.has_error():
+                    mtts.mtts_instance.set_error("client_generation_failed", exception_msg)
+                store.mtts_status = mtts_failure_status_text()
 
-            store.mtts_status = renpy.substitute(_("Standing by"))
+            if not generation_timed_out and task.is_success and task.result.is_success():
+                store.mtts_status = renpy.substitute(_("Standing by"))
 
             self._history.append(text)
             self._last_raw_text = what
@@ -645,8 +669,11 @@ init python:
             store.mtts_status = renpy.substitute(_("Outdated"))
             return
 
-        ok = store.mtts.mtts_instance.is_accessable
-        store.mtts_status = renpy.substitute(_("Standing by")) if ok else renpy.substitute(_("No connection"))
+        instance = store.mtts.mtts_instance
+        if instance.has_error() or not instance.is_accessable:
+            store.mtts_status = mtts_failure_status_text()
+        else:
+            store.mtts_status = renpy.substitute(_("Standing by"))
 
     mtts_say = MttsSay()
     renpy.say = mtts_say
