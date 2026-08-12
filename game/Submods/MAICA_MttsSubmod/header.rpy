@@ -3,7 +3,6 @@ init -990 python:
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
     mtts_version = "1.2.13"
-    store._mtts_donation_dir = os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation"))
     # dependencies - dictionary in the following structure: {"name": ("minimum_version", "maximum_version")}
     store.mas_submod_utils.Submod(
         author="P",
@@ -27,6 +26,12 @@ init -989 python:
         )
 
 screen mtts_settingpane():
+    on "show" action Function(store.mtts.refresh_setting_pane_cache)
+
+    python:
+        pane_cache = store.mtts.mtts_setting_pane_cache
+        version_check = pane_cache.get("version_check", None)
+
     vbox:
         # background None
         # has vbox:
@@ -44,15 +49,16 @@ screen mtts_settingpane():
                     text _("> Support for this version has ended, please update to the latest version"):
                         style "main_menu_version_l"
 
-            $ res, libv, uiv = store.mtts.validate_version()
-            if res is None:
-                hbox:
-                    text _("> Warning: MTTS Libs version not found. Please install from Release, {color=#ff0000}NOT source code{/color}"):
-                        style "main_menu_version_l"
-            elif res != 0:
-                hbox:
-                    text _("> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update {color=#ff0000}from Release{/color}"):
-                        style "main_menu_version_l"
+            if version_check is not None:
+                $ res, libv, uiv = version_check
+                if res is None:
+                    hbox:
+                        text _("> Warning: MTTS Libs version not found. Please install from Release, {color=#ff0000}NOT source code{/color}"):
+                            style "main_menu_version_l"
+                elif res != 0:
+                    hbox:
+                        text _("> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update {color=#ff0000}from Release{/color}"):
+                            style "main_menu_version_l"
 
             text "":
                 size 0
@@ -71,7 +77,7 @@ screen mtts_settingpane():
             textbutton _("> MTTS params and settings"):
                 action Show("mtts_settings")
 
-            if store._mtts_donation_dir:
+            if pane_cache.get("donation_exists", False):
                 textbutton _("> Donate to MAICA"):
                     action Show("mtts_support")
 

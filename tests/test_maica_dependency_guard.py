@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 import struct
+import textwrap
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +52,57 @@ def test_settings_pane_checks_maica_runtime_before_accessing_instance():
 
     assert unsafe_condition not in text
     assert "if mtts_can_use_blessland_login():" in text
+
+
+def test_settings_pane_uses_cached_file_diagnostics():
+    header_text = HEADER.read_text(encoding="utf-8")
+    main_text = MAIN.read_text(encoding="utf-8")
+
+    assert 'on "show" action Function(store.mtts.refresh_setting_pane_cache)' in header_text
+    assert "store.mtts.validate_version()" not in header_text
+    assert 'version_check = pane_cache.get("version_check", None)' in header_text
+    assert 'pane_cache.get("donation_exists", False)' in header_text
+    assert "refresh_setting_pane_cache(force_version=True)" in main_text
+
+
+def test_version_and_setting_pane_caches_support_explicit_refresh(tmp_path):
+    source = MAIN.read_text(encoding="utf-8")
+    cache_block = source[
+        source.index("    _cached_version_result = None") :
+        source.index("    def progress_bar")
+    ]
+
+    python_packages = tmp_path / "game" / "python-packages"
+    python_packages.mkdir(parents=True)
+    version_file = python_packages / "mtts_release_version"
+    version_file.write_text("1.2.13", encoding="utf-8")
+
+    def compare_versions(left, right):
+        left = [int(part) for part in left]
+        right = [int(part) for part in right]
+        return (left > right) - (left < right)
+
+    namespace = {
+        "os": __import__("os"),
+        "renpy": SimpleNamespace(config=SimpleNamespace(basedir=str(tmp_path))),
+        "store": SimpleNamespace(
+            mtts_version="1.2.13",
+            mas_utils=SimpleNamespace(compareVersionLists=compare_versions),
+        ),
+    }
+    exec(textwrap.dedent(cache_block), namespace)
+
+    first_result = namespace["validate_version"]()
+    version_file.write_text("1.2.14", encoding="utf-8")
+
+    assert first_result[0] == 0
+    assert namespace["validate_version"]() is first_result
+    assert namespace["validate_version"](force=True)[0] == 1
+
+    pane_cache = namespace["refresh_setting_pane_cache"]()
+    assert pane_cache["initialized"] is True
+    assert pane_cache["version_check"][0] == 1
+    assert pane_cache["donation_exists"] is False
 
 
 def test_user_sync_checks_maica_runtime_before_accessing_instance():

@@ -149,6 +149,8 @@ init -100 python in mtts:
     
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_check_outdated():
+        refresh_setting_pane_cache(force_version=True)
+
         version = mtts_instance.get_version()
         if version.get("success"):
             min_version = version['content']['fe_synbrace_version']
@@ -174,11 +176,17 @@ init -100 python in mtts:
             store.mtts_status = store.mtts_failure_status_text()
 
     _cached_version_result = None
+    mtts_setting_pane_cache = {
+        "initialized": False,
+        "version_check": None,
+        "donation_exists": False,
+    }
 
-    def validate_version():
+    def validate_version(force=False):
         global _cached_version_result
-        if _cached_version_result is not None:
+        if _cached_version_result is not None and not force:
             return _cached_version_result
+
         # if not (config.debug or config.developer or store.maica.maica_instance._ignore_accessable):
         libv_path = os.path.normpath(os.path.join(renpy.config.basedir, "game", "python-packages", "mtts_release_version"))
         if not os.path.exists(libv_path):
@@ -189,6 +197,16 @@ init -100 python in mtts:
             uiv = store.mtts_version
             _cached_version_result = (store.mas_utils.compareVersionLists(libv.strip().split('.'), uiv.strip().split('.')), libv, uiv)
         return _cached_version_result
+
+    def refresh_setting_pane_cache(force_version=False):
+        global mtts_setting_pane_cache
+        donation_path = os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation")
+        mtts_setting_pane_cache = {
+            "initialized": True,
+            "version_check": validate_version(force=force_version),
+            "donation_exists": os.path.exists(donation_path),
+        }
+        return mtts_setting_pane_cache
 
     def progress_bar(percentage, current=None, total=None, bar_length=20, unit=None):
         # Calculate the number of filled positions in the progress bar
