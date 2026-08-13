@@ -446,14 +446,14 @@ class MTTS:
         ACCOUNT_BANNED = 13404
         EMAIL_UNVERIFIED = 13405
         TOS_UNACCEPTED = 13406
-        SERVER_REJECTED = 13407
-        SERVER_ERROR = 13408
-        TOKEN_GENERATION_FAILED = 13409
-        GENERATION_FAILED = 13410
+        SERVER_REJECTED = 13408
+        SERVER_ERROR = 13409
+        TOKEN_GENERATION_FAILED = 13410
         CONNECT_PROBLEM = 13411
         RESPONSE_INVALID = 13412
         SERVER_MAINTAIN = 13413
-        FAILED_GET_NODE = 13414
+        FAILED_GET_NODE = 13415
+        GENERATION_FAILED = 13418
 
         _protocol_error_map = {
             "client_token_missing": TOKEN_MISSING,
@@ -468,6 +468,7 @@ class MTTS:
             "maica_unified_error": SERVER_ERROR,
             "client_token_generation_failed": TOKEN_GENERATION_FAILED,
             "client_generation_failed": GENERATION_FAILED,
+            "client_availability_failed": CONNECT_PROBLEM,
             "client_network_error": CONNECT_PROBLEM,
             "client_response_timeout": CONNECT_PROBLEM,
             "client_response_invalid": RESPONSE_INVALID,
@@ -610,6 +611,20 @@ class MTTS:
     def get_status_description(self):
         return self.MttsStatus.get_description(self.status)
 
+    def _preserve_or_set_availability_error(self, message):
+        availability_failures = (
+            self.MttsStatus.SERVER_MAINTAIN,
+            self.MttsStatus.FAILED_GET_NODE,
+            self.MttsStatus.CONNECT_PROBLEM,
+            self.MttsStatus.RESPONSE_INVALID,
+        )
+        if self.status not in availability_failures:
+            self.set_error(
+                "client_availability_failed",
+                message,
+                fallback=self.MttsStatus.CONNECT_PROBLEM,
+            )
+
     @staticmethod
     def _normalize_failure(data, fallback_status):
         try:
@@ -731,12 +746,10 @@ class MTTS:
             self.clear_error()
             return
         if not self.__accessable and token == "":
-            self.set_error(
-                "client_server_unavailable",
-                "MTTS server is not serving",
-                fallback=self.MttsStatus.SERVER_MAINTAIN,
+            self._preserve_or_set_availability_error(
+                "MTTS server availability is unknown"
             )
-            return logger.error("_gen_token:MTTS server not serving.")
+            return logger.error("_gen_token: MTTS server is not accessible.")
         self.token = ""
         data = {
             "username":account,
@@ -798,10 +811,8 @@ class MTTS:
             )
             return self.get_error_result()
         if not self.__accessable:
-            self.set_error(
-                "client_server_unavailable",
-                "MTTS server is not serving",
-                fallback=self.MttsStatus.SERVER_MAINTAIN,
+            self._preserve_or_set_availability_error(
+                "MTTS server availability is unknown"
             )
             return self.get_error_result()
         try:
@@ -1073,13 +1084,17 @@ class MTTS:
             self.set_error("client_response_invalid", "Accessibility response was not valid JSON", response.status_code)
             return False
         if response.status_code != 200 or not data.get(u"success", False):
-            self._set_response_failure(
+            _, message = self._normalize_failure(
                 data,
-                "client_server_unavailable",
-                response.status_code,
-                self.MttsStatus.SERVER_MAINTAIN,
+                "client_availability_failed",
             )
-            logger.error("accessable(): server is not serving: {}".format(data))
+            self.set_error(
+                "client_availability_failed",
+                message or "Accessibility request failed",
+                response.status_code,
+                self.MttsStatus.CONNECT_PROBLEM,
+            )
+            logger.error("accessable(): accessibility request failed: {}".format(data))
             return False
 
         self._serving_status = data.get("content")

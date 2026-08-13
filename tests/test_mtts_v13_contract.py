@@ -88,6 +88,68 @@ def test_token_generation_uses_post_json(monkeypatch, instance):
     ]
 
 
+def test_mtts_status_codes_align_with_chat_shared_statuses(instance):
+    status = instance.MttsStatus
+
+    assert status.SERVER_REJECTED == 13408
+    assert status.SERVER_ERROR == 13409
+    assert status.TOKEN_GENERATION_FAILED == 13410
+    assert status.CONNECT_PROBLEM == 13411
+    assert status.RESPONSE_INVALID == 13412
+    assert status.SERVER_MAINTAIN == 13413
+    assert status.FAILED_GET_NODE == 13415
+    assert status.GENERATION_FAILED == 13418
+    assert status.from_protocol_status("client_availability_failed") == status.CONNECT_PROBLEM
+
+
+@pytest.mark.parametrize(
+    "protocol_status,fallback,expected_status",
+    [
+        ("client_provider_unavailable", "FAILED_GET_NODE", "FAILED_GET_NODE"),
+        ("client_network_error", None, "CONNECT_PROBLEM"),
+        ("client_response_invalid", None, "RESPONSE_INVALID"),
+        ("client_server_unavailable", None, "SERVER_MAINTAIN"),
+    ],
+)
+def test_token_operations_preserve_availability_failures(
+    instance,
+    protocol_status,
+    fallback,
+    expected_status,
+):
+    instance._MTTS__accessable = False
+    fallback_status = getattr(instance.MttsStatus, fallback) if fallback else None
+    instance.set_error(protocol_status, "original availability failure", fallback=fallback_status)
+
+    generation_result = instance._gen_token("alice", "password")
+
+    assert generation_result is None
+    assert instance.status == getattr(instance.MttsStatus, expected_status)
+    assert instance.error_protocol_status == protocol_status
+    assert instance.error_message == "original availability failure"
+
+    verification_result = instance._verify_token()
+
+    assert verification_result["status"] == protocol_status
+    assert verification_result["exception"] == "original availability failure"
+    assert instance.status == getattr(instance.MttsStatus, expected_status)
+
+
+def test_unknown_token_generation_unavailability_is_connection_problem(tmp_path):
+    instance = mtts_package.MTTS(
+        url="https://example.test/tts/",
+        token="",
+        cache_path=str(tmp_path),
+    )
+
+    instance._gen_token("alice", "password")
+    verification_result = instance._verify_token()
+
+    assert instance.status == instance.MttsStatus.CONNECT_PROBLEM
+    assert verification_result["status"] == "client_availability_failed"
+    assert verification_result["exception"] == "MTTS server availability is unknown"
+
+
 def test_generation_json_failure_sets_stable_failure_status(monkeypatch, instance):
     calls = []
 
@@ -200,6 +262,48 @@ def test_accessibility_refreshes_provider_url_and_clears_failure(monkeypatch, in
     assert instance.baseurl == "https://new-provider.test/tts/"
     assert not instance.has_error()
     assert calls[0][0] == "https://new-provider.test/tts/accessibility"
+
+
+def test_accessibility_only_uses_maintenance_for_explicit_non_serving(monkeypatch, instance):
+    class ProviderStub(object):
+        last_error = None
+
+        def get_provider(self):
+            return True
+
+        def get_provider_id(self):
+            return 2
+
+        def get_tts_url(self):
+            return "https://provider.test/tts/"
+
+    responses = iter(
+        [
+            ResponseStub(200, {"success": True, "content": "maintenance"}),
+            ResponseStub(
+                503,
+                {
+                    "success": False,
+                    "exception": "maica_unified_error: temporary gateway failure",
+                },
+            ),
+        ]
+    )
+    instance.provider_manager = ProviderStub()
+    monkeypatch.setattr(
+        mtts_package.requests,
+        "get",
+        lambda *args, **kwargs: next(responses),
+    )
+
+    assert instance.accessable() is False
+    assert instance.status == instance.MttsStatus.SERVER_MAINTAIN
+    assert instance.error_protocol_status == "client_server_unavailable"
+
+    assert instance.accessable() is False
+    assert instance.status == instance.MttsStatus.CONNECT_PROBLEM
+    assert instance.error_protocol_status == "client_availability_failed"
+    assert instance.error_message == "temporary gateway failure"
 
 
 def test_renpy_status_flow_keeps_failures_visible():
