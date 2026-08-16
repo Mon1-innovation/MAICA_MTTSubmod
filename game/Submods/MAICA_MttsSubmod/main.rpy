@@ -290,7 +290,10 @@ init -100 python in mtts:
 init 10 python in mtts:
     import store
     def apply_settings():
-        store.mtts.mtts_instance.enabled = store.persistent.mtts["enabled"]
+        previous_enabled = store.mtts.mtts_instance.enabled
+        enabled = bool(store.persistent.mtts["enabled"])
+        store.mtts.mtts_instance.enabled = enabled
+        store.mtts_set_enabled(enabled, previous_enabled=previous_enabled)
         store.mtts.mtts_instance.volume = store.persistent.mtts["volume"]
         store.mtts.mtts_instance.acs_enabled = store.persistent.mtts["acs_enabled"]
         store.mtts.mtts_instance.ministathud = store.persistent.mtts["ministathud"]
@@ -300,7 +303,11 @@ init 10 python in mtts:
         store.mtts.mtts_instance.generate_timeout = store.persistent.mtts["generate_timeout"]
         
     def discard_settings():
-        store.persistent.mtts["enabled"] = store.mtts.mtts_instance.enabled
+        enabled = bool(store.mtts.mtts_instance.enabled)
+        store.mtts_set_enabled(
+            enabled,
+            previous_enabled=store.persistent.mtts.get("enabled", False),
+        )
         store.persistent.mtts["volume"] = store.mtts.mtts_instance.volume
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts_instance.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts_instance.ministathud
@@ -311,7 +318,12 @@ init 10 python in mtts:
         
 
     def reset_settings():
+        previous_enabled = store.persistent.mtts.get("enabled", False)
         store.persistent.mtts = store.setting.copy()
+        store.mtts_set_enabled(
+            store.persistent.mtts.get("enabled", False),
+            previous_enabled=previous_enabled,
+        )
 
 init -100 python:
     import json_exporter_mtts
@@ -368,11 +380,38 @@ init python:
             self._history = mtts_package.LimitedList(3)
             self._extend_tracker = mtts_package.ExtendTextTracker()
             self._last_raw_text = None
+            self._session_id = 0
             self._generation_wait_id = 0
             self._active_generation_wait_id = None
 
         def begin_extend(self, what):
             self._extend_tracker.begin_extend(what)
+
+        def reset_session(self, stop_audio=False):
+            self._extend_tracker.clear()
+            self._last_raw_text = None
+            del self._history[:]
+            self._session_id += 1
+            self._generation_wait_id += 1
+            self._active_generation_wait_id = None
+            if stop_audio:
+                self.stop_voice()
+
+        @staticmethod
+        def stop_voice():
+            try:
+                # Stopping the channel also discards MTTS segments queued on it.
+                renpy.music.stop(channel="voice", fadeout=0)
+            except Exception as e:
+                store.mas_submod_utils.submod_log.debug(
+                    "[MTTS DEBUG] Failed to stop voice channel: {0}".format(e)
+                )
+
+        def is_generation_current(self, session_id):
+            return (
+                self._session_id == session_id
+                and bool(persistent.mtts.get("enabled", False))
+            )
 
         @staticmethod
         def call_old_say(who, what, interact, args, kwargs):
@@ -588,13 +627,14 @@ init python:
                     return 'en'
 
         def __call__(self, who, what, interact=True, *args, **kwargs):
-            if (
-                not self.conditions
-            ):
+            if not self.conditions:
+                self.reset_session(
+                    stop_audio=not bool(persistent.mtts.get("enabled", False))
+                )
                 return self.call_old_say(who, what, interact, args, kwargs)
             
             if who != store.m:
-                self._extend_tracker.pending_raw = None
+                self._extend_tracker.clear()
                 return self.call_old_say(who, what, interact, args, kwargs)
 
             is_extend, raw_tts_text = self._extend_tracker.resolve(
@@ -653,6 +693,8 @@ init python:
 
             mtts.mtts_instance.local_cache = 'local' in rule['action']
             mtts.mtts_instance.remote_cache = 'remote' in rule['action']
+
+            generation_session_id = self._session_id
 
             task = mtts.MTTSAsyncTask(
                 mtts.mtts_instance.generate, 
@@ -713,7 +755,12 @@ init python:
             if task.is_finished and self._generation_wait_id == generation_wait_id:
                 self._generation_wait_id += 1
 
-            if generation_timed_out:
+            generation_is_current = self.is_generation_current(generation_session_id)
+            if not generation_is_current:
+                store.mas_submod_utils.submod_log.debug(
+                    "[MTTS DEBUG] Ignoring generation result from an expired session."
+                )
+            elif generation_timed_out:
                 mtts.mtts_instance.set_error(
                     "client_response_timeout",
                     "Speech generation timed out after {0} seconds".format(generate_timeout),
@@ -763,11 +810,13 @@ init python:
                     mtts.mtts_instance.set_error("client_generation_failed", exception_msg)
                 store.mtts_status = mtts_failure_status_text()
 
-            if not generation_timed_out and task.is_success and task.result.is_success():
-                store.mtts_status = renpy.substitute(_("Standing by"))
+            if generation_is_current:
+                if not generation_timed_out and task.is_success and task.result.is_success():
+                    store.mtts_status = renpy.substitute(_("Standing by"))
 
-            self._history.append(text)
-            self._last_raw_text = what
+            if generation_is_current:
+                self._history.append(text)
+                self._last_raw_text = what
             display_what = self.strip_no_wait_tags(what) if self.should_wait_for_voice_before_extend(what, is_extend, interact) else what
             self.call_old_say(who, display_what, interact, args, kwargs)
 
@@ -794,6 +843,17 @@ init python:
     mtts_say = MttsSay()
     renpy.say = mtts_say
     renpy.exports.say = mtts_say
+
+    def mtts_set_enabled(enabled, previous_enabled=None):
+        enabled = bool(enabled)
+        if previous_enabled is None:
+            previous_enabled = persistent.mtts.get("enabled", False)
+        persistent.mtts["enabled"] = enabled
+        if bool(previous_enabled) != enabled:
+            store.mtts_say.reset_session(stop_audio=not enabled)
+
+    def mtts_toggle_enabled():
+        mtts_set_enabled(not bool(persistent.mtts.get("enabled", False)))
 
     _mtts_original_extend = extend
     def mtts_extend(what, interact=True, *args, **kwargs):

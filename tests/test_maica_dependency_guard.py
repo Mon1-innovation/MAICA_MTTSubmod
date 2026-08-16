@@ -133,6 +133,18 @@ def test_extend_tracker_consumes_pending_raw_text():
     assert tracker.pending_raw is None
 
 
+def test_extend_tracker_can_clear_pending_text_at_a_session_boundary():
+    tracker = mtts_package.ExtendTextTracker()
+
+    tracker.begin_extend("Stale line")
+    tracker.clear()
+
+    assert tracker.resolve("Current line", "Previous line") == (
+        False,
+        "Current line",
+    )
+
+
 def test_extend_tracker_falls_back_to_combined_text_tail():
     tracker = mtts_package.ExtendTextTracker()
 
@@ -168,6 +180,33 @@ def test_main_wraps_extend_to_capture_raw_extend_text():
     assert "store.mtts_say.begin_extend(what)" in text
     assert "mtts_extend.record_say = False" in text
     assert "extend = mtts_extend" in text
+
+
+def test_main_clears_tts_session_when_unavailable_and_invalidates_old_generations():
+    text = MAIN.read_text(encoding="utf-8")
+
+    assert "def reset_session(self, stop_audio=False):" in text
+    assert "self._extend_tracker.clear()" in text
+    assert "del self._history[:]" in text
+    assert "self._session_id += 1" in text
+    assert "self.reset_session(" in text[text.index("def __call__") :]
+    assert "generation_session_id = self._session_id" in text
+    assert "generation_is_current = self.is_generation_current(generation_session_id)" in text
+    assert "Ignoring generation result from an expired session" in text
+
+
+def test_main_routes_enabled_toggles_through_session_boundary_handler():
+    main_text = MAIN.read_text(encoding="utf-8")
+    setting_text = (ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "screen_main_setting.rpy").read_text(encoding="utf-8")
+    status_text = (ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "status.rpy").read_text(encoding="utf-8")
+
+    assert "def mtts_set_enabled(enabled, previous_enabled=None):" in main_text
+    assert "def mtts_toggle_enabled():" in main_text
+    assert "Function(mtts_toggle_enabled)" in setting_text
+    assert "Function(mtts_toggle_enabled)" in status_text
+    assert 'ToggleDict(persistent.mtts, "enabled", True, False)' not in setting_text
+    assert 'ToggleDict(persistent.mtts, "enabled", True, False)' not in status_text
+    assert 'renpy.music.stop(channel="voice", fadeout=0)' in main_text
 
 
 def test_main_queues_extend_voice_segments_without_clearing_voice_queue():

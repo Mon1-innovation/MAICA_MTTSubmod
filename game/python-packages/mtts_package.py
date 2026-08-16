@@ -201,6 +201,9 @@ class ExtendTextTracker(object):
         self.default_interjection = default_interjection
         self.pending_raw = None
 
+    def clear(self):
+        self.pending_raw = None
+
     def begin_extend(self, raw_text):
         self.pending_raw = raw_text
 

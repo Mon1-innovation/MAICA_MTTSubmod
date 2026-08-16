@@ -118,7 +118,7 @@ screen maicatts_stat_lite():
                         yfill True
                         background "mod_assets/console/cn_frame_tts_button.png"
                         hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
-                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
+                        action [Function(mtts_toggle_enabled), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
                         add Text(
                             "{0}●{{/color}} I / O".format(beacon),
                             font=maica_confont,

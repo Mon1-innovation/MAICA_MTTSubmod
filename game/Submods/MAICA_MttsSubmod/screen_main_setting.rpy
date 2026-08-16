@@ -1,7 +1,10 @@
 init 10 python in mtts:
     import store
     def apply_settings():
-        store.mtts.mtts_instance.enabled = store.persistent.mtts["enabled"]
+        previous_enabled = store.mtts.mtts_instance.enabled
+        enabled = bool(store.persistent.mtts["enabled"])
+        store.mtts.mtts_instance.enabled = enabled
+        store.mtts_set_enabled(enabled, previous_enabled=previous_enabled)
         store.mtts.mtts_instance.volume = store.persistent.mtts["volume"]
         store.mtts.mtts_instance.acs_enabled = store.persistent.mtts["acs_enabled"]
         store.mtts.mtts_instance.ministathud = store.persistent.mtts["ministathud"]
@@ -11,7 +14,11 @@ init 10 python in mtts:
         store.mtts.mtts_instance.generate_timeout = store.persistent.mtts["generate_timeout"]
         
     def discard_settings():
-        store.persistent.mtts["enabled"] = store.mtts.mtts_instance.enabled
+        enabled = bool(store.mtts.mtts_instance.enabled)
+        store.mtts_set_enabled(
+            enabled,
+            previous_enabled=store.persistent.mtts.get("enabled", False),
+        )
         store.persistent.mtts["volume"] = store.mtts.mtts_instance.volume
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts_instance.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts_instance.ministathud
@@ -21,7 +28,12 @@ init 10 python in mtts:
         store.persistent.mtts["generate_timeout"] = store.mtts.mtts_instance.generate_timeout
         store.persistent.mtts["use_custom_model_config"] = bool(store.persistent.mtts_advance_params)
     def reset_settings():
+        previous_enabled = store.persistent.mtts.get("enabled", False)
         store.persistent.mtts = store.setting.copy()
+        store.mtts_set_enabled(
+            store.persistent.mtts.get("enabled", False),
+            previous_enabled=previous_enabled,
+        )
 
 
 screen mtts_settings():
@@ -85,7 +97,7 @@ screen mtts_settings():
                 hbox:
                     style_prefix "generic_fancy_check"
                     textbutton _("Enable MTTS: [persistent.mtts.get('enabled')]"):
-                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
+                        action [Function(mtts_toggle_enabled), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
                         hovered SetField(_tooltip, "value", _("Enable to generate and play TTS audio."))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
 
@@ -97,7 +109,7 @@ screen mtts_settings():
                 hbox:
                     textbutton _("Enable MTTS: [persistent.mtts.get('enabled')]"):
                         style "generic_fancy_check_button_disabled"
-                        action ToggleDict(persistent.mtts, "enabled", True, False)
+                        action Function(mtts_toggle_enabled)
                         hovered SetField(_tooltip, "value", _("Enable to generate and play TTS audio.\n! MTTS not unlocked, enabling will not take effect"))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
             
