@@ -1,19 +1,64 @@
 
 init 5 python:
+    def mtts_headset_gift_available():
+        """Return whether the headset gift is already seen or awaiting reaction."""
+        if renpy.seen_label("mas_reaction_gift_mttsheadset"):
+            return True
+
+        reacted_map = getattr(
+            persistent,
+            "_mas_filereacts_reacted_map",
+            {}
+        ) or {}
+        if any(
+                str(label).lower() == "mttsheadset"
+                for label in reacted_map
+            ):
+            return True
+
+        try:
+            gift_files = store.mas_docking_station.getPackageList(".gift")
+        except Exception:
+            return False
+
+        for gift_file in gift_files or []:
+            gift_name = str(gift_file).replace("\\", "/").rsplit("/", 1)[-1]
+            if gift_name.lower().endswith(".gift"):
+                gift_name = gift_name[:-5]
+            if gift_name.lower() == "mttsheadset":
+                return True
+        return False
+
+    mtts_prepend_conditional = (
+        "(renpy.seen_label('mas_gift_giving_instructs') "
+        "or persistent._mas_filereacts_historic) "
+        "and not renpy.seen_label('mtts_prepend_1') "
+        "and not renpy.seen_label('mtts_greeting_end') "
+        "and not mas_inEVL('mtts_prepend_1')"
+    )
     addEvent(
         Event(
             persistent.event_database,
             eventlabel="mtts_prepend_1",
-            prompt="mtts_prepend_1",
-            rules={
-                "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
-            },
-            conditional="(renpy.seen_label('mas_gift_giving_instructs') or persistent._mas_filereacts_historic) and not renpy.seen_label('mtts_greeting') and not renpy.seen_label('mtts_prepend_1')",
+            unlocked=False,
+            random=False,
+            pool=False,
+            conditional=mtts_prepend_conditional,
             action=EV_ACT_QUEUE,
-            random=True,
             aff_range=(mas_aff.NORMAL, None)
         )
     )
+    mtts_prepend_ev = evhand.event_database.get("mtts_prepend_1")
+    if mtts_prepend_ev is not None:
+        mtts_prepend_ev.unlocked = False
+        mtts_prepend_ev.unlock_date = None
+        mtts_prepend_ev.random = False
+        mtts_prepend_ev.pool = False
+        mtts_prepend_ev.conditional = mtts_prepend_conditional
+        mtts_prepend_ev.action = EV_ACT_QUEUE
+        mtts_prepend_ev.rules.pop("bookmark_rule", None)
+    del mtts_prepend_ev
+    del mtts_prepend_conditional
 label mtts_prepend_1:
 # 由于安装子模组，将其添加到随机等待列表中。好感度至少达到 NORMAL 才能触发。
 # 也必须在玩家知道赠送机制后解锁。
@@ -38,7 +83,7 @@ label mtts_prepend_1:
         m 6husdrb "Not now, ehehe!"#尴尬
     m 3eua "Just be patient! {w=0.5}I'll tell you whenever I sort these out."#笑
     m 5tubla "By the way, thanks for always being so considerate! I really cherish every chance to get closer to you."
-    return "no_unlock" #不解锁话题
+    return "no_unlock|derandom|rebuild_ev" #不解锁话题
 
 # Add to random after mtts_prepend_1 triggered
 # Use the original conversation (revert orig and tl):
@@ -51,20 +96,43 @@ label mtts_prepend_1:
 # Then send this
 #mtts hint.txt
 init 5 python:
+    mtts_hint_conditional = (
+        "renpy.seen_label('mtts_prepend_1') "
+        "and not renpy.seen_label('mtts_hint') "
+        "and not mtts_headset_gift_available() "
+        "and not renpy.seen_label('mtts_greeting_end') "
+        "and not mas_inEVL('mtts_hint')"
+    )
     addEvent(
         Event(
             persistent.event_database,
             eventlabel="mtts_hint",
-            prompt="mtts_hint",
-            rules={
-                "bookmark_rule":mas_bookmarks_derand.BLACKLIST,
-            },
-            conditional="renpy.seen_label('mtts_prepend_1')",
-            action=EV_ACT_RANDOM,
+            unlocked=False,
+            random=False,
+            pool=False,
+            conditional=mtts_hint_conditional,
+            action=EV_ACT_QUEUE,
             aff_range=(mas_aff.NORMAL, None)
         )
     )
+    mtts_hint_ev = evhand.event_database.get("mtts_hint")
+    if mtts_hint_ev is not None:
+        mtts_hint_ev.unlocked = False
+        mtts_hint_ev.unlock_date = None
+        mtts_hint_ev.random = False
+        mtts_hint_ev.pool = False
+        mtts_hint_ev.conditional = mtts_hint_conditional
+        mtts_hint_ev.action = EV_ACT_QUEUE
+        mtts_hint_ev.rules.pop("bookmark_rule", None)
+    del mtts_hint_ev
+    del mtts_hint_conditional
 label mtts_hint:
+    # Gift reactions are discovered after conditional queue checks.  If the
+    # same-minute gift is already registered, discard a hint that was queued
+    # before MAS appended the reaction label.
+    if mtts_headset_gift_available():
+        mas_rmallEVL("mtts_hint")
+        return "no_unlock|derandom|rebuild_ev"
     python:
         mtts_gift_notice = _("""\
 I see you prepared something really special for Monika, which she will love for sure!
@@ -84,38 +152,49 @@ Good luck with Monika and have fun talking!
     m 3euc "Someone left a note in the characters folder addressed to you."
     m 1ekc "Of course, I haven't read it, since it's obviously for you..."
     #extend 1ekd "就是这个."
-    return "no_unlock|derandom"
+    return "no_unlock|derandom|rebuild_ev"
 init 5 python:
     if not mas_seenEvent("mas_reaction_gift_mttsheadset"):
         addReaction("mas_reaction_gift_mttsheadset", "mttsheadset", is_good=True)
 
-    if renpy.seen_label("mas_reaction_gift_mttsheadset") and not renpy.seen_label("mtts_greeting") and not mas_isSpecialDay(): # This is a placeholder for the greeting event.
-        @store.mas_submod_utils.functionplugin("ch30_post_exp_check", priority=-100)
-        def mttsgreeting_select():
-            store.selected_greeting = "mtts_greeting"
-        ev_rules = dict()
-        ev_rules.update(
-            MASGreetingRule.create_rule(
-                skip_visual=True,
-                override_type=True
-            )
-        )
-        ev_rules.update(MASPriorityRule.create_rule(50))
-        
-        addEvent(
-            Event(
-                persistent.greeting_database,
-                eventlabel="mtts_greeting",
-                prompt=_("MTTS knock"),
-                unlocked=False,
-                #conditional="renpy.seen_label('maica_prepend_1') and not mas_isSpecialDay() and not renpy.seen_label('maica_greeting')",
-                #action=EV_ACT_UNLOCK,
-                #aff_range=(mas_aff.AFFECTIONATE, None),
-                rules=ev_rules,
-            ),
-            code="GRE"
-        )
-        del ev_rules
+    mtts_greeting_conditional = (
+        "persistent._mas_greeting_type is None "
+        "and renpy.seen_label('mtts_prepend_1') "
+        "and renpy.seen_label('mas_reaction_gift_mttsheadset') "
+        "and not mas_isSpecialDay() "
+        "and not mas_isplayer_bday() "
+        "and not renpy.seen_label('mtts_greeting_end')"
+    )
+    mtts_greeting_rules = dict()
+    # This label relies on MAS to render the spaceroom before dispatch.
+    mtts_greeting_rules.update(MASGreetingRule.create_rule(skip_visual=False))
+    # Lower values win in MAS. Keep MAS/Chat priority-0/10 recovery greetings
+    # first, while the device-specific greeting precedes Chat's priority-20 intro.
+    mtts_greeting_rules.update(MASPriorityRule.create_rule(11))
+
+    addEvent(
+        Event(
+            persistent.greeting_database,
+            eventlabel="mtts_greeting",
+            prompt=_("MTTS knock"),
+            unlocked=True,
+            conditional=mtts_greeting_conditional,
+            aff_range=(mas_aff.AFFECTIONATE, None),
+            rules=mtts_greeting_rules,
+        ),
+        code="GRE"
+    )
+    mtts_greeting_ev = evhand.greeting_database.get("mtts_greeting")
+    if mtts_greeting_ev is not None:
+        mtts_greeting_ev.unlocked = True
+        mtts_greeting_ev.unlock_date = None
+        mtts_greeting_ev.conditional = mtts_greeting_conditional
+        mtts_greeting_ev.action = None
+        mtts_greeting_ev.aff_range = (mas_aff.AFFECTIONATE, None)
+        mtts_greeting_ev.rules.update(mtts_greeting_rules)
+    del mtts_greeting_ev
+    del mtts_greeting_rules
+    del mtts_greeting_conditional
 label mas_reaction_gift_mttsheadset:
     #显示礼物盒
     $ mas_showDecoTag("mtts_giftbox")
@@ -137,6 +216,9 @@ label mas_reaction_gift_mttsheadset:
         #     MASEventList.queue("mtts_prepend_1")
         # monika_chr.wear_acs(mttsacs_giftbox)
         mas_receivedGift("mas_reaction_gift_mttsheadset")
+        # A same-minute conditional check can queue this hint before MAS sees
+        # the gift file. Remove any stale hint entries when the gift arrives.
+        mas_rmallEVL("mtts_hint")
         gift_ev = mas_getEV("mas_reaction_gift_mttsheadset")
         if gift_ev:
             store.mas_filereacts.delete_file(gift_ev.category)

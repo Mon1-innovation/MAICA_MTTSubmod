@@ -1,62 +1,58 @@
-class migration_instance():
+class migration_instance(object):
 
-    def __init__(self, last_ver, curr_ver):
+    def __init__(self, last_ver, curr_ver, force_current=False):
         self.last_ver, self.curr_ver = last_ver, curr_ver
-        # Must be lined in sequence!
-        self.migration_queue = [
-            ("1.1.20", self.migration_1_1_20),
-            ("1.1.21", self.migration_1_1_21),
-            ("1.2.0", self.migration_1_2_0)
-        ]
+        self.force_current = force_current
+        self.migration_queue = []
+
+    @staticmethod
+    def _compare_versions(v1, v2):
+        """Compare dotted numeric versions using the legacy 0/1/2 states."""
+        try:
+            first = [int(part.strip()) for part in str(v1).strip().split('.')]
+            second = [int(part.strip()) for part in str(v2).strip().split('.')]
+        except (TypeError, ValueError):
+            return None
+
+        if not first or not second or any(part < 0 for part in first + second):
+            return None
+
+        width = max(len(first), len(second))
+        first.extend([0] * (width - len(first)))
+        second.extend([0] * (width - len(second)))
+        if first == second:
+            return 0
+        return 1 if first > second else 2
 
     def migrate(self):
-        def compare_vers(v1, v2):
-            cmp = None
-            v1s = str(v1).split('.')
-            v2s = str(v2).split('.')
-            if len(v1s) == len(v2s):
-                j = -1
-                for i in v1s:
-                    j += 1
-                    x = int(i)
-                    y = int(v2s[j])
-                    if x > y:
-                        cmp = 1
-                        break
-                    elif x < y:
-                        cmp = 2
-                        break
-                if not cmp:
-                    cmp = 0
-            else:
-                cmp = -1
-            # -1 ERROR
-            # 0 same
-            # 1 first larger
-            # 2 second larger
-            return cmp
-        signal = compare_vers(self.last_ver, self.curr_ver)
-        if signal == 0:
-            return True, 'Version unchanged'
-        elif signal == 1:
-            return False, 'Trying to revert version, denying'
-        elif signal == -1:
+        # Invalid schemas use None internally and retain the old public error
+        # message for callers that display or compare migration results.
+        signal = self._compare_versions(self.last_ver, self.curr_ver)
+        if signal is None and not self.force_current:
             return False, 'Version schemas incompatable'
-        elif signal == 2:
-            for p in self.migration_queue:
-                c1 = compare_vers(p[0], self.last_ver) == 1; c2 = compare_vers(p[0], self.curr_ver)
-                if c1 == 1 and (c2 == 2 or c2 == 0):
-                    p[1]()
+        if signal == 0 and not self.force_current:
+            return True, 'Version unchanged'
+        if signal == 1 and not self.force_current:
+            return False, 'Trying to revert version, denying'
 
-    def migration_1_1_20(self):
-        print(0)
+        if signal == 2 or self.force_current:
+            try:
+                for version, migration in self.migration_queue:
+                    pending_compare = self._compare_versions(version, self.last_ver)
+                    current_compare = self._compare_versions(version, self.curr_ver)
+                    if pending_compare is None or current_compare is None:
+                        return False, 'Version schemas incompatable'
 
-    def migration_1_1_21(self):
-        print(1)
+                    is_pending = (
+                        signal == 2
+                        and pending_compare == 1
+                        and current_compare in (2, 0)
+                    )
+                    is_current = self.force_current and current_compare == 0
+                    if is_pending or is_current:
+                        migration()
+            except Exception as error:
+                return False, 'Migration failed: {}'.format(error)
+            return True, 'Migration complete'
 
-    def migration_1_2_0(self):
-        print(2)
-
-if __name__ == '__main__':
-    i = migration_instance('1.1.9', '1.2.0')
-    i.migrate()
+        return False, 'Version schemas incompatable'

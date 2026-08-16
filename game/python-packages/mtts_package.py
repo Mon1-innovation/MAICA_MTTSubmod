@@ -7,6 +7,12 @@ import sys
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 import logging
+from logger_manager import LoggerWrapper
+
+try:
+    string_types = (basestring,)
+except NameError:
+    string_types = (str,)
 
 class TokenRedactionFilter(logging.Filter):
     """Filter that redacts sensitive tokens from log messages."""
@@ -23,24 +29,119 @@ class TokenRedactionFilter(logging.Filter):
     def _redact_tokens(self, text):
         """Replace token values with first 4 characters + ***"""
         # Pattern: access_token=<value> where value is alphanumeric, +, /, or - (URL-safe base64)
-        def replace_token(match):
-            full_match = match.group(0)
-            token_value = match.group(1)
-            prefix = token_value[:4] if len(token_value) >= 4 else token_value
-            return "access_token={}***".format(prefix)
+        return re.sub(
+            r'(?P<prefix>["\']?access_token["\']?\s*[:=]\s*["\']?)'
+            r'(?P<value>[a-zA-Z0-9+/_-]+)',
+            lambda match: "{}{}***".format(
+                match.group("prefix"), match.group("value")[:4]
+            ),
+            text,
+        )
 
-        return re.sub(r'access_token=([a-zA-Z0-9+/_-]+)', replace_token, text)
+class TokenRedactingLogger(object):
+    """Apply token redaction before forwarding to the active MAS logger."""
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-BASIC_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
-DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-formatter = logging.Formatter(BASIC_FORMAT, DATE_FORMAT)
-chlr = logging.StreamHandler() # 输出到控制台的handler
-chlr.setFormatter(formatter)
-chlr.setLevel(logging.DEBUG)  # 也可以不设置，不设置就默认用logger的level
-logger.addHandler(chlr)
-logger.addFilter(TokenRedactionFilter())
+    def __init__(self, logger):
+        self._logger = logger
+        self._filter = TokenRedactionFilter()
+
+    def _redact(self, value):
+        if isinstance(value, dict):
+            return dict(
+                (
+                    key,
+                    self._redact_token_value(item)
+                    if self._is_token_key(key)
+                    else self._redact(item)
+                )
+                for key, item in value.items()
+            )
+        if isinstance(value, tuple):
+            return tuple(self._redact(item) for item in value)
+        if isinstance(value, list):
+            return [self._redact(item) for item in value]
+        if isinstance(value, string_types):
+            return self._filter._redact_tokens(value)
+        return value
+
+    @staticmethod
+    def _is_token_key(key):
+        return isinstance(key, string_types) and key.lower() == "access_token"
+
+    def _redact_token_value(self, value):
+        if isinstance(value, string_types):
+            return "{}***".format(value[:4])
+        return self._redact(value)
+
+    def _prepare_call(self, message, args):
+        """Render standard %-style calls before redacting their final text."""
+        if args and isinstance(message, string_types):
+            try:
+                formatted = (
+                    message % args[0]
+                    if len(args) == 1 and isinstance(args[0], dict)
+                    else message % args
+                )
+                return formatted, ()
+            except Exception:
+                # Preserve logging's normal fallback behavior for malformed
+                # format strings, while still redacting likely token values.
+                pass
+
+        token_context = (
+            isinstance(message, string_types)
+            and "access_token" in message.lower()
+        )
+        return message, tuple(
+            self._redact_token_value(arg)
+            if token_context and isinstance(arg, string_types)
+            else self._redact(arg)
+            for arg in args
+        )
+
+    def _call(self, method_name, message, *args, **kwargs):
+        method = getattr(self._logger, method_name)
+        message, args = self._prepare_call(message, args)
+        redacted_message = self._redact(message)
+        redacted_args = tuple(self._redact(arg) for arg in args)
+        return method(redacted_message, *redacted_args, **kwargs)
+
+    def debug(self, message, *args, **kwargs):
+        return self._call("debug", message, *args, **kwargs)
+
+    def info(self, message, *args, **kwargs):
+        return self._call("info", message, *args, **kwargs)
+
+    def warning(self, message, *args, **kwargs):
+        return self._call("warning", message, *args, **kwargs)
+
+    def error(self, message, *args, **kwargs):
+        return self._call("error", message, *args, **kwargs)
+
+    def critical(self, message, *args, **kwargs):
+        return self._call("critical", message, *args, **kwargs)
+
+    def exception(self, message, *args, **kwargs):
+        return self._call("exception", message, *args, **kwargs)
+
+    def log(self, level, message, *args, **kwargs):
+        """Log at an arbitrary level without bypassing token redaction."""
+        method = getattr(self._logger, "log")
+        message, args = self._prepare_call(message, args)
+        return method(
+            level,
+            self._redact(message),
+            *(self._redact(arg) for arg in args),
+            **kwargs
+        )
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
+
+
+# LoggerWrapper resolves the MAS logger after submod initialization and avoids
+# adding a handler to Python's process-wide root logger during import.
+logger = TokenRedactingLogger(LoggerWrapper())
 
 import mtts_provider_manager
 

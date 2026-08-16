@@ -1,9 +1,19 @@
 init 980 python:
+    import os
+
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=0)
     def mtts_migration():
         def migration_0_1_10():
-            if renpy.seen_label("mtts_greeting"):
-                persistent._seen_ever.update({"mtts_greeting_end":True})
+            # Event shown_count is incremented only after the label returns.
+            # It distinguishes a completed legacy greeting from a save made
+            # while the player was still in its menu.
+            greeting_ev = evhand.greeting_database.get("mtts_greeting")
+            if (
+                    renpy.seen_label("mtts_greeting")
+                    and greeting_ev is not None
+                    and getattr(greeting_ev, "shown_count", 0) > 0
+                ):
+                persistent._seen_ever["mtts_greeting_end"] = True
         
         def m_1_0_4():
             try:
@@ -15,12 +25,118 @@ init 980 python:
             if renpy.android and config.language != "chinese":
                 persistent.mtts["provider_id"] = 1
 
+        def m_1_2_16():
+            event_contracts = {
+                "mtts_prepend_1": (
+                    "(renpy.seen_label('mas_gift_giving_instructs') or persistent._mas_filereacts_historic) and not renpy.seen_label('mtts_prepend_1') and not renpy.seen_label('mtts_greeting_end') and not mas_inEVL('mtts_prepend_1')",
+                    EV_ACT_QUEUE,
+                    False,
+                ),
+                "mtts_hint": (
+                    "renpy.seen_label('mtts_prepend_1') and not renpy.seen_label('mtts_hint') and not renpy.seen_label('mas_reaction_gift_mttsheadset') and not renpy.seen_label('mtts_greeting_end') and not mas_inEVL('mtts_hint')",
+                    EV_ACT_QUEUE,
+                    False,
+                ),
+            }
+            for eventlabel, (conditional, action, random) in event_contracts.items():
+                ev = evhand.event_database.get(eventlabel)
+                if ev is not None:
+                    ev.unlocked = False
+                    ev.unlock_date = None
+                    ev.random = random
+                    ev.pool = False
+                    ev.conditional = conditional
+                    ev.action = action
+                    ev.rules.pop("bookmark_rule", None)
+
+            greeting_ev = evhand.greeting_database.get("mtts_greeting")
+            if greeting_ev is not None:
+                greeting_ev.unlocked = True
+                greeting_ev.unlock_date = None
+                greeting_ev.conditional = (
+                    "persistent._mas_greeting_type is None "
+                    "and renpy.seen_label('mtts_prepend_1') "
+                    "and renpy.seen_label('mas_reaction_gift_mttsheadset') "
+                    "and not mas_isSpecialDay() "
+                    "and not mas_isplayer_bday() "
+                    "and not renpy.seen_label('mtts_greeting_end')"
+                )
+                greeting_ev.action = None
+                greeting_ev.aff_range = (mas_aff.AFFECTIONATE, None)
+                greeting_ev.rules.update(
+                    MASGreetingRule.create_rule(skip_visual=False)
+                )
+                greeting_ev.rules.update(MASPriorityRule.create_rule(11))
+
+            managed_events = ("mtts_prepend_1", "mtts_hint")
+            completed_events = set(
+                eventlabel
+                for eventlabel in managed_events
+                if renpy.seen_label(eventlabel)
+            )
+            if getattr(persistent, "event_list", None):
+                repaired_event_list = []
+                queued_events = set()
+                for item in persistent.event_list:
+                    queued_label = (
+                        item[0]
+                        if isinstance(item, (tuple, list)) and item
+                        else item
+                    )
+                    if queued_label not in managed_events:
+                        repaired_event_list.append(item)
+                    elif (
+                            queued_label not in completed_events
+                            and queued_label not in queued_events
+                        ):
+                        repaired_event_list.append(item)
+                        queued_events.add(queued_label)
+                persistent.event_list[:] = repaired_event_list
+
+            for attr_name in ("_mas_player_bookmarked", "_mas_player_derandomed"):
+                labels = getattr(persistent, attr_name, None)
+                if labels is not None:
+                    setattr(
+                        persistent,
+                        attr_name,
+                        [label for label in labels if label not in managed_events]
+                    )
+            if getattr(persistent, "flagged_monikatopic", None) in managed_events:
+                persistent.flagged_monikatopic = None
+
+            mas_rebuildEventLists()
+
         import migrations
-        migration = migrations.migration_instance(persistent._mtts_last_version, store.mtts_version)
+        migration = migrations.migration_instance(
+            persistent._mtts_last_version,
+            store.mtts_version,
+            force_current=store.maica_is_dev
+        )
         migration.migration_queue = [
             ("0.1.10", migration_0_1_10),
             ("1.0.4", m_1_0_4),
-            ("1.2.10", m_1_2_10)
+            ("1.2.10", m_1_2_10),
+            ("1.2.16", m_1_2_16),
         ]
-        migration.migrate()
-        persistent._mtts_last_version = store.mtts_version
+        migration_result = migration.migrate()
+        # Chat's shared migrations.py historically returned None on success;
+        # accept that result so release file-overwrite order is harmless.
+        migration_succeeded = (
+            migration_result is None
+            or (
+                isinstance(migration_result, (tuple, list))
+                and len(migration_result) > 0
+                and migration_result[0]
+            )
+        )
+        if migration_succeeded:
+            persistent._mtts_last_version = store.mtts_version
+        else:
+            store.mas_submod_utils.submod_log.error(
+                "MTTS migration was not completed: {}".format(
+                    migration_result[1]
+                    if isinstance(migration_result, (tuple, list))
+                    and len(migration_result) > 1
+                    else migration_result
+                )
+            )

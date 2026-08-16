@@ -2,7 +2,10 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "1.2.15"
+    mtts_version = "1.2.16"
+    maica_is_dev = True
+    # Development builds rerun the current migration, show a warning, and
+    # are excluded from the release workflow.
     # dependencies - dictionary in the following structure: {"name": ("minimum_version", "maximum_version")}
     store.mas_submod_utils.Submod(
         author="P",
@@ -44,6 +47,11 @@ screen mtts_settingpane():
 
             text "":
                 size 0
+            if store.maica_is_dev:
+                hbox:
+                    text _("> Warning: this is a {color=#ff0000}development build{/color} copy. {color=#ff0000}Stop using immediately{/color} if you're not MAICA official staff"):
+                        style "main_menu_version_l"
+
             if persistent.mtts["_outdated"]:
                 hbox:
                     text _("> Support for this version has ended, please update to the latest version"):

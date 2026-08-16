@@ -143,9 +143,6 @@ init -100 python in mtts:
             renpy.notify(_("MTTS: Provider applied, reinitializing"))
         except Exception:
             pass
-    mtts_package.logger = store.mas_submod_utils.submod_log
-
-
     
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_check_outdated():
@@ -153,10 +150,11 @@ init -100 python in mtts:
 
         version = mtts_instance.get_version()
         if version.get("success"):
-            min_version = version['content']['fe_synbrace_version']
-            if store.mas_utils.compareVersionLists(mtts_version.strip().split('.'), min_version.strip().split('.')) < 0:
-                persistent.mtts["_outdated"] = True
+            persistent.mtts["_outdated"] = is_mtts_frontend_outdated(version)
         else:
+            # A failed check must not preserve a stale outage flag from an
+            # older save; the status path reports the actual request failure.
+            persistent.mtts["_outdated"] = False
             store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
 
         if _acc is not None:
@@ -182,6 +180,60 @@ init -100 python in mtts:
         "donation_exists": False,
     }
 
+    def mtts_version_parts(version):
+        """Parse a dotted numeric version, returning None for malformed data."""
+        try:
+            string_types = (basestring,)
+        except NameError:
+            string_types = (str,)
+        if isinstance(version, (list, tuple)):
+            raw_parts = version
+        elif isinstance(version, string_types):
+            raw_parts = version.strip().split('.')
+        else:
+            return None
+
+        if not raw_parts:
+            return None
+
+        parts = []
+        for part in raw_parts:
+            text = str(part).strip()
+            if not text or not text.isdigit():
+                return None
+            parts.append(int(text))
+        return parts
+
+    def compare_mtts_versions(left, right):
+        """Compare numeric versions with zero-padding for missing segments."""
+        if left is None or right is None:
+            return None
+        left_parts = list(left)
+        right_parts = list(right)
+        width = max(len(left_parts), len(right_parts))
+        left_parts.extend([0] * (width - len(left_parts)))
+        right_parts.extend([0] * (width - len(right_parts)))
+        return (left_parts > right_parts) - (left_parts < right_parts)
+
+    def is_mtts_frontend_outdated(version_info):
+        if not isinstance(version_info, dict) or not version_info.get("success", False):
+            return False
+
+        content = version_info.get("content")
+        if not isinstance(content, dict):
+            return False
+        min_version = content.get("fe_synbrace_version")
+        if not min_version:
+            return False
+
+        comparison = compare_mtts_versions(
+            mtts_version_parts(store.mtts_version),
+            mtts_version_parts(min_version)
+        )
+        if comparison is None:
+            return False
+        return comparison < 0
+
     def validate_version(force=False):
         global _cached_version_result
         if _cached_version_result is not None and not force:
@@ -193,9 +245,13 @@ init -100 python in mtts:
             _cached_version_result = (None, None, None)
         else:
             with open(libv_path, 'r') as libv_file:
-                libv = libv_file.read()
+                libv = libv_file.read().strip()
             uiv = store.mtts_version
-            _cached_version_result = (store.mas_utils.compareVersionLists(libv.strip().split('.'), uiv.strip().split('.')), libv, uiv)
+            comparison = compare_mtts_versions(
+                mtts_version_parts(libv),
+                mtts_version_parts(uiv)
+            )
+            _cached_version_result = (comparison, libv, uiv)
         return _cached_version_result
 
     def refresh_setting_pane_cache(force_version=False):
@@ -414,36 +470,78 @@ init python:
 
         @staticmethod
         def decode_str(text):
-            import sys
-            from cp936_decode import decode_cp936
-            # 1. 统一转换为 Unicode 字符串
-            decoded_text = text
+            from mtts_cp936_decode import decode_cp936
 
-            # 判断是否为字节流 (兼容 Python 2/3)
-            is_bytes = (
-                (sys.version_info[0] == 3 and isinstance(text, bytes))
-                or
-                (sys.version_info[0] == 2 and isinstance(text, str))
-            )
+            try:
+                text_type = unicode
+            except NameError:
+                text_type = str
 
-            if is_bytes and len(text) > 0:
+            if isinstance(text, text_type):
+                return text
 
-                # 使用 chardet 检测编码
-                detection = chardet.detect(text)
-                encoding = detection.get('encoding')
-                confidence = detection.get('confidence', 0)
+            if isinstance(text, (bytes, bytearray)):
+                cp936_text = None
+                try:
+                    cp936_text = decode_cp936(text)
+                except (UnicodeDecodeError, TypeError):
+                    cp936_text = None
 
-                if encoding.lower() in ('utf8', 'utf-8'):
-                    decoded_text = text.decode('utf-8', errors='strict')
-                else:
-                    store.mas_submod_utils.submod_log.warning("Encoding not utf-8 detected: %s, trying GBK", encoding)
-                    decoded_text = decode_cp936(text)
+                try:
+                    utf8_text = text.decode('utf-8', errors='strict')
+                except UnicodeDecodeError:
+                    utf8_text = None
 
-            elif sys.version_info[0] == 2 and not isinstance(text, unicode):
-                # 兼容处理 Py2 某些奇怪的对象类型
-                decoded_text = unicode(text)
+                if utf8_text is not None:
+                    # CP936 and UTF-8 overlap for a few byte pairs (for
+                    # example CP936 ``C2 A1`` is ``隆`` while UTF-8 is ``¡``).
+                    # Keep the legacy CP936 interpretation only when the
+                    # UTF-8 candidate is punctuation/symbol text and the
+                    # complete CP936 candidate contains CJK characters.
+                    try:
+                        import unicodedata
+                        utf8_has_nonletter = any(
+                            ord(char) >= 0x80
+                            and not unicodedata.category(char).startswith("L")
+                            for char in utf8_text
+                        )
+                        utf8_has_nonascii_letter = any(
+                            ord(char) >= 0x80
+                            and unicodedata.category(char).startswith("L")
+                            for char in utf8_text
+                        )
+                        cp936_has_cjk = any(
+                            0x3400 <= ord(char) <= 0x9FFF
+                            for char in (cp936_text or u"")
+                        )
+                    except Exception:
+                        utf8_has_nonletter = False
+                        utf8_has_nonascii_letter = False
+                        cp936_has_cjk = False
 
-            return decoded_text
+                    if (
+                            cp936_text is not None
+                            and u"\ufffd" not in cp936_text
+                            and cp936_has_cjk
+                            and utf8_has_nonletter
+                            and not utf8_has_nonascii_letter
+                        ):
+                        return cp936_text
+                    return utf8_text
+
+                if cp936_text is not None and u"\ufffd" not in cp936_text:
+                    return cp936_text
+
+                if utf8_text is None:
+                    store.mas_submod_utils.submod_log.warning(
+                        "Text is not valid UTF-8 or CP936; replacement characters used."
+                    )
+                return cp936_text if cp936_text is not None else decode_cp936(text)
+
+            try:
+                return text_type(text)
+            except Exception:
+                return u"{}".format(text)
 
         @staticmethod
         def escape_brackets_in_exceptions_and_ellipsis(err, max_chars=120):

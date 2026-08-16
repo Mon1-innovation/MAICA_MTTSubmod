@@ -6,6 +6,10 @@ translate chinese strings:
     new "MAICA-MTTS官方前端子模组"
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:44
+    old "> Warning: this is a {color=#ff0000}development build{/color} copy. {color=#ff0000}Stop using immediately{/color} if you're not MAICA official staff"
+    new "> 警告: 该副本是{color=#ff0000}开发版本{/color}. 如果你不是MAICA官方人员, 请{color=#ff0000}立刻停止使用{/color}"
+
+    # game/Submods/MAICA_MttsSubmod/header.rpy:55
     old "> Support for this version has ended, please update to the latest version"
     new "> 当前版本支持已终止, 请更新至最新版"
 

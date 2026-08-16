@@ -1,24 +1,112 @@
 # -*- coding: utf-8 -*-
 
+import re
+
+from logger_manager import LoggerWrapper
+
+try:
+    string_types = (basestring,)
+except NameError:
+    string_types = (str,)
+
 class DefaultLogger(object):
     """
-    默认日志记录器，用于在没有提供日志记录器的情况下输出日志信息。
+    Compatibility logger that follows the active MAS logger.
     """
-    def debug(self, msg):
-        """输出调试级别的日志"""
-        print("[DEBUG] {}".format(msg))
+    def __init__(self, logger=None):
+        self._logger = logger or LoggerWrapper()
 
-    def info(self, msg):
-        """输出信息级别的日志"""
-        print("[INFO] {}".format(msg))
+    def _log(self, method_name, msg, *args, **kwargs):
+        msg, args = self._prepare_call(msg, args)
+        return getattr(self._logger, method_name)(
+            self._log_value(msg),
+            *(self._log_value(arg) for arg in args),
+            **kwargs
+        )
 
-    def error(self, msg):
-        """输出错误级别的日志"""
-        print("[ERROR] {}".format(msg))
+    @staticmethod
+    def _prepare_call(msg, args):
+        if args and isinstance(msg, string_types):
+            try:
+                formatted = (
+                    msg % args[0]
+                    if len(args) == 1 and isinstance(args[0], dict)
+                    else msg % args
+                )
+                return formatted, ()
+            except Exception:
+                pass
 
-    def warning(self, msg):
-        """输出警告级别的日志"""
-        print("[WARNING] {}".format(msg))
+        token_context = (
+            isinstance(msg, string_types)
+            and "access_token" in msg.lower()
+        )
+        return msg, tuple(
+            "{}***".format(arg[:4])
+            if token_context and isinstance(arg, string_types)
+            else arg
+            for arg in args
+        )
+
+    def debug(self, msg, *args, **kwargs):
+        return self._log("debug", msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        return self._log("info", msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        return self._log("error", msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        return self._log("warning", msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        return self._log("critical", msg, *args, **kwargs)
+
+    def exception(self, msg, *args, **kwargs):
+        return self._log("exception", msg, *args, **kwargs)
+
+    def log(self, level, msg, *args, **kwargs):
+        msg, args = self._prepare_call(msg, args)
+        return self._logger.log(
+            level,
+            self._log_value(msg),
+            *(self._log_value(arg) for arg in args),
+            **kwargs
+        )
+
+    def _log_value(self, value):
+        if isinstance(value, dict):
+            return dict(
+                (
+                    key,
+                    "{}***".format(item[:4])
+                    if self._is_token_key(key) and isinstance(item, string_types)
+                    else self._log_value(item)
+                )
+                for key, item in value.items()
+            )
+        if isinstance(value, tuple):
+            return tuple(self._log_value(item) for item in value)
+        if isinstance(value, list):
+            return [self._log_value(item) for item in value]
+        if isinstance(value, string_types):
+            return re.sub(
+                r'(?P<prefix>["\']?access_token["\']?\s*[:=]\s*["\']?)'
+                r'(?P<value>[a-zA-Z0-9+/_-]+)',
+                lambda match: "{}{}***".format(
+                    match.group("prefix"), match.group("value")[:4]
+                ),
+                value,
+            )
+        return value
+
+    @staticmethod
+    def _is_token_key(key):
+        return isinstance(key, string_types) and key.lower() == "access_token"
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
 
 
 logger = DefaultLogger()

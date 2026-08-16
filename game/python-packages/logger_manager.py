@@ -30,6 +30,8 @@ class LoggerManager(object):
 
     _instance = None
     _initialized = False
+    _fallback_logger_name = "maica_logger_manager"
+    _fallback_handler_marker = "_maica_logger_manager_handler"
 
     def __new__(cls):
         """Ensure singleton pattern"""
@@ -44,12 +46,25 @@ class LoggerManager(object):
 
         LoggerManager._initialized = True
 
-        # Initialize root logger
-        self._root_logger = logging.getLogger()
+        # Keep the standalone fallback isolated from the process-wide root logger.
+        # MAS supplies its own logging hierarchy, so attaching a handler to the
+        # real root would make MAS loggers emit duplicate records after injection.
+        self._root_logger = logging.getLogger(self._fallback_logger_name)
         self._root_logger.setLevel(logging.DEBUG)
+        self._root_logger.propagate = False
 
-        # Create stream handler for console output
-        self._stream_handler = logging.StreamHandler(sys.stdout)
+        # Reuse the manager-owned handler across module reloads.
+        self._stream_handler = None
+        for handler in list(self._root_logger.handlers):
+            if getattr(handler, self._fallback_handler_marker, False):
+                self._stream_handler = handler
+                break
+
+        if self._stream_handler is None:
+            self._stream_handler = logging.StreamHandler(sys.stdout)
+            setattr(self._stream_handler, self._fallback_handler_marker, True)
+            self._root_logger.addHandler(self._stream_handler)
+
         self._stream_handler.setLevel(logging.DEBUG)
 
         # Create formatter
@@ -58,9 +73,6 @@ class LoggerManager(object):
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         self._stream_handler.setFormatter(self._formatter)
-
-        # Add handler to logger
-        self._root_logger.addHandler(self._stream_handler)
 
         # Registry for injection points that need synchronization
         # Format: {name: (module, attribute_name, current_logger_ref)}
@@ -110,7 +122,11 @@ class LoggerManager(object):
         Args:
             level: logging level (e.g., logging.DEBUG, logging.INFO, etc.)
         """
-        self._root_logger.setLevel(level)
+        set_level = getattr(self._root_logger, "setLevel", None)
+        if callable(set_level):
+            set_level(level)
+        elif hasattr(self._root_logger, "level"):
+            self._root_logger.level = level
         self._stream_handler.setLevel(level)
         self._root_logger.info("Log level set to {}".format(level))
         self._sync_injected_references()
@@ -122,7 +138,11 @@ class LoggerManager(object):
         Args:
             handler: logging.Handler instance
         """
-        self._root_logger.addHandler(handler)
+        add_handler = getattr(self._root_logger, "addHandler", None)
+        if not callable(add_handler):
+            self._root_logger.warning("Current logger does not support handlers")
+            return
+        add_handler(handler)
         self._root_logger.info("Handler added: {}".format(handler))
         self._sync_injected_references()
 
@@ -133,7 +153,11 @@ class LoggerManager(object):
         Args:
             handler: logging.Handler instance
         """
-        self._root_logger.removeHandler(handler)
+        remove_handler = getattr(self._root_logger, "removeHandler", None)
+        if not callable(remove_handler):
+            self._root_logger.warning("Current logger does not support handlers")
+            return
+        remove_handler(handler)
         self._root_logger.info("Handler removed: {}".format(handler))
         self._sync_injected_references()
 
@@ -178,6 +202,7 @@ class LoggerManager(object):
         This is called automatically after configuration changes to ensure
         all modules get the latest logger configuration.
         """
+        root_level = getattr(self._root_logger, 'level', None)
         for name, ref_info in self._injected_references.items():
             try:
                 module = ref_info['module']
@@ -186,16 +211,17 @@ class LoggerManager(object):
                 # Get current logger from module
                 current_logger = getattr(module, attr_name, None)
 
-                # Update configuration to match current root logger
-                if current_logger is not None:
-                    current_logger.setLevel(self._root_logger.level)
-
-                    # Clear existing handlers and add current ones
-                    for handler in current_logger.handlers[:]:
-                        current_logger.removeHandler(handler)
-
-                    for handler in self._root_logger.handlers:
-                        current_logger.addHandler(handler)
+                # Dynamic proxies already resolve the current logger on every call.
+                # For distinct stdlib loggers, synchronize only the level. Copying
+                # handlers here causes each record to be handled by both the child
+                # and its parent when propagation remains enabled.
+                if (
+                    isinstance(current_logger, logging.Logger)
+                    and current_logger is not self._root_logger
+                    and isinstance(self._root_logger, logging.Logger)
+                ):
+                    if root_level is not None:
+                        current_logger.setLevel(root_level)
 
                 self._root_logger.debug("Synced injection point: {}".format(name))
             except Exception as e:
@@ -210,10 +236,11 @@ class LoggerManager(object):
         Returns:
             dict: Status information
         """
+        handlers = list(getattr(self._root_logger, 'handlers', []))
         return {
-            'logger_level': logging.getLevelName(self._root_logger.level),
-            'handler_count': len(self._root_logger.handlers),
-            'handlers': [type(h).__name__ for h in self._root_logger.handlers],
+            'logger_level': logging.getLevelName(getattr(self._root_logger, 'level', logging.NOTSET)),
+            'handler_count': len(handlers),
+            'handlers': [type(h).__name__ for h in handlers],
             'formatter': str(self._formatter._fmt) if self._formatter else None,
             'injected_references': list(self._injected_references.keys())
         }
@@ -234,14 +261,14 @@ class LoggerWrapper(object):
         Args:
             logger_manager: LoggerManager instance (default: get_logger_manager())
         """
-        if logger_manager is None:
-            logger_manager = get_logger_manager()
         self._manager = logger_manager
+        self._dynamic_manager = logger_manager is None
 
     @property
     def logger(self):
         """Get current logger from manager"""
-        return self._manager.logger
+        manager = get_logger_manager() if self._dynamic_manager else self._manager
+        return manager.logger
 
     def debug(self, msg, *args, **kwargs):
         """Log debug message"""

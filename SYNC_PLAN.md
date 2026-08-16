@@ -1,163 +1,76 @@
-# MTTS 与 Chat 同步审计临时清单
+# MTTS 与 Chat 同步实施记录
 
-状态：待确认。本文档只记录审计结论和后续同步范围，不代表已经开始同步；本阶段不修改任何 `.rpy`、`.py`、测试、workflow 或现有文档。
+状态：已实施并验证（2026-08-16）。
 
-## 1. 审计范围
+本文最初是“待确认、尚未修改代码”的审计清单。该状态已经过时；本轮同步已经完成，本文改为记录实际实现、证据、验证结果和仍未处理的发布风险。
+
+## 1. 基线与范围
 
 - 参考项目：`D:\0Works2\MAICA_ChatSubmod`
-- Chat 基线：提交 `1c561214bfb2`（tag `1.8.6`）
-- Chat 审计终点：提交 `47bedca0e740f0da4863d7c98119dff165793495`
-- 范围内提交：35 个非合并提交
-- MTTS 当前基线：提交 `5f7a7c2b9d1c105a2e58b8f9f67ba841515bbfd2`（tag `1.2.15`）
-- MAS 上游运行时参考：本地检出提交 `a7e260c`
+- Chat 审计终点：`47bedca0e740f0da4863d7c98119dff165793495`
+- MTTS 同步前基线：`5f7a7c2b9d1c105a2e58b8f9f67ba841515bbfd2`（`1.2.15`）
+- MAS 运行时参考：本地检出 `a7e260c308000e2e21c173d5f751bce81e19b7ba`
 
-主要对照文件：
+本轮只修改 MTTS 工作树。Chat 参考仓库保持干净；Chat 专属后端、WebSocket/tasker、Vista/MPostal/背景等没有机械移植。
 
-- Chat：`game/Submods/MAICA_ChatSubmod/chat.rpy`、`api.rpy`、`migrations.rpy`
-- MTTS：`game/Submods/MAICA_MttsSubmod/chat.rpy`、`migration.rpy`、`main.rpy`
-- 共享 Python 包：`game/python-packages/logger_manager.py`、`migrations.py`
+## 2. 已修正的审计结论
 
-## 2. 总结结论
+1. 原文“本阶段不修改代码”的边界已失效，代码和测试已经按下文实施。
+2. MAS 的 `mas_buildEventLists()`/`Event.filterEvents(random=True)` 只按 `random` 字段筛选，不评估 `conditional`。启动阶段还会把 `EV_ACT_QUEUE` 事件排除在 `startup_events` 外；条件队列事件由后续 `Event.checkEvents()` 处理。因此 MTTS 的前置和 hint 事件必须保持 `random=False`、`pool=False`、`unlocked=False`、`action=EV_ACT_QUEUE`，并在条件中检查 `seen` 与 `mas_inEVL()`。这能阻止条件事件泄漏到随机话题列表，但不能声称它能强制排在 Chat 的随机前置话题之前。
+3. MAS greeting priority 数字越小越优先。Chat recovery 使用 `0`，MAS 自带 `monikaroom_will_change` 使用 `10`，Chat 普通 intro 使用 `20`；MTTS 使用 `11`，所以不会与 MAS 的 priority-10 greeting 进入同一随机池，同时仍先于 Chat 普通 intro。
+4. greeting 必须注册到 `persistent.greeting_database`，由 MAS 的 `selectGreeting()` 选择；直接写 `selected_greeting` 的 MTTS 插件已删除。`skip_visual=False` 是有意保留的，因为该对白依赖 MAS 正常初始化 spaceroom。
+5. MTTS 现在沿用 Chat 的 `maica_is_dev` 开发版标志：设置页显示开发版警告，迁移通过 `force_current` 重跑当前版本，release workflow 跳过正式发布。该标志与 Chat 共用全局名称，不再引入另一套开发版变量。
+6. Chat release 仍会覆盖共享路径 `game/python-packages/cp936_decode`，而 Chat 当前不再依赖该模块。MTTS 的运行入口已经改为私有 `mtts_cp936_decode.py`；公共包同时保留修正版，但不能把 release 的同名文件覆盖风险当作已消除。
 
-1. **话题解锁体系是必须同步的 P0 项。** Chat 在事件条件、解锁动作、随机/池属性、重启黑名单、事件顺序、主入口锁定和旧存档迁移方面已经形成一套相互依赖的规则。MTTS 的三个事件不能继续按旧的局部逻辑维护。
-2. **greeting 处理是必须同步的 P0 项。** MTTS 当前通过 `ch30_post_exp_check` 直接写入 `selected_greeting`，同时使用与 Chat 不同的事件 priority 和旧的注册方式；必须重新设计两者同时满足时的选择关系并进行运行时验证。
-3. **共享运行时文件是 P1 项，但必须在同一轮同步中处理。** 两个 release workflow 都打包整个 `game`，同名的 `logger_manager.py`、`migrations.py` 会互相覆盖；只更新 Chat 或只保留 MTTS 旧版都会造成启动/运行时兼容问题。
-4. **MTTS 还有需要等价修复的本地缺陷。** 包括 CP936/Unicode 解码、版本比较和日志适配。它们不是简单复制 Chat 业务代码，而是把同一类修复落实到 MTTS 的实现边界。
+## 3. 分阶段实施结果
 
-## 3. P0：话题解锁体系
+### 阶段 A：共享运行时接口（完成）
 
-### 3.1 必须重新审查的 MTTS 事件
+- `logger_manager.py` 使用隔离的 `maica_logger_manager`，`propagate=False`，以 marker 去重 fallback handler，不修改 Python root logger。
+- 注入的标准 logger 只同步 level，不复制 handler；默认 `LoggerWrapper` 在每次调用时解析当前 MAS logger，module reload 后仍能跟随新 manager，显式注入的 manager 则保持固定引用。
+- `mtts_package.py` 与 `mtts_provider_manager.py` 删除 root-handler/`print()` fallback，接入动态 logger，并在普通格式化、字典/序列和 `logger.log()` 路径统一脱敏 `access_token`。
+- `migrations.py` 默认 queue 为空，支持 `force_current=False`，版本段按数字比较并补零；unchanged、upgrade、rollback、非法版本和迁移异常均返回明确的 `(success, message)`。非法版本的旧错误文本 `Version schemas incompatable` 保留，以免破坏已有调用方的字符串契约。
+- Chat 当前共享 `migrations.py` 的升级成功路径仍返回 `None`；MTTS 迁移脚本已把 `None` 视为成功，避免两个整包按不同顺序覆盖时崩溃。
 
-`game/Submods/MAICA_MttsSubmod/chat.rpy` 中的：
+### 阶段 B：事件与 greeting（完成）
 
-- `mtts_prepend_1`
-- `mtts_hint`
-- `mtts_greeting`
+- `mtts_prepend_1` 和 `mtts_hint` 按 MAS 条件队列模型重注册；完成对白返回 `no_unlock|derandom|rebuild_ev`，避免旧随机/池字段继续生效。
+- hint 条件同时排除已收到礼物、已完成 greeting 和已在事件列表中的项；礼物反应标签、hint 标签入口的礼物发现短路以及 `ch30_preloop` 清理钩子会移除同一分钟或旧存档中残留的 hint 队列项。
+- greeting 条件要求 generic startup、prepend 完成、礼物反应完成、AFFECTIONATE+、非特殊日、非玩家生日且 `mtts_greeting_end` 未完成。旧 Event 对象会显式更新字段和规则，避免 MAS `addEvent()` 的 `setdefault` 保留旧数据。
+- greeting priority 为 `11`，使用 MAS 正式 greeting 选择流程；不再使用 `ch30_post_exp_check` 插件或直接写 `selected_greeting`。
+- `unlock_progress.rpy` 与真实条件保持一致。
 
-审查时需要逐项对齐 Chat 当前事件模型，而不是只复制对白或条件文本：
+### 阶段 C：旧存档迁移（完成）
 
-- `conditional` 是否描述了真实的前置状态、完成状态和互斥状态；
-- `action` 是否使用正确的 `EV_ACT_QUEUE`、`EV_ACT_PUSH`、`EV_ACT_UNLOCK` 等动作；
-- `random`、`pool`、`unlocked` 的组合是否会让池话题绕过条件提前解锁；
-- `restartBlacklist`、bookmark/derandom 状态以及事件返回值是否会在重启后改变选择结果；
-- affection、礼物领取、首次流程、特殊日等条件的评估时机；
-- 事件优先级和队列顺序是否保证前置话题先于 hint、greeting 和后续主入口；
-- 事件已存在于 `persistent.event_database` 时，是否更新旧对象而不是留下旧字段。
+- 新增 `1.2.16` 迁移，修复两个事件的 conditional/action/random/pool/unlocked/rules 字段，清除旧 `bookmark_rule`、重复队列项、已完成队列项，以及 `_mas_player_bookmarked`、`_mas_player_derandomed`、`flagged_monikatopic` 中的旧标签。
+- 新迁移不把“进入 `mtts_greeting`”推断为完成；新存档以真实的 `mtts_greeting_end` 为完成标记。极旧的 `0.1.10` 历史迁移只在旧 Event 的 `shown_count > 0`（MAS 已完整返回事件）时补写 end 标记，保存中断的旧 greeting 不会被永久锁死。
+- MTTS 优先识别增强版 migration 的成功 tuple；为兼容 Chat release 覆盖旧版 `migrations.py` 时的升级路径，也接受其历史成功返回值 `None`。明确失败 tuple 不会推进 `persistent._mtts_last_version`，失败会记录错误并在下次启动重试。
 
-### 3.2 必须保留的状态不变量
+### 阶段 D：本地等价修复（完成）
 
-- 首次入口完成前，后续话题不能通过 `pool` 或 `random` 绕过前置条件；
-- 事件解锁顺序不能因重启、重新评估或重复注册而倒退；
-- 主入口不能在前置流程尚未完成时被重新解锁（“主入口回锁”问题）；
-- `unlocked` 的持久化状态、`conditional` 的动态判断和事件实际执行结果必须一致；
-- 已有用户存档需要迁移到新字段和新标签语义，不能只对新安装生效。
+- `main.rpy` 的 `decode_str` 对字节同时计算严格 UTF-8 与完整 CP936 候选：通常采用 UTF-8；当两者均可解码且 UTF-8 候选只有非文字符号、CP936 候选包含 CJK 时，保留历史 CP936 解释（例如 `"隆".encode("gbk") == b"\xC2\xA1"`），避免歧义字节误读。Unicode、空 bytes、bytearray、非法/截断字节均返回 Unicode，不再依赖 `chardet` 的 `encoding=None` 结果。
+- `cp936_decode` 修复 Python 2/3 字节处理、`0x80 -> U+20AC`、CP936 扩展 pair 和非法 pair；MTTS 实际运行使用新增的私有 `mtts_cp936_decode.py`，避免 Chat 整包覆盖共享模块。
+- 版本检查改为数字段比较，修复 `1.2.10` 与 `1.2.9` 的顺序错误；成功检查和失败检查都会清除陈旧的 `_outdated` 标志。
+- 版本升至 `1.2.16`。
+- 迁移 Chat 的 `maica_is_dev` 职能：Mtts 设置页显示开发版警告，开发版 workflow 不创建 release，且当前迁移会在每次启动执行。
 
-### 3.3 MTTS 与 Chat 的共享标签兼容性
+## 4. 验证
 
-MTTS 当前对白和条件仍引用以下 Chat 标签：
+- `C:\Users\Edge\Documents\teaching\Scripts\python.exe -m pytest -q tests`：`67 passed`。
+- `tests/test_mtts_sync_contract.py`：事件契约、迁移修复、迁移结果、logger 注入/脱敏/root handler 和 reload 去重。
+- `tests/test_mtts_text_and_version.py`：CP936/GBK/UTF-8 边界、数字版本比较、当前/失败检查清除 `_outdated`。
+- `tests/test_mtts_dev_contract.py`：`maica_is_dev`、设置页警告、强制迁移和 release workflow 门控。
+- 参考 Chat 的 Unicode/version/backend 兼容测试：`163 passed`（其余 Chat 测试未作为 MTTS 工作树的全套入口运行）。
+- 本轮修改的 Python 文件已逐文件通过 `py_compile`；仓库全量 `compileall` 仍会被原有的 Python 2 专用 `datapy2_mtts.py` 拦截。`git diff --check` 无空白错误（仅报告 autocrlf 行尾提示）。
+- 修改的 Ren'Py `init ... python` 块已用 Python AST 做语法解析；当前环境没有完整 Ren'Py/MAS 图形运行时，因此未执行 GUI 启动回归。
+- 已按 MAICA-MTTS 后端文档及提交 `c0e5f3c` 核对 `GET /version` 的 `content.fe_synbrace_version` 字段；对 `success=True` 但 `content` 为 `None`、列表或缺字段的响应均安全返回“不判定过期”。
+- 本轮新增了 Mtts 设置页开发版警告及其 `tl/header.rpy` 中文翻译；没有改动 `tl/chat.rpy`。
 
-- `maica_prepend_1`
-- `maica_end_1`
-- `maica_talking`
-- `maica_greeting`
+仓库根目录直接运行无参数 `pytest` 会额外收集既有的 `game/python-packages/mtts_test.py`，该手工脚本会读取开发者本地 `token.txt`，因此不是可重复的项目测试入口；正式结果以 `pytest tests` 为准。
 
-Chat 重构后这些标签仍存在，但执行时机和“完成”的语义可能变化。同步时必须确认 MTTS 条件在新旧 Chat 安装组合下都不会误解锁、永久锁死或重复播放。必要时增加兼容迁移，而不是改写 Chat 标签名称。
+## 5. 范围外风险
 
-### 3.4 话题相关提交（需要语义同步/逐项复核）
-
-下列提交共同构成 Chat 的解锁体系重构，不能只挑一两个补丁移植：
-
-`4d8cd41`、`a4a9d7e`、`92ee0c3`、`c9a19b7`、`57842f1`、`460a042`、`983ca5f`、`3b9adb5`、`2a15f8f`、`2702da7`、`dd6a78b`、`78ac3d8`、`e553c22`、`6ead49c`、`4a5a230`、`0eb99bf`、`ef56bfc`、`f1def35`、`47bedca`。
-
-其中尤其要保留以下修复意图：首次聊天锁定条件扩展、事件解锁顺序修复、池话题不得绕过条件、条件/affection/category 修正、事件重新评估后的清理与重排、greeting/knocking 处理，以及最新的 reread interaction 处理。
-
-## 4. P0：greeting 处理
-
-### 4.1 当前差异
-
-- MTTS 在 `chat.rpy` 中通过 priority `-100` 的 `ch30_post_exp_check` plugin 直接设置 `store.selected_greeting = "mtts_greeting"`。
-- MTTS greeting event 当前使用 `unlocked=False`、旧的条件被注释掉，并设置 `MASPriorityRule` priority `50`。
-- Chat 当前 greeting 使用显式 `conditional`、`unlocked=True`、`MASGreetingRule` 和 priority `20`，并会更新已存在的 greeting event。
-- MAS 上游 `event-rules.rpy` 表明 priority 数字越小优先级越高；`script-ch30.rpy` 的 `ch30_post_exp_check` 会执行插件、检查事件并推送 `selected_greeting`。插件执行和 greeting 事件筛选的交互不能仅凭静态代码假定。
-
-### 4.2 同步要求
-
-- 采用 Chat 新的 greeting 条件与事件注册/更新模式，并按 MTTS 的礼物和设备状态补充条件；
-- 明确 MTTS greeting 与 Chat greeting 同时满足时谁胜出、何时清除/保留 `selected_greeting`；
-- 不要机械地把 MTTS priority `50` 改成 `20`，先确认 plugin priority、事件 priority、事件 `unlocked` 和 `MASGreetingRule` 的实际执行顺序；
-- 防止旧 greeting event 在 `persistent.greeting_database` 中残留旧条件、旧 priority 或错误的 unlocked 状态；
-- 验证至少包括：礼物已领取但 Chat 首次流程未完成、Chat 首次流程已完成、两者同时满足、特殊日/玩家生日、不同 affection、重启后首次进入等组合。
-
-## 5. P1：共享运行时接口
-
-### 5.1 `logger_manager.py`
-
-Chat 提交 `67e7a38` 的方向需要同步到共享实现：
-
-- 使用隔离的 `maica_logger_manager`，不要污染全局 root logger；
-- `propagate = False`，并用 handler marker 去重；
-- `_sync_injected_references()` 只同步标准 logger 的 level，不复制 handler；
-- 对 `DefaultLogger` 等非标准 logger 不强行访问不存在的 `.setLevel()`、`.handlers`。
-
-MTTS 旧实现（`game/python-packages/logger_manager.py`）仍初始化 root logger、添加 root handler，并在导入 `mtts_package.py` 时再次操作 root logger；`mtts_provider_manager.py` 还混用 `DefaultLogger` 与 `print()`。同步时必须保留 MTTS 的 token 脱敏功能，并确认 filter 挂在实际生效的 logger/handler 上。
-
-### 5.2 `migrations.py` 与事件迁移
-
-Chat 新版 `game/python-packages/migrations.py` 的构造函数支持 `force_current=False`，默认 migration queue 为空，由调用方显式设置 queue；Chat `api.rpy` 在开发版使用 `force_current=store.maica_is_dev`。
-
-MTTS 当前 `migrations.py` 是旧接口，但 `migration.rpy` 会显式覆盖 queue。需要统一成兼容两边的接口，并确认 MTTS 文件不会在整包发布时覆盖 Chat 新接口导致 Chat 启动失败。Chat `migrations.rpy` 中针对旧事件的条件、动作、greeting、reread、`unlocked`/`pool` 修复逻辑也应作为 MTTS 迁移设计的参考。
-
-## 6. P1：MTTS 的等价修复
-
-### 6.1 Unicode / CP936
-
-Chat 的 `5144266`、`cc7b81f` 暴露并修复了中文/解码边界；MTTS 对应位置仍有问题：
-
-- `game/Submods/MAICA_MttsSubmod/main.rpy` 的 `decode_str`；
-- `game/python-packages/cp936_decode/__init__.py` 的 Python 3 字节处理。
-
-已验证：`chardet.detect(b"\\x81")` 可能返回 `encoding=None`；`decode_cp936("中文".encode("gbk"))` 在 Python 3 会触发 `TypeError: ord() expected string of length 1, but int found`。后续应做等价的健壮解码，保留 GBK/CP936 兼容，不直接移植 Chat 的 WebSocket 业务代码。
-
-### 6.2 版本比较
-
-Chat 的 `70187a4`、`c05a944` 引入数字化版本解析。MTTS `main.rpy` 仍在约第 157、198 行使用字符串列表比较；例如 `1.2.10` 与 `1.2.9` 会得到错误顺序。应统一为按整数版本段比较，并覆盖开发版、缺失段和回滚场景。
-
-### 6.3 日志专属适配
-
-`mtts_package.py` 的 root handler 初始化、`mtts_provider_manager.py` 的 `DefaultLogger`/`print()` 以及 token 脱敏需要在共享 logger 方案中重新接入；不能因套用 Chat logger 而丢失脱敏或产生重复输出。
-
-## 7. 已检查、暂不直接移植的 Chat 内容
-
-以下提交目前没有发现 MTTS 的对等业务入口，暂不作为代码移植项；若后续引入对应功能，再单独评估：
-
-- `b24429b`（MPostal 临时诗歌记录清理）；
-- `87b224b`（背景逻辑）；`4f25156`（MVista 解锁）；`e039828`（显示 Monika）；
-- `fae799d`（Chat 连接初始化）；`1c62c40`（Chat `maica.py` 的 Ellipsis 消息队列 Python 3 修复）；
-- `de555db`（Chat 专属调试调整）；
-- `ac032d3`（测试）、`9fb9d88`（workflow）、`0c7c9c0`（mobile skill）、`c310ff4`（MAS upstream skill）；
-- Chat 专属后端/WebSocket tasker、MTrigger/Vista 文件管理、翻译/文档/skill 产物，以及 MVista、MPostal、背景、Heaven Forest 相关逻辑。
-
-“暂不直接移植”不等于跳过验证：共享打包文件和事件标签仍需按第 3、5 节处理。
-
-## 8. 待确认后的实施与验证清单
-
-实施顺序建议为：
-
-1. 先确定共享 `logger_manager.py`、`migrations.py` 的兼容接口，避免文件覆盖；
-2. 按 Chat 事件模型重写/迁移 MTTS 的三个事件，明确每个字段和状态转移；
-3. 重新实现 greeting 选择，并在真实 MAS 启动流程中验证 priority 与 `selected_greeting`；
-4. 修复 MTTS 的 CP936、版本比较和日志接入；
-5. 用旧存档、新存档、Chat 有/无、礼物有/无、特殊日和重启组合回归。
-
-验收重点：
-
-- 无池话题绕过 `conditional` 提前出现；
-- 首次话题、hint、reread、greeting、主入口顺序稳定且不重复；
-- 旧存档迁移后不会永久锁死或错误解锁；
-- Chat 与 MTTS 同时安装时只产生一套有效 logger/migration 实现；
-- 中文、GBK/CP936、版本比较和 token 脱敏行为保持兼容；
-- release 打包后没有因同名文件覆盖而改变另一子模组的接口。
-
-## 9. 本阶段边界
-
-本次只新增本临时文档，等待确认后再修改代码。除 `SYNC_PLAN.md` 外，不应把本次审计产生的任何文件变更视为已执行同步。
+- 两个 release workflow 都打包完整 `game`。MTTS workflow 已加入开发版跳过发布，但 Chat 当前携带 `urllib3 1.26.9`，MTTS 携带 `urllib3 1.26.20`；本轮没有擅自统一依赖，后续应在发布流程中解决同名文件覆盖和依赖版本治理。
+- MTTS/Chat 的前置事件跨子模组执行顺序仍由 MAS 的随机话题选择和分钟检查决定；本轮保证的是 MTTS 自身条件不绕过，不是跨子模组的绝对先后。
+- logger reload 修复只覆盖默认动态 wrapper；外部显式注入旧 manager 的调用方仍按设计固定，且 Chat 未来覆盖共享 logger 文件时需保持同一实现才能保留该行为。
+- 当前工作树的 `maica_is_dev=True` 是开发构建状态，正式发布前必须改为 `False`；若 Chat 与 MTTS 同时加载，两者应保持同一全局值。若两个子模组版本配置不一致，后加载的 header 会覆盖该共享标志，属于发布配置风险。本轮没有在完整 MAS 图形运行时中启动旧存档回归；上游行为依据上述 MAS commit 的源码核验，真实安装包仍应覆盖特殊日、生日、typed/reload/crash greeting、礼物同分钟到达和重启场景。
