@@ -64,6 +64,7 @@ def test_migration_repairs_legacy_events_and_only_advances_after_success():
     assert "mas_rebuildEventLists()" in text
     assert "queued_events" in text
     assert "_mas_player_derandomed" in text
+    assert "not mtts_headset_gift_available()" in migration_1_2_16
     assert "migration_result = migration.migrate()" in text
     assert "migration_succeeded" in text
     assert "migration_result is None" in text
@@ -75,6 +76,7 @@ def test_progress_diagnostics_use_the_same_end_markers_and_greeting_guards():
 
     assert "cond1_seen_end" in text
     assert "cond2_seen_gift" in text
+    assert "cond2_gift_available" in text
     assert "cond2_seen_end" in text
     assert "persistent._mas_greeting_type is None" in text
     assert "cond3_player_bday = mas_isplayer_bday()" in text
@@ -115,6 +117,25 @@ def test_migration_force_current_runs_only_the_current_entry():
 
     assert migration.migrate() == (True, "Migration complete")
     assert calls == ["current"]
+
+
+def test_migration_force_current_repairs_even_with_a_corrupt_legacy_version():
+    calls = []
+    migration = migrations.migration_instance("legacy", "1.8.0", force_current=True)
+    migration.migration_queue = [
+        ("1.8.0", lambda: calls.append("current")),
+        ("1.9.0", lambda: calls.append("newer")),
+    ]
+
+    assert migration.migrate() == (True, "Migration complete")
+    assert calls == ["current"]
+
+
+def test_migration_force_current_rejects_a_corrupt_current_version():
+    migration = migrations.migration_instance("legacy", "1.8.x", force_current=True)
+    migration.migration_queue = [("1.8.x", lambda: None)]
+
+    assert migration.migrate() == (False, "Version schemas incompatable")
 
 
 def test_migration_failure_is_returned_without_claiming_success():
@@ -159,6 +180,7 @@ def test_loggers_follow_mas_logger_and_redact_tokens_on_all_paths():
     try:
         manager.set_logger(capture)
         mtts_package.logger.error("access_token=abcdefghijk")
+        mtts_package.logger.error("access_token=abcd.efgh==&next=value")
         mtts_package.logger.error("access_token=%s", "format-secret")
         mtts_package.logger.log(logging.INFO, '{"access_token": "zyxwvuts"}')
         mtts_package.logger.log(logging.INFO, {"access_token": "structured-secret"})
@@ -173,17 +195,34 @@ def test_loggers_follow_mas_logger_and_redact_tokens_on_all_paths():
         for call in capture.calls
     ]
     assert any("abcd***" in message for message in messages)
+    assert any("abcd***&next" in message for message in messages)
     assert any("form***" in message for message in messages)
     assert any("zyxw***" in message for message in messages)
     assert any("stru***" in message for message in messages)
     assert any("prov***" in message for message in messages)
-    assert any("prov***" in message for message in messages)
     assert all("abcdefghijk" not in message for message in messages)
+    assert all("abcd.efgh==" not in message for message in messages)
     assert all("format-secret" not in message for message in messages)
     assert all("provider-secret" not in message for message in messages)
     assert all("provider-format-secret" not in message for message in messages)
     assert all("provider-log-secret" not in message for message in messages)
     assert all("structured-secret" not in message for message in messages)
+
+
+def test_token_redaction_filter_formats_arguments_before_emitting():
+    record = logging.LogRecord(
+        "mtts",
+        logging.ERROR,
+        __file__,
+        1,
+        "access_token=%s",
+        ("filter-secret",),
+        None,
+    )
+
+    assert mtts_package.TokenRedactionFilter().filter(record)
+    assert record.msg == "access_token=filt***"
+    assert record.args == ()
 
 
 def test_logger_manager_does_not_touch_process_root_handlers():

@@ -28,14 +28,31 @@ class migration_instance(object):
         # Invalid schemas use None internally and retain the old public error
         # message for callers that display or compare migration results.
         signal = self._compare_versions(self.last_ver, self.curr_ver)
-        if signal is None and not self.force_current:
+        if self.force_current:
+            # Development builds intentionally rerun only the current entry.
+            # Do not let a malformed legacy version prevent that repair path;
+            # the current version still must be a valid schema.
+            if self._compare_versions(self.curr_ver, self.curr_ver) is None:
+                return False, 'Version schemas incompatable'
+            try:
+                for version, migration in self.migration_queue:
+                    current_compare = self._compare_versions(version, self.curr_ver)
+                    if current_compare is None:
+                        return False, 'Version schemas incompatable'
+                    if current_compare == 0:
+                        migration()
+            except Exception as error:
+                return False, 'Migration failed: {}'.format(error)
+            return True, 'Migration complete'
+
+        if signal is None:
             return False, 'Version schemas incompatable'
-        if signal == 0 and not self.force_current:
+        if signal == 0:
             return True, 'Version unchanged'
-        if signal == 1 and not self.force_current:
+        if signal == 1:
             return False, 'Trying to revert version, denying'
 
-        if signal == 2 or self.force_current:
+        if signal == 2:
             try:
                 for version, migration in self.migration_queue:
                     pending_compare = self._compare_versions(version, self.last_ver)
@@ -48,8 +65,7 @@ class migration_instance(object):
                         and pending_compare == 1
                         and current_compare in (2, 0)
                     )
-                    is_current = self.force_current and current_compare == 0
-                    if is_pending or is_current:
+                    if is_pending:
                         migration()
             except Exception as error:
                 return False, 'Migration failed: {}'.format(error)

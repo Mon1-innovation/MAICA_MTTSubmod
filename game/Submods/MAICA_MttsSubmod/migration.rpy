@@ -33,7 +33,7 @@ init 980 python:
                     False,
                 ),
                 "mtts_hint": (
-                    "renpy.seen_label('mtts_prepend_1') and not renpy.seen_label('mtts_hint') and not renpy.seen_label('mas_reaction_gift_mttsheadset') and not renpy.seen_label('mtts_greeting_end') and not mas_inEVL('mtts_hint')",
+                    "renpy.seen_label('mtts_prepend_1') and not renpy.seen_label('mtts_hint') and not mtts_headset_gift_available() and not renpy.seen_label('mtts_greeting_end') and not mas_inEVL('mtts_hint')",
                     EV_ACT_QUEUE,
                     False,
                 ),

@@ -93,7 +93,7 @@ class DefaultLogger(object):
         if isinstance(value, string_types):
             return re.sub(
                 r'(?P<prefix>["\']?access_token["\']?\s*[:=]\s*["\']?)'
-                r'(?P<value>[a-zA-Z0-9+/_-]+)',
+                r'(?P<value>[^,\s}\]"\'&;]+)',
                 lambda match: "{}{}***".format(
                     match.group("prefix"), match.group("value")[:4]
                 ),

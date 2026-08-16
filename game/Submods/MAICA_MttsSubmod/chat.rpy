@@ -131,7 +131,7 @@ label mtts_hint:
     # same-minute gift is already registered, discard a hint that was queued
     # before MAS appended the reaction label.
     if mtts_headset_gift_available():
-        mas_rmallEVL("mtts_hint")
+        $ mas_rmallEVL("mtts_hint")
         return "no_unlock|derandom|rebuild_ev"
     python:
         mtts_gift_notice = _("""\

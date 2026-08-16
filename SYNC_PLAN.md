@@ -35,7 +35,7 @@
 ### 阶段 B：事件与 greeting（完成）
 
 - `mtts_prepend_1` 和 `mtts_hint` 按 MAS 条件队列模型重注册；完成对白返回 `no_unlock|derandom|rebuild_ev`，避免旧随机/池字段继续生效。
-- hint 条件同时排除已收到礼物、已完成 greeting 和已在事件列表中的项；礼物反应标签、hint 标签入口的礼物发现短路以及 `ch30_preloop` 清理钩子会移除同一分钟或旧存档中残留的 hint 队列项。
+- hint 条件同时排除已收到或已在磁盘中待处理的礼物、已完成 greeting 和已在事件列表中的项；礼物反应标签、hint 标签入口的礼物发现短路以及 `ch30_preloop` 清理钩子会移除同一分钟或旧存档中残留的 hint 队列项。
 - greeting 条件要求 generic startup、prepend 完成、礼物反应完成、AFFECTIONATE+、非特殊日、非玩家生日且 `mtts_greeting_end` 未完成。旧 Event 对象会显式更新字段和规则，避免 MAS `addEvent()` 的 `setdefault` 保留旧数据。
 - greeting priority 为 `11`，使用 MAS 正式 greeting 选择流程；不再使用 `ch30_post_exp_check` 插件或直接写 `selected_greeting`。
 - `unlock_progress.rpy` 与真实条件保持一致。
@@ -56,7 +56,7 @@
 
 ## 4. 验证
 
-- `C:\Users\Edge\Documents\teaching\Scripts\python.exe -m pytest -q tests`：`67 passed`。
+- `C:\Users\Edge\Documents\teaching\Scripts\python.exe -m pytest -q tests`：`70 passed`。
 - `tests/test_mtts_sync_contract.py`：事件契约、迁移修复、迁移结果、logger 注入/脱敏/root handler 和 reload 去重。
 - `tests/test_mtts_text_and_version.py`：CP936/GBK/UTF-8 边界、数字版本比较、当前/失败检查清除 `_outdated`。
 - `tests/test_mtts_dev_contract.py`：`maica_is_dev`、设置页警告、强制迁移和 release workflow 门控。

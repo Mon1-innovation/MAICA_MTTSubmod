@@ -17,21 +17,37 @@ except NameError:
 class TokenRedactionFilter(logging.Filter):
     """Filter that redacts sensitive tokens from log messages."""
     def filter(self, record):
-        # Redact access_token values in log messages
+        # Render %-style arguments first so a token passed separately from the
+        # format string cannot bypass redaction.
+        if record.args:
+            try:
+                record.msg = self._redact_tokens(str(record.msg % record.args))
+                record.args = ()
+                return True
+            except Exception:
+                pass
+
         record.msg = self._redact_tokens(str(record.msg))
         if record.args:
             if isinstance(record.args, dict):
                 record.args = {k: self._redact_tokens(str(v)) for k, v in record.args.items()}
             elif isinstance(record.args, tuple):
-                record.args = tuple(self._redact_tokens(str(arg)) for arg in record.args)
+                token_context = "access_token" in str(record.msg).lower()
+                record.args = tuple(
+                    self._redact_tokens(str(arg))
+                    if not token_context
+                    else "{}***".format(str(arg)[:4])
+                    for arg in record.args
+                )
         return True
 
     def _redact_tokens(self, text):
         """Replace token values with first 4 characters + ***"""
-        # Pattern: access_token=<value> where value is alphanumeric, +, /, or - (URL-safe base64)
+        # Stop at common JSON/URL/log delimiters so padded or JWT-like tokens
+        # are redacted as one value instead of leaking their suffix.
         return re.sub(
             r'(?P<prefix>["\']?access_token["\']?\s*[:=]\s*["\']?)'
-            r'(?P<value>[a-zA-Z0-9+/_-]+)',
+            r'(?P<value>[^,\s}\]"\'&;]+)',
             lambda match: "{}{}***".format(
                 match.group("prefix"), match.group("value")[:4]
             ),

@@ -4,7 +4,7 @@ init 999 python:
         # A queued hint can outlive the condition that created it (for
         # example, when the gift reaction is processed in the same startup).
         # Remove stale or duplicate MTTS queue entries before the idle loop.
-        if renpy.seen_label("mas_reaction_gift_mttsheadset") or renpy.seen_label("mtts_greeting_end"):
+        if mtts_headset_gift_available() or renpy.seen_label("mtts_greeting_end"):
             mas_rmallEVL("mtts_hint")
         if renpy.seen_label("mtts_prepend_1") or renpy.seen_label("mtts_greeting_end"):
             mas_rmallEVL("mtts_prepend_1")
@@ -30,9 +30,15 @@ init 999 python:
         cond2_seen_prepend = renpy.seen_label('mtts_prepend_1')
         cond2_seen_hint = renpy.seen_label('mtts_hint')
         cond2_seen_gift = renpy.seen_label('mas_reaction_gift_mttsheadset')
+        cond2_gift_available = mtts_headset_gift_available()
         cond2_seen_end = renpy.seen_label('mtts_greeting_end')
-        cond2 = cond2_seen_prepend and not cond2_seen_hint and not cond2_seen_gift and not cond2_seen_end
-        debug_log("mtts_hint condition: prepend seen={}, hint seen={}, gift reaction seen={}, greeting end seen={}, total condition={}".format(cond2_seen_prepend, cond2_seen_hint, cond2_seen_gift, cond2_seen_end, cond2))
+        cond2 = (
+            cond2_seen_prepend
+            and not cond2_seen_hint
+            and not cond2_gift_available
+            and not cond2_seen_end
+        )
+        debug_log("mtts_hint condition: prepend seen={}, hint seen={}, gift reaction seen={}, gift available={}, greeting end seen={}, total condition={}".format(cond2_seen_prepend, cond2_seen_hint, cond2_seen_gift, cond2_gift_available, cond2_seen_end, cond2))
 
         # Condition 3: keep this in lockstep with mtts_greeting_conditional.
         cond3_seen_gift = renpy.seen_label('mas_reaction_gift_mttsheadset')
