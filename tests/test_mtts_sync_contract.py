@@ -19,6 +19,7 @@ import mtts_provider_manager
 
 CHAT = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "chat.rpy"
 MIGRATION = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "migration.rpy"
+STATUS = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "status.rpy"
 UNLOCK_PROGRESS = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "unlock_progress.rpy"
 
 
@@ -52,6 +53,16 @@ def test_event_registration_matches_the_runtime_contract():
 
     assert "ch30_post_exp_check" not in text
     assert "selected_greeting" not in text
+
+
+def test_status_overlay_registers_before_skip_visual_greetings():
+    text = STATUS.read_text(encoding="utf-8")
+
+    assert '@store.mas_submod_utils.functionplugin("ch30_preloop", priority=1000)' in text
+    assert 'store.mas_submod_utils.unregisterFunction("ch30_preloop", auto_show_statlite)' in text
+    assert 'functionplugin("ch30_loop"' not in text
+    assert 'unregisterFunction("ch30_loop"' not in text
+    assert "not mas_HKBIsVisible()" in text
 
 
 def test_migration_repairs_legacy_events_and_only_advances_after_success():
