@@ -34,8 +34,8 @@ translate chinese strings:
     new "文本预切分模式, 一般只影响较长文本"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:93
-    old "Change: currently [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"
-    new "切换: 当前为 [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"
+    old "Change: currently [split_method]"
+    new "切换: 当前为 [split_method]"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:105
     old "Speed factor, affects speaking speed in inference phrase.\n* Is not linear correlative with actual speaking speed"

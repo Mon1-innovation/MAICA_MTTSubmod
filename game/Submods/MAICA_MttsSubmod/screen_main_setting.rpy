@@ -77,14 +77,21 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "maica_check"
-                textbutton _("Current provider: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"):
+                $ provider_name = store.mtts.provider_manager.get_server_info().get("name") or "Unknown"
+                textbutton mtts_escape_display_text(renpy.substitute(
+                    _("Current provider: [provider_name]"),
+                    scope={"provider_name": provider_name}
+                )):
                     action Show("mtts_node_setting")
                     hovered SetField(_tooltip, "value", _("Set server node"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
             hbox:
                 style_prefix "maica_check_nohover"
                 $ user_disp = store.mtts.mtts_instance.user_acc or renpy.substitute(_("Not logged in"))
-                textbutton _("Current user: [user_disp]"):
+                textbutton mtts_escape_display_text(renpy.substitute(
+                    _("Current user: [user_disp]"),
+                    scope={"user_disp": user_disp}
+                )):
                     action NullAction()
                     hovered SetField(_tooltip, "value", _("To change or log out of your account, log out from the Submods screen.\n* To change account information or password, visit the registration website"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -147,7 +154,11 @@ screen mtts_settings():
 
                     hbox:
                         style_prefix "maica_check"
-                        textbutton _("Replace to: [persistent.mtts.get('playername_replacement') or 'Empty']"):
+                        $ replacement = persistent.mtts.get("playername_replacement") or "Empty"
+                        textbutton mtts_escape_display_text(renpy.substitute(
+                            _("Replace to: [replacement]"),
+                            scope={"replacement": replacement}
+                        )):
                             action Show("mtts_playername_replace_input")
                             hovered SetField(_tooltip, "value", _("Configure your spoken name.\n* Leave empty to not pronounce, but may lead to behaviour issue"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)

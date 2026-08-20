@@ -22,10 +22,10 @@ translate chinese strings:
     old "The latest terms are not accepted"
     new "尚未接受最新服务条款"
 
-    old "An user level exception happened"
+    old "A user-level error occurred"
     new "发生用户级别错误"
 
-    old "An server level exception happened"
+    old "A server-side error occurred"
     new "发生服务器级别错误"
 
     old "Token generation failed"
@@ -88,4 +88,3 @@ translate chinese strings:
     # game/Submods/MAICA_MttsSubmod/main.rpy:627
     old "Standing by"
     new "待机"
-

@@ -28,6 +28,26 @@ init -1500 python:
         config.language = "english"
 
 init -990 python:
+    # Ren'Py may expose revertable containers through a namespace that shadows
+    # the normal ``dict``/``list`` names. Resolve the Python builtins once so
+    # persistent-data checks keep their intended meaning.
+    try:
+        import __builtin__ as _mtts_builtin_types
+    except ImportError:
+        import builtins as _mtts_builtin_types
+
+    def mtts_is_builtin_dict(value):
+        return isinstance(value, _mtts_builtin_types.dict)
+
+    def mtts_is_builtin_list(value):
+        return isinstance(value, _mtts_builtin_types.list)
+
+    def mtts_is_builtin_tuple(value):
+        return isinstance(value, _mtts_builtin_types.tuple)
+
+    def mtts_is_builtin_sequence(value):
+        return mtts_is_builtin_tuple(value) or mtts_is_builtin_list(value)
+
     mtts_defaultsettings = {
         "enabled": False,
         "_chat_installed": False,
@@ -43,15 +63,15 @@ init -990 python:
         "playername_replacement": "",
         "generate_timeout": 15,
     }
-    if persistent.mtts is None:
-        persistent.mtts = mtts_defaultsettings
+    if not mtts_is_builtin_dict(getattr(persistent, "mtts", None)):
+        persistent.mtts = {}
     import copy
     setting = copy.deepcopy(mtts_defaultsettings)
     setting.update(persistent.mtts)
     persistent.mtts = setting
 
     # Initialize MTTS advanced settings
-    if not persistent.mtts_advanced_setting:
+    if not mtts_is_builtin_dict(getattr(persistent, "mtts_advanced_setting", None)):
         persistent.mtts_advanced_setting = {}
     mtts_default_advanced_setting = {
         "parallel_infer": False,
@@ -67,22 +87,25 @@ init -990 python:
     _conf.update(persistent.mtts_advanced_setting)
     persistent.mtts_advanced_setting = _conf
 
-    if persistent.mtts_advanced_setting_status is None or not isinstance(persistent.mtts_advanced_setting_status, dict):
+    if not mtts_is_builtin_dict(getattr(persistent, "mtts_advanced_setting_status", None)):
         persistent.mtts_advanced_setting_status = {}
     for k in persistent.mtts_advanced_setting:
         if k not in persistent.mtts_advanced_setting_status:
             persistent.mtts_advanced_setting_status[k] = False
 
     # Initialize backup dictionaries for advanced settings
-    if persistent.mtts_advanced_setting_backup is None or not isinstance(persistent.mtts_advanced_setting_backup, dict):
+    if not mtts_is_builtin_dict(getattr(persistent, "mtts_advanced_setting_backup", None)):
         persistent.mtts_advanced_setting_backup = {}
 
-    if persistent.mtts_advanced_setting_status_backup is None or not isinstance(persistent.mtts_advanced_setting_status_backup, dict):
+    if not mtts_is_builtin_dict(getattr(persistent, "mtts_advanced_setting_status_backup", None)):
         persistent.mtts_advanced_setting_status_backup = {}
+
+    if not mtts_is_builtin_dict(getattr(persistent, "mtts_advance_params", None)):
+        persistent.mtts_advance_params = {}
 
 
 init -100 python in mtts:
-    import mtts_package, store, os
+    import mtts_package, mtts_renpy_text, store, os
     from mtts_provider_manager import MTTSProviderManager
 
     from logger_manager import get_logger_manager
@@ -126,7 +149,7 @@ init -100 python in mtts:
         store.persistent.mtts["provider_id"] = pid
         # Keep MAICA_CHAT setting in sync if installed
         try:
-            if store.persistent.mtts.get("_chat_installed", False) and hasattr(store.persistent, "maica_setting_dict") and isinstance(store.persistent.maica_setting_dict, dict):
+            if store.persistent.mtts.get("_chat_installed", False) and hasattr(store.persistent, "maica_setting_dict") and mtts_is_builtin_dict(store.persistent.maica_setting_dict):
                 store.persistent.maica_setting_dict["provider_id"] = pid
         except Exception:
             pass
@@ -174,6 +197,23 @@ init -100 python in mtts:
             store.mtts_status = store.mtts_failure_status_text()
 
     _cached_version_result = None
+    try:
+        import __builtin__ as _mtts_version_builtin_types
+    except ImportError:
+        import builtins as _mtts_version_builtin_types
+
+    def _mtts_is_version_sequence(value):
+        return isinstance(
+            value,
+            (
+                _mtts_version_builtin_types.list,
+                _mtts_version_builtin_types.tuple,
+            )
+        )
+
+    def _mtts_is_version_dict(value):
+        return isinstance(value, _mtts_version_builtin_types.dict)
+
     mtts_setting_pane_cache = {
         "initialized": False,
         "version_check": None,
@@ -186,7 +226,7 @@ init -100 python in mtts:
             string_types = (basestring,)
         except NameError:
             string_types = (str,)
-        if isinstance(version, (list, tuple)):
+        if _mtts_is_version_sequence(version):
             raw_parts = version
         elif isinstance(version, string_types):
             raw_parts = version.strip().split('.')
@@ -216,11 +256,11 @@ init -100 python in mtts:
         return (left_parts > right_parts) - (left_parts < right_parts)
 
     def is_mtts_frontend_outdated(version_info):
-        if not isinstance(version_info, dict) or not version_info.get("success", False):
+        if not _mtts_is_version_dict(version_info) or not version_info.get("success", False):
             return False
 
         content = version_info.get("content")
-        if not isinstance(content, dict):
+        if not _mtts_is_version_dict(content):
             return False
         min_version = content.get("fe_synbrace_version")
         if not min_version:
@@ -584,21 +624,7 @@ init python:
 
         @staticmethod
         def escape_brackets_in_exceptions_and_ellipsis(err, max_chars=120):
-            #输入转可显示文本 + 转义Exception里的中括号 (如requests)
-            try:
-                if isinstance(err, basestring):
-                    s = err
-                else:
-                    s = unicode(err)
-            except Exception:
-                s = u"{}".format(err)
-
-            if max_chars and len(s) > max_chars:
-                s = s[:max_chars-1] + u"\u2026" # \u2026: 省略号字符: …
-
-            s = s.replace(u"[", u"[[")
-            s = s.replace(u"]", u"]]")
-            return s
+            return mtts_renpy_text.escape_exception_text(err, max_chars=max_chars)
 
         @staticmethod
         def determ_lang(input, suppose='zh'):

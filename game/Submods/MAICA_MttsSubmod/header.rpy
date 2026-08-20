@@ -91,6 +91,11 @@ screen mtts_settingpane():
 
 
 init python:
+    import mtts_renpy_text
+
+    def mtts_escape_display_text(value):
+        return mtts_renpy_text.escape_renpy_text(value)
+
     def _mtts_clear(save_token=False):
         store._maica_LoginAcc = ""
         store._maica_LoginPw = ""
@@ -141,7 +146,6 @@ init python:
             message = renpy.substitute(_("Verification failed: ")) + store.mtts_status
             detail = u"{}".format(res.get("exception") or "")
             if detail:
-                detail = detail.replace(u"[", u"[[").replace(u"]", u"]]")
                 message += "\n" + renpy.substitute(_("Reason: ")) + detail
             renpy.show_screen("maica_message", message=message)
             return False
@@ -321,19 +325,27 @@ screen mtts_workload_stat():
 
             for server in stat:
 
-                use divider_small(server)
+                use divider_small(mtts_escape_display_text(server))
 
                 for card in stat[server]:
                     hbox:
-                        text stat[server][card]["name"]:
+                        text mtts_escape_display_text(stat[server][card].get("name")):
                             size 15
                         text store.mtts.progress_bar(stat[server][card]["mean_utilization"], total=int(stat[server][card]["tflops"]), unit="TFlops"):
                             size 10
                             font maica_confont
 
-                        text "VRAM: " + str(stat[server][card]["mean_memory"]) + " / " + str(stat[server][card]["vram"]):
+                        text mtts_escape_display_text(
+                            "VRAM: {} / {}".format(
+                                stat[server][card]["mean_memory"],
+                                stat[server][card]["vram"]
+                            )
+                        ):
                             size 10
-                        text renpy.substitute(_("Average power consumption: ")) + str(stat[server][card]["mean_consumption"]) + "W":
+                        text mtts_escape_display_text(
+                            renpy.substitute(_("Average power consumption: ")) +
+                            "{}W".format(stat[server][card]["mean_consumption"])
+                        ):
                             size 10
                 text ""
 

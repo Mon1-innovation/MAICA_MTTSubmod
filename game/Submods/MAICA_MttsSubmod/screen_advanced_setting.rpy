@@ -90,7 +90,11 @@ screen mtts_advance_setting():
                 if persistent.mtts_advanced_setting_status.get("text_split_method", False):
                     hbox:
                         style_prefix "maica_check"
-                        textbutton _("Change: currently [persistent.mtts_advanced_setting.get('text_split_method', 'cut2')]"):
+                        $ split_method = persistent.mtts_advanced_setting.get("text_split_method", "cut2")
+                        textbutton mtts_escape_display_text(renpy.substitute(
+                            _("Change: currently [split_method]"),
+                            scope={"split_method": split_method}
+                        )):
                             action Show("mtts_text_split_selector")
                             hovered SetField(_tooltip, "value", _("Text pre-split method, normally only affects long text"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)

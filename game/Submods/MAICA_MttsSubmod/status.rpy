@@ -84,17 +84,24 @@ screen maicatts_stat_lite():
                 vbox:
                     xoffset 5
                     hbox:
-                        text renpy.substitute(_("MTTS status: [store.mtts_status]")):
+                        text mtts_escape_display_text(renpy.substitute(
+                            _("MTTS status: [status_text]"),
+                            scope={"status_text": store.mtts_status}
+                        )):
                             size 13
                             xmaximum 205
 
                     hbox:
-                        text "CURR: [store.mtts._current_label]":
+                        text mtts_escape_display_text(
+                            "CURR: {}".format(store.mtts._current_label)
+                        ):
                             size 14
                             font maica_confont
 
                     hbox:
-                        text "RULE: [store.mtts_match_rule]":
+                        text mtts_escape_display_text(
+                            "RULE: {}".format(store.mtts_match_rule)
+                        ):
                             size 14
                             font maica_confont
 

@@ -80,7 +80,7 @@ init 980 python:
                 for item in persistent.event_list:
                     queued_label = (
                         item[0]
-                        if isinstance(item, (tuple, list)) and item
+                        if mtts_is_builtin_sequence(item) and item
                         else item
                     )
                     if queued_label not in managed_events:
@@ -124,7 +124,7 @@ init 980 python:
         migration_succeeded = (
             migration_result is None
             or (
-                isinstance(migration_result, (tuple, list))
+                mtts_is_builtin_sequence(migration_result)
                 and len(migration_result) > 0
                 and migration_result[0]
             )
@@ -135,7 +135,7 @@ init 980 python:
             store.mas_submod_utils.submod_log.error(
                 "MTTS migration was not completed: {}".format(
                     migration_result[1]
-                    if isinstance(migration_result, (tuple, list))
+                    if mtts_is_builtin_sequence(migration_result)
                     and len(migration_result) > 1
                     else migration_result
                 )

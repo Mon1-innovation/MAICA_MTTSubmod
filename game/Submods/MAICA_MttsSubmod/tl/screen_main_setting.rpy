@@ -6,8 +6,8 @@ translate chinese strings:
     new "连接与安全"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:68
-    old "Current provider: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"
-    new "服务提供节点: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"
+    old "Current provider: [provider_name]"
+    new "服务提供节点: [provider_name]"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:70
     old "Set server node"
@@ -82,8 +82,8 @@ translate chinese strings:
     new "是否在MTTS生成中替换玩家名称.\n! 该替换直接通过正则实现, 若你的游戏内名称容易在正常词句中出现, 则不要使用"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:138
-    old "Replace to: [persistent.mtts.get('playername_replacement') or 'Empty']"
-    new "替换为: [persistent.mtts.get('playername_replacement') or 'Empty']"
+    old "Replace to: [replacement]"
+    new "替换为: [replacement]"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:140
     old "Configure your spoken name.\n* Leave empty to not pronounce, but may lead to behaviour issue"

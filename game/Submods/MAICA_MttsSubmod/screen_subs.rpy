@@ -89,14 +89,26 @@ screen mtts_node_setting():
         use maica_common_inner_frame():
 
             for provider in store.mtts.provider_manager._servers:
+                $ provider_id = provider.get("id")
+                $ provider_name = provider.get("name") or "Unknown"
+                $ provider_description = provider.get("description") or "Device not provided"
+                $ provider_model = provider.get("servingModel") or "No model provided"
+                $ provider_url = provider.get("portalPage") or ""
                 use maica_l2_subframe():
-                    text str(provider.get('id')) + ' | ' + provider.get('name')
-                    
+                    text mtts_escape_display_text(
+                        "{} | {}".format(provider_id, provider_name)
+                    )
 
                     hbox:
-                        text renpy.substitute(_("Description: ")) + provider.get('description', 'Device not provided')
+                        text mtts_escape_display_text(
+                            renpy.substitute(_("Description: ")) +
+                            u"{}".format(provider_description)
+                        )
                     hbox:
-                        text renpy.substitute(_("Current model: ")) + provider.get('servingModel', 'No model provided')
+                        text mtts_escape_display_text(
+                            renpy.substitute(_("Current model: ")) +
+                            u"{}".format(provider_model)
+                        )
 
 
                 hbox:
@@ -111,8 +123,11 @@ screen mtts_node_setting():
                             selected persistent.mtts["provider_id"] == provider.get('id')
                     hbox:
                         style_prefix "maica_check"
-                        textbutton renpy.substitute(_("> Open website")) + "(" + provider.get('portalPage') + ")":
-                            action OpenURL(provider.get('portalPage'))
+                        textbutton mtts_escape_display_text(
+                            renpy.substitute(_("> Open website")) +
+                            " (" + u"{}".format(provider_url) + ")"
+                        ):
+                            action OpenURL(provider_url)
 
                     if provider.get("isOfficial", False):
                         hbox:
