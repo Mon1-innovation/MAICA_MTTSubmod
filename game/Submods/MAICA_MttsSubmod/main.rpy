@@ -444,7 +444,7 @@ init python:
                 renpy.music.stop(channel="voice", fadeout=0)
             except Exception as e:
                 store.mas_submod_utils.submod_log.debug(
-                    "[MTTS DEBUG] Failed to stop voice channel: {0}".format(e)
+                    "[MttsDebugging] Failed to stop voice channel: {0}".format(e)
                 )
 
         def is_generation_current(self, session_id):
@@ -477,7 +477,7 @@ init python:
                     prefs.afm_after_click = True
                 return should_restore
             except Exception as e:
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed entering AFM wait scope: {0}".format(e))
+                store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed entering AFM wait scope: {0}".format(e))
                 return False
 
         def end_generation_wait_afm_scope(self, should_restore):
@@ -491,7 +491,7 @@ init python:
                     prefs.afm_enable = True
                     renpy.restart_interaction()
             except Exception as e:
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed leaving AFM wait scope: {0}".format(e))
+                store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed leaving AFM wait scope: {0}".format(e))
 
         def should_wait_for_voice_before_extend(self, what, is_extend, interact):
             if is_extend or not interact or "{nw}" not in what:
@@ -505,7 +505,7 @@ init python:
                     and getattr(prefs, "afm_time", 0)
                 )
             except Exception as e:
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed checking AFM extend wait state: {0}".format(e))
+                store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed checking AFM extend wait state: {0}".format(e))
                 return False
 
         @staticmethod
@@ -676,12 +676,12 @@ init python:
 
 
             # 调试日志：记录文本替换过程
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Original text: {0}".format(repr(original_text)))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Is extend: {0}".format(is_extend))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Decoded text: {0}".format(repr(decoded_text)))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After replace rules: {0}".format(repr(replaced_text)))
-            # store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After process_str: {0}".format(repr(clean_text)))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] After unduplication: {0}".format(repr(unduplicated_text)))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] Original text: {0}".format(repr(original_text)))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] Is extend: {0}".format(is_extend))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] Decoded text: {0}".format(repr(decoded_text)))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] After replace rules: {0}".format(repr(replaced_text)))
+            # store.mas_submod_utils.submod_log.debug("[MttsDebugging] After process_str: {0}".format(repr(clean_text)))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] After unduplication: {0}".format(repr(unduplicated_text)))
 
             if store.mas_submod_utils.current_label[0] != '_':
                 store.mtts._current_label = store.mas_submod_utils.current_label
@@ -689,12 +689,12 @@ init python:
 
             # 添加字符计数调试日志
             content_char_count = store.mtts.matcher._count_content_chars(text)
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Content char count: {0}".format(content_char_count))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] Content char count: {0}".format(content_char_count))
             store.mtts_match_rule = rule.get('name', 'Default')
             
             # 添加匹配规则调试日志
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Matched rule: {0}".format(store.mtts_match_rule))
-            store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Rule action: {0}".format(rule.get('action', [])))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] Matched rule: {0}".format(store.mtts_match_rule))
+            store.mas_submod_utils.submod_log.debug("[MttsDebugging] Rule action: {0}".format(rule.get('action', [])))
 
             if not rule['action']:
                 store.mtts_status = renpy.substitute(_("Blank rule"))
@@ -704,7 +704,7 @@ init python:
             replacement_str = persistent.mtts.get("playername_replacement", "")
             if persistent.mtts.get("replace_playername") and player in text:
                 text = text.replace(player, replacement_str)
-                store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Replaced player name with: {0}".format(replacement_str))
+                store.mas_submod_utils.submod_log.debug("[MttsDebugging] Replaced player name with: {0}".format(replacement_str))
 
 
             if rule['name'] == 'MAICA_Chat' and mtts_has_maica_instance():
@@ -750,7 +750,7 @@ init python:
                 try:
                     renpy.queue_event("dismiss")
                 except Exception as e:
-                    store.mas_submod_utils.submod_log.debug("[MTTS DEBUG] Failed to wake generation wait: {0}".format(e))
+                    store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed to wake generation wait: {0}".format(e))
 
             task.add_done_callback(wake_generation_wait)
 
@@ -784,7 +784,7 @@ init python:
             generation_is_current = self.is_generation_current(generation_session_id)
             if not generation_is_current:
                 store.mas_submod_utils.submod_log.debug(
-                    "[MTTS DEBUG] Ignoring generation result from an expired session."
+                    "[MttsDebugging] Ignoring generation result from an expired session."
                 )
             elif generation_timed_out:
                 mtts.mtts_instance.set_error(

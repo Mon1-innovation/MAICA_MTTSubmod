@@ -367,7 +367,7 @@ class RuleMatcher:
             min_len = rule.get('min_len', 0)
 
             if self._count_content_chars(text) < min_len:
-                logger.warning("Text length is too short: {}".format(text))
+                logger.debug("Text too short for rule {}: {}".format(rule.get('name', 'UNKNOWN'), text))
                 continue
 
             # 检查 variable 字段
