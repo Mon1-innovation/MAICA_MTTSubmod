@@ -204,6 +204,7 @@ def test_main_routes_enabled_toggles_through_session_boundary_handler():
     assert "def mtts_toggle_enabled():" in main_text
     assert "Function(mtts_toggle_enabled)" in setting_text
     assert "Function(mtts_toggle_enabled)" in status_text
+    assert setting_text.count('selected persistent.mtts.get("enabled", False)') == 2
     assert 'ToggleDict(persistent.mtts, "enabled", True, False)' not in setting_text
     assert 'ToggleDict(persistent.mtts, "enabled", True, False)' not in status_text
     assert 'renpy.music.stop(channel="voice", fadeout=0)' in main_text

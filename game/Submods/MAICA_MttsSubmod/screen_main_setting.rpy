@@ -105,6 +105,7 @@ screen mtts_settings():
                     style_prefix "generic_fancy_check"
                     textbutton _("Enable MTTS: [persistent.mtts.get('enabled')]"):
                         action [Function(mtts_toggle_enabled), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
+                        selected persistent.mtts.get("enabled", False)
                         hovered SetField(_tooltip, "value", _("Enable to generate and play TTS audio."))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
 
@@ -117,6 +118,7 @@ screen mtts_settings():
                     textbutton _("Enable MTTS: [persistent.mtts.get('enabled')]"):
                         style "generic_fancy_check_button_disabled"
                         action Function(mtts_toggle_enabled)
+                        selected persistent.mtts.get("enabled", False)
                         hovered SetField(_tooltip, "value", _("Enable to generate and play TTS audio.\n! MTTS not unlocked, enabling will not take effect"))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
             
