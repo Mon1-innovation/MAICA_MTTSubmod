@@ -762,7 +762,7 @@ init python:
                     generation_timed_out = True
                     self._generation_wait_id += 1
                     self._active_generation_wait_id = None
-                    store.mas_submod_utils.submod_log.info("[MTTS TIMEOUT] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
+                    store.mas_submod_utils.submod_log.info("[MttsTimeout] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
                     break
                 remaining_wait = max(0.1, generate_timeout - elapsed)
                 self._active_generation_wait_id = generation_wait_id
@@ -816,10 +816,10 @@ init python:
                     error_msg = res.reason() if getattr(res, 'reason', None) else 'Unknown'
                     renpy.notify(renpy.substitute(_("MTTS: Generation failed -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(error_msg))
                     # 添加详细日志：输出错误内容和输入文本
-                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Input text: {0}".format(repr(text)))
-                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Error reason: {0}".format(repr(error_msg)))
-                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Label: {0}".format(store.mtts._current_label))
-                    store.mas_submod_utils.submod_log.info("[MTTS ERROR] Target language: {0}".format(target_lang))
+                    store.mas_submod_utils.submod_log.info("[MttsRemoteError] Input text: {0}".format(repr(text)))
+                    store.mas_submod_utils.submod_log.info("[MttsRemoteError] Error reason: {0}".format(repr(error_msg)))
+                    store.mas_submod_utils.submod_log.info("[MttsRemoteError] Label: {0}".format(store.mtts._current_label))
+                    store.mas_submod_utils.submod_log.info("[MttsRemoteError] Target language: {0}".format(target_lang))
                     if not mtts.mtts_instance.has_error():
                         mtts.mtts_instance.set_error("client_generation_failed", error_msg)
                     store.mtts_status = mtts_failure_status_text()
@@ -828,10 +828,10 @@ init python:
                 exception_msg = str(task.exception)
                 renpy.notify(renpy.substitute(_("MTTS: Generation failed -- ")) + self.escape_brackets_in_exceptions_and_ellipsis(exception_msg))
                 # 添加详细日志：输出错误内容和输入文本
-                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Input text: {0}".format(repr(text)))
-                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Exception: {0}".format(repr(exception_msg)))
-                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Label: {0}".format(store.mtts._current_label))
-                store.mas_submod_utils.submod_log.info("[MTTS EXCEPTION] Target language: {0}".format(target_lang))
+                store.mas_submod_utils.submod_log.info("[MttsLocalError] Input text: {0}".format(repr(text)))
+                store.mas_submod_utils.submod_log.info("[MttsLocalError] Exception: {0}".format(repr(exception_msg)))
+                store.mas_submod_utils.submod_log.info("[MttsLocalError] Label: {0}".format(store.mtts._current_label))
+                store.mas_submod_utils.submod_log.info("[MttsLocalError] Target language: {0}".format(target_lang))
                 if not mtts.mtts_instance.has_error():
                     mtts.mtts_instance.set_error("client_generation_failed", exception_msg)
                 store.mtts_status = mtts_failure_status_text()
