@@ -6,27 +6,8 @@ init -990 python:
     maica_is_dev = False
     # Development builds rerun the current migration, show a warning, and
     # are excluded from the release workflow.
-    # dependencies - dictionary in the following structure: {"name": ("minimum_version", "maximum_version")}
-    store.mas_submod_utils.Submod(
-        author="P",
-        name="MTTS Synbrace",
-        description=_("MAICA-MTTS Official Submod Frontend"),
-        version=mtts_version,
-        dependencies={"Ignore Translation Conflicts": (None, None)},
-        settings_pane="mtts_settingpane"
-    )
 
 default persistent._mtts_last_version = "0.0.1"
-
-init -989 python:
-    if store.mas_submod_utils.isSubmodInstalled("Submod Updater Plugin"):
-        store.sup_utils.SubmodUpdater(
-            submod="MAICA MTTSubmod",
-            user_name="Mon1-innovation",
-            repository_name="MAICA_MTTSubmod",
-            update_dir="",
-            attachment_id=None
-        )
 
 screen mtts_settingpane():
     on "show" action Function(store.mtts.refresh_setting_pane_cache)
@@ -105,10 +86,7 @@ init python:
             store.mas_api_keys.save_keys()
 
     def _is_str(x):
-        try:
-            return isinstance(x, basestring)  # py2
-        except Exception:
-            return isinstance(x, str)
+        return isinstance(x, str)
 
     def mtts_has_maica_instance():
         if not persistent.mtts.get("_chat_installed", False):
@@ -215,13 +193,6 @@ init python:
             return
     
 init python:
-    from mtts_package import PY2, PY3
-    def iterize(dict):
-        if PY2:
-            return dict.iteritems()
-        elif PY3:
-            return dict.items()
-    
     import time
     class ThrottleReturnNone(object):
         """This is a wrapper."""
@@ -301,7 +272,7 @@ init python:
 define maica_confont = "mod_assets/font/SarasaMonoTC-SemiBold.ttf"
 screen mtts_workload_stat():
     python:
-        stat = {k: v for k, v in iterize(store.mtts.mtts_instance.workload_raw) if k != "onliners"}
+        stat = {k: v for k, v in store.mtts.mtts_instance.workload_raw.items() if k != "onliners"}
     python:
         store.update_interval = 15
 

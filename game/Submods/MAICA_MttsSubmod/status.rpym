@@ -31,7 +31,7 @@ init -1 python:
         if persistent.mtts['ministathud']:
             maicatts_enableWorkLoadScreen()
         
-        store.mas_submod_utils.unregisterFunction("ch30_preloop", auto_show_statlite)
+        store.mas_submod_utils.unregister_plugin("ch30_preloop", auto_show_statlite)
         
 
 

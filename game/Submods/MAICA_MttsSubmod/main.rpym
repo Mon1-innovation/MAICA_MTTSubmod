@@ -1,7 +1,7 @@
 define MTTS_SPINNER_CYCLE_SECONDS = 1.2
 define MTTS_SPINNER_DISPLAY_SIZE = 20
 
-init -1500 python:
+init -990 python:
     def mtts_build_spinner_animation():
         source = "mod_assets/mtts_img/mtts_spinner_strip.png"
         frame_width = 260
@@ -23,7 +23,7 @@ init -1500 python:
 
 image mtts_spinner = mtts_build_spinner_animation()
 
-init -1500 python:
+init -990 python:
     if not config.language:
         config.language = "english"
 
@@ -379,7 +379,7 @@ init -100 python:
 init python in mtts:
     _acc = MTTSAsyncTask(mtts_instance.accessable)
 init python:
-    persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
+    persistent.mtts["_chat_installed"] = store.mas_submod_utils.is_submod_installed("MAICA Blessland")
     old_renpysay = renpy.exports.say
     import mtts_package
     PY2, PY3 = mtts_package.PY2, mtts_package.PY3

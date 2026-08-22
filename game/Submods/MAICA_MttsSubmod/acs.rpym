@@ -106,7 +106,7 @@ init -1 python:
 
 init 501 python:
     for bg_id in store.mas_background.BACKGROUND_MAP:
-        if isinstance(bg_id, basestring) and "spaceroom" in bg_id.lower():
+        if isinstance(bg_id, str) and "spaceroom" in bg_id.lower():
             MASImageTagDecoDefinition.register_img(
                 "mtts_giftbox",
                 bg_id,
