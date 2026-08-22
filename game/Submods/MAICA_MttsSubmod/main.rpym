@@ -105,7 +105,8 @@ init -990 python:
 
 
 init -100 python in mtts:
-    import mtts_package, mtts_renpy_text, store, os
+    import mtts_package
+    AudioData = getattr(renpy, "AudioData", getattr(store, "MASAudioData", None)), mtts_renpy_text, store, os
     from mtts_provider_manager import MTTSProviderManager
 
     from logger_manager import get_logger_manager
@@ -799,7 +800,7 @@ init python:
                 if res.is_success():
                     store.mtts_status = renpy.substitute(_("Playing"))
                     renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
-                    audio_data = store.MASAudioData(res.data, name)
+                    audio_data = AudioData(res.data, name)
                     if is_extend:
                         renpy.music.queue(
                             audio_data,
