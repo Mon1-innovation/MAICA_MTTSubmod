@@ -12,7 +12,12 @@ import mtts_renpy_text
 
 
 def read_source(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    path = ROOT / relative_path
+    if not path.exists() and str(path).endswith(".rpy"):
+        rpym_path = path.with_suffix(".rpym")
+        if rpym_path.exists():
+            return rpym_path.read_text(encoding="utf-8")
+    return path.read_text(encoding="utf-8")
 
 
 def test_renpy_external_text_escape_covers_brackets_braces_and_trusted_names():

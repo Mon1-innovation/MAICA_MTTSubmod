@@ -12,22 +12,10 @@ try:
 except Exception:
     _CP936_MAP = {}
 
-try:
-    _TEXT_TYPE = unicode
-    _PY2 = True
-except NameError:
-    _TEXT_TYPE = str
-    _PY2 = False
-
-try:
-    _INTEGER_TYPES = (int, long)
-except NameError:
-    _INTEGER_TYPES = (int,)
-
-try:
-    _UNICHAR = unichr
-except NameError:
-    _UNICHAR = chr
+_TEXT_TYPE = str
+_PY2 = False
+_INTEGER_TYPES = (int,)
+_UNICHAR = chr
 
 
 def _byte_value(value):
@@ -37,8 +25,6 @@ def _byte_value(value):
 
 
 def _bytes_from_values(values):
-    if _PY2:
-        return ''.join(chr(value) for value in values)
     return bytes(bytearray(values))
 
 

@@ -4,12 +4,49 @@ import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    class _MockRaises:
+        def __init__(self, exc):
+            self.exc = exc
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if exc_type is None or not issubclass(exc_type, self.exc):
+                raise AssertionError(f"Expected {self.exc}, got {exc_type}")
+            return True
+
+    class _MockPytest:
+        raises = _MockRaises
+
+        class mark:
+            @staticmethod
+            def parametrize(keys, values):
+                def decorator(fn):
+                    def wrapper(*args, **kwargs):
+                        import tempfile
+                        if isinstance(keys, str):
+                            k_list = [k.strip() for k in keys.split(",")]
+                        else:
+                            k_list = list(keys)
+                        for val_tuple in values:
+                            call_kwargs = dict(kwargs)
+                            for k, v in zip(k_list, val_tuple):
+                                call_kwargs[k] = v
+                            if "tmp_path" not in call_kwargs and len(args) == 0:
+                                with tempfile.TemporaryDirectory() as td:
+                                    fn(Path(td), **call_kwargs)
+                            else:
+                                fn(*args, **call_kwargs)
+                    return wrapper
+                return decorator
+    pytest = _MockPytest()
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON_PACKAGES = ROOT / "game" / "python-packages"
-MAIN = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "main.rpy"
+MAIN = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "main.rpym"
 
 if str(PYTHON_PACKAGES) not in sys.path:
     sys.path.insert(0, str(PYTHON_PACKAGES))

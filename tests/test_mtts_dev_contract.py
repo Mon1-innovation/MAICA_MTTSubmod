@@ -3,8 +3,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADER = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.rpy"
-MIGRATION = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "migration.rpy"
+HEADER = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.rpym"
+MIGRATION = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "migration.rpym"
 TRANSLATION = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "tl" / "header.rpy"
 WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 

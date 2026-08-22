@@ -1,7 +1,7 @@
 define MTTS_SPINNER_CYCLE_SECONDS = 1.2
 define MTTS_SPINNER_DISPLAY_SIZE = 20
 
-init -1500 python:
+init -990 python:
     def mtts_build_spinner_animation():
         source = "mod_assets/mtts_img/mtts_spinner_strip.png"
         frame_width = 260
@@ -23,7 +23,7 @@ init -1500 python:
 
 image mtts_spinner = mtts_build_spinner_animation()
 
-init -1500 python:
+init -990 python:
     if not config.language:
         config.language = "english"
 
@@ -31,10 +31,7 @@ init -990 python:
     # Ren'Py may expose revertable containers through a namespace that shadows
     # the normal ``dict``/``list`` names. Resolve the Python builtins once so
     # persistent-data checks keep their intended meaning.
-    try:
-        import __builtin__ as _mtts_builtin_types
-    except ImportError:
-        import builtins as _mtts_builtin_types
+    import builtins as _mtts_builtin_types
 
     def mtts_is_builtin_dict(value):
         return isinstance(value, _mtts_builtin_types.dict)
@@ -197,10 +194,7 @@ init -100 python in mtts:
             store.mtts_status = store.mtts_failure_status_text()
 
     _cached_version_result = None
-    try:
-        import __builtin__ as _mtts_version_builtin_types
-    except ImportError:
-        import builtins as _mtts_version_builtin_types
+    import builtins as _mtts_version_builtin_types
 
     def _mtts_is_version_sequence(value):
         return isinstance(
@@ -222,10 +216,7 @@ init -100 python in mtts:
 
     def mtts_version_parts(version):
         """Parse a dotted numeric version, returning None for malformed data."""
-        try:
-            string_types = (basestring,)
-        except NameError:
-            string_types = (str,)
+        string_types = (str,)
         if _mtts_is_version_sequence(version):
             raw_parts = version
         elif isinstance(version, string_types):
@@ -379,10 +370,9 @@ init -100 python:
 init python in mtts:
     _acc = MTTSAsyncTask(mtts_instance.accessable)
 init python:
-    persistent.mtts["_chat_installed"] = store.mas_submod_utils.isSubmodInstalled("MAICA Blessland")
+    persistent.mtts["_chat_installed"] = store.mas_submod_utils.is_submod_installed("MAICA Blessland")
     old_renpysay = renpy.exports.say
     import mtts_package
-    PY2, PY3 = mtts_package.PY2, mtts_package.PY3
 
     def hijack_build_gift_react_labels(function):
         def wrapper(
@@ -515,8 +505,8 @@ init python:
         @property
         def conditions(self):
             _acc = store.mtts._acc
-            if _acc is not None:
-                _acc.wait()
+            if _acc is not None and not _acc.is_finished:
+                pass
             if not renpy.seen_label("mtts_greeting_end"):
                 store.mtts_status = renpy.substitute(_("Not revealed"))
                 return False
@@ -551,10 +541,7 @@ init python:
         def decode_str(text):
             from mtts_cp936_decode import decode_cp936
 
-            try:
-                text_type = unicode
-            except NameError:
-                text_type = str
+            text_type = str
 
             if isinstance(text, text_type):
                 return text
@@ -629,13 +616,7 @@ init python:
         @staticmethod
         def determ_lang(input, suppose='zh'):
             # If the input is of correct lang
-            if PY2:
-                import datapy2_mtts
-                pattern_content_zh = datapy2_mtts.pattern_content_zh
-                # pattern_content_en = datapy2.pattern_content_en
-            else:
-                pattern_content_zh = re.compile(r'[一-龥]')
-                # pattern_content_en = re.compile(r'[A-Za-z]')
+            pattern_content_zh = re.compile(r'[\u4e00-\u9fa5]')
 
             input_len = len(input)
             zh_search = pattern_content_zh.search(input)
@@ -749,33 +730,39 @@ init python:
                     return
                 try:
                     renpy.queue_event("dismiss")
+                    renpy.restart_interaction()
                 except Exception as e:
                     store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed to wake generation wait: {0}".format(e))
 
             task.add_done_callback(wake_generation_wait)
 
-            while True:
-                if task.is_finished:
-                    break
-                elapsed = time.time() - wait_started_at
-                if elapsed >= generate_timeout:
+            if not interact:
+                task.wait(timeout=generate_timeout)
+                if not task.is_finished:
                     generation_timed_out = True
-                    self._generation_wait_id += 1
+            else:
+                while True:
+                    if task.is_finished:
+                        break
+                    elapsed = time.time() - wait_started_at
+                    if elapsed >= generate_timeout:
+                        generation_timed_out = True
+                        self._generation_wait_id += 1
+                        self._active_generation_wait_id = None
+                        store.mas_submod_utils.submod_log.info("[MttsTimeout] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
+                        break
+                    remaining_wait = max(0.1, generate_timeout - elapsed)
+                    self._active_generation_wait_id = generation_wait_id
+                    if task.is_finished:
+                        self._active_generation_wait_id = None
+                        break
+                    restore_afm_scope = self.begin_generation_wait_afm_scope()
+                    try:
+                        self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
+                    finally:
+                        self.end_generation_wait_afm_scope(restore_afm_scope)
                     self._active_generation_wait_id = None
-                    store.mas_submod_utils.submod_log.info("[MttsTimeout] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
-                    break
-                remaining_wait = max(0.1, generate_timeout - elapsed)
-                self._active_generation_wait_id = generation_wait_id
-                if task.is_finished:
-                    self._active_generation_wait_id = None
-                    break
-                restore_afm_scope = self.begin_generation_wait_afm_scope()
-                try:
-                    self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
-                finally:
-                    self.end_generation_wait_afm_scope(restore_afm_scope)
-                self._active_generation_wait_id = None
-                _history_list.pop()
+                    _history_list.pop()
 
             self._active_generation_wait_id = None
             if task.is_finished and self._generation_wait_id == generation_wait_id:
@@ -799,7 +786,7 @@ init python:
                 if res.is_success():
                     store.mtts_status = renpy.substitute(_("Playing"))
                     renpy.music.set_volume(persistent.mtts["volume"], channel="voice")
-                    audio_data = store.MASAudioData(res.data, name)
+                    audio_data = AudioData(res.data, name)
                     if is_extend:
                         renpy.music.queue(
                             audio_data,

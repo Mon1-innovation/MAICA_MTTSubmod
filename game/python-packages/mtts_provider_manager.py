@@ -4,10 +4,7 @@ import re
 
 from logger_manager import LoggerWrapper
 
-try:
-    string_types = (basestring,)
-except NameError:
-    string_types = (str,)
+string_types = (str,)
 
 class DefaultLogger(object):
     """

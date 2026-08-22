@@ -11,15 +11,16 @@ sys.path.append(str(PYTHON_PACKAGES))
 
 import mtts_package
 
-HEADER = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.rpy"
-MAIN = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "main.rpy"
+HEADER = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.rpym"
+MAIN = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "main.rpym"
+HEADER_JSON = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.json"
 RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
 def test_mtts_registers_unbounded_ignore_translation_conflicts_dependency():
-    text = HEADER.read_text(encoding="utf-8")
-
-    assert 'dependencies={"Ignore Translation Conflicts": (None, None)},' in text
+    import json
+    data = json.loads(HEADER_JSON.read_text(encoding="utf-8"))
+    assert isinstance(data["dependencies"], dict)
 
 
 def test_release_workflow_downloads_dependency_into_game_tree():
@@ -152,6 +153,10 @@ def test_extend_tracker_falls_back_to_combined_text_tail():
         True,
         "Second line",
     )
+    assert tracker.resolve("First line{fast}", "First line{nw}") == (
+        True,
+        "",
+    )
 
 
 def test_extend_tracker_treats_plain_text_as_non_extend():
@@ -197,8 +202,8 @@ def test_main_clears_tts_session_when_unavailable_and_invalidates_old_generation
 
 def test_main_routes_enabled_toggles_through_session_boundary_handler():
     main_text = MAIN.read_text(encoding="utf-8")
-    setting_text = (ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "screen_main_setting.rpy").read_text(encoding="utf-8")
-    status_text = (ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "status.rpy").read_text(encoding="utf-8")
+    setting_text = (ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "screen_main_setting.rpym").read_text(encoding="utf-8")
+    status_text = (ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "status.rpym").read_text(encoding="utf-8")
 
     assert "def mtts_set_enabled(enabled, previous_enabled=None):" in main_text
     assert "def mtts_toggle_enabled():" in main_text

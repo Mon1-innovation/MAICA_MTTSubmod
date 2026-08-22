@@ -4,15 +4,10 @@ import re
 import unicodedata
 
 import sys
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
 import logging
 from logger_manager import LoggerWrapper
 
-try:
-    string_types = (basestring,)
-except NameError:
-    string_types = (str,)
+string_types = (str,)
 
 class TokenRedactionFilter(logging.Filter):
     """Filter that redacts sensitive tokens from log messages."""
@@ -214,8 +209,13 @@ class ExtendTextTracker(object):
             return True, raw_text
 
         marker = interjection if interjection is not None else self.default_interjection
+        if marker in text:
+            left, _, right = text.partition(marker)
+            return True, right
+
         if previous_text:
-            prefix = previous_text + marker
+            clean_prev = previous_text.replace("{nw}", "")
+            prefix = clean_prev + marker
             if text.startswith(prefix):
                 return True, text[len(prefix):]
 
@@ -1026,44 +1026,24 @@ class MTTS:
         }
         if not self.__accessable:
             return data
-    # Use iteritems() for Python 2
         avgcount = 0
-        if PY2:
-            # 处理 onliners 键
-            if isinstance(self.workload_raw.get('onliners'), (int, float)):
-                data['onliners'] = int(self.workload_raw['onliners'])
+        # 处理 onliners 键
+        if isinstance(self.workload_raw.get('onliners'), (int, float)):
+            data['onliners'] = int(self.workload_raw['onliners'])
 
-            for group_name, group in self.workload_raw.iteritems():
-                if group_name == 'onliners':
-                    continue
-                for card in group.itervalues():
-                    if card["mean_utilization"] > data["max_usage"]:
-                        data["max_usage"] = card["mean_utilization"]
-                    data["avg_usage"] += card["mean_utilization"]
-                    avgcount+=1
-                    data["total_vmem"] += int(card["vram"][:-4].strip())
-                    data["total_inuse_vmem"] += card["mean_memory"]
-                    data["total_w"] += card["mean_consumption"]
-                    data["max_tflops"] += int(card["tflops"])
-                    data["cur_tflops"] += int(card["tflops"]) * card["mean_utilization"] * 0.01
-        elif PY3:
-            # 处理 onliners 键
-            if isinstance(self.workload_raw.get('onliners'), (int, float)):
-                data['onliners'] = int(self.workload_raw['onliners'])
-
-            for group_name, group in self.workload_raw.items():
-                if group_name == 'onliners':
-                    continue
-                for card in group.values():
-                    if card["mean_utilization"] > data["max_usage"]:
-                        data["max_usage"] = card["mean_utilization"]
-                    data["avg_usage"] += card["mean_utilization"]
-                    avgcount+=1
-                    data["total_vmem"] += int(card["vram"][:-4].strip())
-                    data["total_inuse_vmem"] += card["mean_memory"]
-                    data["total_w"] += card["mean_consumption"]
-                    data["max_tflops"] += int(card["tflops"])
-                    data["cur_tflops"] += int(card["tflops"]) * card["mean_utilization"] * 0.01
+        for group_name, group in self.workload_raw.items():
+            if group_name == 'onliners':
+                continue
+            for card in group.values():
+                if card["mean_utilization"] > data["max_usage"]:
+                    data["max_usage"] = card["mean_utilization"]
+                data["avg_usage"] += card["mean_utilization"]
+                avgcount += 1
+                data["total_vmem"] += int(card["vram"][:-4].strip())
+                data["total_inuse_vmem"] += card["mean_memory"]
+                data["total_w"] += card["mean_consumption"]
+                data["max_tflops"] += int(card["tflops"])
+                data["cur_tflops"] += int(card["tflops"]) * card["mean_utilization"] * 0.01
 
         if avgcount > 0:
             data["avg_usage"] /= avgcount
