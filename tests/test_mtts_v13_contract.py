@@ -1,7 +1,54 @@
 import os
 import sys
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    class _MockRaises:
+        def __init__(self, exc):
+            self.exc = exc
+            self.value = None
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if exc_type is None or not issubclass(exc_type, self.exc):
+                raise AssertionError(f"Expected {self.exc}, got {exc_type}")
+            self.value = exc_val
+            return True
+
+    class _MockPytest:
+        raises = _MockRaises
+
+        @staticmethod
+        def fixture(fn):
+            return fn
+
+        class mark:
+            @staticmethod
+            def parametrize(keys, values):
+                def decorator(fn):
+                    def wrapper(*args, **kwargs):
+                        if isinstance(keys, str):
+                            k_list = [k.strip() for k in keys.split(",")]
+                        else:
+                            k_list = list(keys)
+                        for val_tuple in values:
+                            call_kwargs = dict(kwargs)
+                            for k, v in zip(k_list, val_tuple):
+                                call_kwargs[k] = v
+                            if "instance" not in call_kwargs and len(args) == 0:
+                                inst = mtts_package.MTTS(
+                                    url="https://example.test/tts/",
+                                    token="secret-token",
+                                    cache_path=".",
+                                )
+                                inst._MTTS__accessable = True
+                                fn(inst, **call_kwargs)
+                            else:
+                                fn(*args, **call_kwargs)
+                    return wrapper
+                return decorator
+    pytest = _MockPytest()
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -307,8 +354,8 @@ def test_accessibility_only_uses_maintenance_for_explicit_non_serving(monkeypatc
 
 
 def test_renpy_status_flow_keeps_failures_visible():
-    main_path = os.path.join(ROOT, "game", "Submods", "MAICA_MttsSubmod", "main.rpy")
-    status_path = os.path.join(ROOT, "game", "Submods", "MAICA_MttsSubmod", "status.rpy")
+    main_path = os.path.join(ROOT, "game", "Submods", "MAICA_MttsSubmod", "main.rpym")
+    status_path = os.path.join(ROOT, "game", "Submods", "MAICA_MttsSubmod", "status.rpym")
     with open(main_path, "r", encoding="utf-8") as source:
         main_text = source.read()
     with open(status_path, "r", encoding="utf-8") as source:

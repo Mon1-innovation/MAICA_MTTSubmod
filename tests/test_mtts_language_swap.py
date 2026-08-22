@@ -6,15 +6,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "game" / "Submods" / "MAICA_MttsSubmod"
 TRANSLATION_ROOT = SOURCE_ROOT / "tl"
 SOURCE_FILES = (
-    "acs.rpy",
-    "chat.rpy",
-    "header.rpy",
-    "main.rpy",
-    "screen_advanced_setting.rpy",
-    "screen_main_setting.rpy",
-    "screen_subs.rpy",
-    "screen_templates.rpy",
-    "status.rpy",
+    "acs.rpym",
+    "chat.rpym",
+    "header.rpym",
+    "main.rpym",
+    "screen_advanced_setting.rpym",
+    "screen_main_setting.rpym",
+    "screen_subs.rpym",
+    "screen_templates.rpym",
+    "status.rpym",
 )
 CHINESE = re.compile(r"[\u4e00-\u9fff]")
 
@@ -54,14 +54,14 @@ def test_mtts_translation_files_use_chinese_namespace_and_english_source_keys():
 
 
 def test_mtts_source_contains_english_defaults_and_preserves_language_routing():
-    header = read_source("header.rpy")
-    chat = read_source("chat.rpy")
-    main = read_source("main.rpy")
+    header_json = (SOURCE_ROOT / "header.json").read_text(encoding="utf-8")
+    chat = read_source("chat.rpym")
+    main = read_source("main.rpym")
     provider = (ROOT / "game" / "python-packages" / "mtts_provider_manager.py").read_text(
         encoding="utf-8"
     )
 
-    assert 'description=_("MAICA-MTTS Official Submod Frontend")' in header
+    assert '"description": "MAICA-MTTS Official Submod Frontend"' in header_json
     assert 'eventlabel="mtts_greeting"' in chat
     assert 'prompt=_("MTTS knock")' in chat
     assert 'config.language = "english"' in main
@@ -73,7 +73,7 @@ def test_mtts_source_contains_english_defaults_and_preserves_language_routing():
 
 
 def test_mtts_source_covers_shared_template_strings_in_english():
-    template = read_source("screen_templates.rpy")
+    template = read_source("screen_templates.rpym")
 
     for value in (
         'minutes',

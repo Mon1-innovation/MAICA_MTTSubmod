@@ -17,10 +17,10 @@ import mtts_package
 import mtts_provider_manager
 
 
-CHAT = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "chat.rpy"
-MIGRATION = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "migration.rpy"
-STATUS = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "status.rpy"
-UNLOCK_PROGRESS = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "unlock_progress.rpy"
+CHAT = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "chat.rpym"
+MIGRATION = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "migration.rpym"
+STATUS = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "status.rpym"
+UNLOCK_PROGRESS = ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "unlock_progress.rpym"
 
 
 def test_event_registration_matches_the_runtime_contract():
@@ -59,7 +59,7 @@ def test_status_overlay_registers_before_skip_visual_greetings():
     text = STATUS.read_text(encoding="utf-8")
 
     assert '@store.mas_submod_utils.functionplugin("ch30_preloop", priority=1000)' in text
-    assert 'store.mas_submod_utils.unregisterFunction("ch30_preloop", auto_show_statlite)' in text
+    assert 'store.mas_submod_utils.unregister_plugin("ch30_preloop", auto_show_statlite)' in text
     assert 'functionplugin("ch30_loop"' not in text
     assert 'unregisterFunction("ch30_loop"' not in text
     assert "not mas_HKBIsVisible()" in text
