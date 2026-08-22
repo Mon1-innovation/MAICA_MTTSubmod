@@ -2,10 +2,17 @@
 
 init -1 python:
     if not hasattr(store, "mtts_status"):
-        store.mtts_status = renpy.substitute(_("待机"))
+        store.mtts_status = renpy.substitute(_("Standing by"))
     if not hasattr(store, "mtts_match_rule"):
         store.mtts_match_rule = "Unknown"
-    # default store.mtts_status = renpy.substitute(_("待机"))
+
+    def mtts_failure_status_text():
+        instance = getattr(getattr(store, "mtts", None), "mtts_instance", None)
+        if instance is not None and instance.has_error():
+            return renpy.substitute(_(instance.get_status_description()))
+        return renpy.substitute(_("No connection"))
+
+    # default store.mtts_status = renpy.substitute(_("Standing by"))
     # quick functions to enable disable the mouse tracker
     def maicatts_enableWorkLoadScreen():
         if not maicatts_isWorkLoadScreenVisible():
@@ -19,12 +26,12 @@ init -1 python:
     def maicatts_isWorkLoadScreenVisible():
         return "maicatts_stat_lite" in config.overlay_screens
     
-    @store.mas_submod_utils.functionplugin("ch30_loop", priority=1000)
+    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=1000)
     def auto_show_statlite():
         if persistent.mtts['ministathud']:
             maicatts_enableWorkLoadScreen()
         
-        store.mas_submod_utils.unregisterFunction("ch30_loop", auto_show_statlite)
+        store.mas_submod_utils.unregisterFunction("ch30_preloop", auto_show_statlite)
         
 
 
@@ -77,16 +84,24 @@ screen maicatts_stat_lite():
                 vbox:
                     xoffset 5
                     hbox:
-                        text renpy.substitute(_("MTTS状态: [store.mtts_status]")):
-                            size 15
+                        text mtts_escape_display_text(renpy.substitute(
+                            _("MTTS status: [status_text]"),
+                            scope={"status_text": store.mtts_status}
+                        )):
+                            size 13
+                            xmaximum 205
 
                     hbox:
-                        text "CURR: [store.mtts._current_label]":
+                        text mtts_escape_display_text(
+                            "CURR: {}".format(store.mtts._current_label)
+                        ):
                             size 14
                             font maica_confont
 
                     hbox:
-                        text "RULE: [store.mtts_match_rule]":
+                        text mtts_escape_display_text(
+                            "RULE: {}".format(store.mtts_match_rule)
+                        ):
                             size 14
                             font maica_confont
 
@@ -110,7 +125,7 @@ screen maicatts_stat_lite():
                         yfill True
                         background "mod_assets/console/cn_frame_tts_button.png"
                         hover_background "mod_assets/console/cn_frame_tts_button_hover.png"
-                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
+                        action [Function(mtts_toggle_enabled), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
                         add Text(
                             "{0}●{{/color}} I / O".format(beacon),
                             font=maica_confont,
@@ -120,5 +135,4 @@ screen maicatts_stat_lite():
                             ypos 10 
                             xanchor 0.5 
                             yanchor 0.5
-
 

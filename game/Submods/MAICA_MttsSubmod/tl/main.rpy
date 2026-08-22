@@ -1,44 +1,90 @@
-﻿# TODO: Translation updated at 2026-01-08 22:58
+﻿
+translate chinese strings:
 
-translate english strings:
+    old "No token is configured"
+    new "尚未配置令牌"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:65
-    old "MTTS: 已切换节点, 正在重新检测可用性"
-    new "MTTS: Provider applied, reinitializing"
+    old "The token is corrupted"
+    new "令牌已损坏"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:196
-    old "未解锁"
-    new "Not revealed"
+    old "The account or password is invalid"
+    new "账号或密码无效"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:199
-    old "未启用"
-    new "Not enabled"
+    old "Login is temporarily blocked"
+    new "登录暂时被阻止"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:202
-    old "版本过旧"
-    new "Outdated"
+    old "The account is suspended"
+    new "账号已被封禁"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:205
-    old "无连接"
-    new "No connection"
+    old "The account email is not verified"
+    new "账号邮箱尚未验证"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:238
-    old "规则为空"
-    new "Blank rule"
+    old "The latest terms are not accepted"
+    new "尚未接受最新服务条款"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:246
-    old "生成中"
-    new "Generating"
+    old "A user-level error occurred"
+    new "发生用户级别错误"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:262
-    old "播放中"
-    new "Playing"
+    old "A server-side error occurred"
+    new "发生服务器级别错误"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:269
-    old "MTTS: 语音生成失败 -- "
-    new "MTTS: Generation failed -- "
+    old "Token generation failed"
+    new "令牌生成失败"
 
-    # game/Submods/MAICA_MTTSubmod/main.rpy:273
-    old "待机"
-    new "Standing by"
+    old "Speech generation failed"
+    new "语音生成失败"
 
+    old "Unable to connect to the server"
+    new "无法连接服务器, 请检查网络和submod_log"
+
+    old "The server returned an invalid response"
+    new "服务器响应无效"
+
+    old "The server is unavailable or under maintenance"
+    new "服务器正在维护, 请等待后续公告"
+
+    old "Failed to retrieve an available service provider"
+    new "获取服务节点失败, 服务器可能正在维护或离线"
+
+    old "Verification failed: "
+    new "验证失败: "
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:142
+    old "MTTS: Provider applied, reinitializing"
+    new "MTTS: 已切换节点, 正在重新检测可用性"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:359
+    old "Not revealed"
+    new "未解锁"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:362
+    old "Not enabled"
+    new "未启用"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:365
+    old "Outdated"
+    new "版本过旧"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:368
+    old "No connection"
+    new "无连接"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:507
+    old "Blank rule"
+    new "规则为空"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:524
+    old "Generating"
+    new "生成中"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:594
+    old "Playing"
+    new "播放中"
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:611
+    old "MTTS: Generation failed -- "
+    new "MTTS: 语音生成失败 -- "
+
+    # game/Submods/MAICA_MttsSubmod/main.rpy:627
+    old "Standing by"
+    new "待机"

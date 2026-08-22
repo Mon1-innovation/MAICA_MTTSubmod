@@ -1,6 +1,7 @@
 .vscode/settings.json
 token.txt
-tests/
+tests/*
+!tests/*.py
 
 **.pyc
 game/Submods/MAICA_MTTSubmod/cache/**

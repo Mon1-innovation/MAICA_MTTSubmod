@@ -2,13 +2,17 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "1.2.10"
-    store._mtts_donation_dir = os.path.exists(os.path.join(renpy.config.basedir, "game", "Submods", "MAICA_MttsSubmod", "donation"))
+    mtts_version = "1.2.17"
+    maica_is_dev = False
+    # Development builds rerun the current migration, show a warning, and
+    # are excluded from the release workflow.
+    # dependencies - dictionary in the following structure: {"name": ("minimum_version", "maximum_version")}
     store.mas_submod_utils.Submod(
         author="P",
         name="MTTS Synbrace",
-        description=_("MAICA-MTTS官方前端子模组"),
+        description=_("MAICA-MTTS Official Submod Frontend"),
         version=mtts_version,
+        dependencies={"Ignore Translation Conflicts": (None, None)},
         settings_pane="mtts_settingpane"
     )
 
@@ -25,6 +29,12 @@ init -989 python:
         )
 
 screen mtts_settingpane():
+    on "show" action Function(store.mtts.refresh_setting_pane_cache)
+
+    python:
+        pane_cache = store.mtts.mtts_setting_pane_cache
+        version_check = pane_cache.get("version_check", None)
+
     vbox:
         # background None
         # has vbox:
@@ -37,20 +47,26 @@ screen mtts_settingpane():
 
             text "":
                 size 0
-            if persistent.mtts["_outdated"]:
+            if store.maica_is_dev:
                 hbox:
-                    text _("> 当前版本支持已终止, 请更新至最新版"):
+                    text _("> Warning: this is a {color=#ff0000}development build{/color} copy. {color=#ff0000}Stop using immediately{/color} if you're not MAICA official staff"):
                         style "main_menu_version_l"
 
-            $ res, libv, uiv = store.mtts.validate_version()
-            if res is None:
+            if persistent.mtts["_outdated"]:
                 hbox:
-                    text _("> 警告: 未检测到MTTS库版本信息. 请从Release下载安装MTTS, {color=#ff0000}而不是源代码{/color}"):
+                    text _("> Support for this version has ended, please update to the latest version"):
                         style "main_menu_version_l"
-            elif res != 0:
-                hbox:
-                    text _("> 警告: MTTS库版本[libv]与UI版本[uiv]不符. 请{color=#ff0000}从Release{/color}完整地更新MTTS"):
-                        style "main_menu_version_l"
+
+            if version_check is not None:
+                $ res, libv, uiv = version_check
+                if res is None:
+                    hbox:
+                        text _("> Warning: MTTS Libs version not found. Please install from Release, {color=#ff0000}NOT source code{/color}"):
+                            style "main_menu_version_l"
+                elif res != 0:
+                    hbox:
+                        text _("> Warning: MTTS Libs v[libv] mismatch with UI v[uiv]. Please fully update {color=#ff0000}from Release{/color}"):
+                            style "main_menu_version_l"
 
             text "":
                 size 0
@@ -61,26 +77,32 @@ screen mtts_settingpane():
             style_prefix "check"
 
             if mtts_can_use_blessland_login():
-                textbutton _("> 使用账号生成令牌 (Blessland)"):
+                textbutton _("> Generate token from account (Blessland)"):
                     action Show("maica_login")
             else:
-                textbutton _("> 使用账号生成令牌 (独立模式)"):
+                textbutton _("> Generate token from account (Standalone)"):
                     action Show("mtts_login")
-            textbutton _("> MTTS参数与设置"):
+            textbutton _("> MTTS params and settings"):
                 action Show("mtts_settings")
 
-            if store._mtts_donation_dir:
-                textbutton _("> 向 MAICA 捐赠"):
+            if pane_cache.get("donation_exists", False):
+                textbutton _("> Donate to MAICA"):
                     action Show("mtts_support")
 
 
 init python:
-    def _mtts_clear():
+    import mtts_renpy_text
+
+    def mtts_escape_display_text(value):
+        return mtts_renpy_text.escape_renpy_text(value)
+
+    def _mtts_clear(save_token=False):
         store._maica_LoginAcc = ""
         store._maica_LoginPw = ""
         store._maica_LoginEmail = ""
-        store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts_instance.token})
-        store.mas_api_keys.save_keys()
+        if save_token:
+            store.mas_api_keys.api_keys.update({"Maica_Token":store.mtts.mtts_instance.token})
+            store.mas_api_keys.save_keys()
 
     def _is_str(x):
         try:
@@ -101,17 +123,54 @@ init python:
         except Exception:
             return False
 
-    def _mtts_verify_token():
-        res = store.mtts.mtts_instance._verify_token()
+    def _mtts_verify_token(result=None):
+        instance = store.mtts.mtts_instance
+        res = result if result is not None else instance._verify_token()
         if res.get("success"):
             c = res.get("content", None)
             if _is_str(c) and c:
-                store.mtts.mtts_instance.user_acc = c
+                instance.user_acc = c
 
-            renpy.show_screen("maica_message", message=_("验证成功"))
+            store.mtts_status = renpy.substitute(_("Standing by"))
+            renpy.show_screen("maica_message", message=_("Verification successful"))
+            return True
         else:
-            store.mas_api_keys.api_keys.update({"Maica_Token":""})
-            renpy.show_screen("maica_message", message=renpy.substitute(_("验证失败, 请检查账号密码")) + "\n" + renpy.substitute(_("失败原因: ")) + res.get("exception"))
+            if instance.status in (
+                instance.MttsStatus.TOKEN_CORRUPTED,
+                instance.MttsStatus.TOKEN_INVALID,
+            ):
+                store.mas_api_keys.api_keys.update({"Maica_Token":""})
+                instance.token = ""
+                store.mas_api_keys.save_keys()
+            store.mtts_status = mtts_failure_status_text()
+            message = renpy.substitute(_("Verification failed: ")) + store.mtts_status
+            detail = u"{}".format(res.get("exception") or "")
+            if detail:
+                message += "\n" + renpy.substitute(_("Reason: ")) + detail
+            renpy.show_screen("maica_message", message=message)
+            return False
+
+    def _mtts_submit_login():
+        instance = store.mtts.mtts_instance
+        previous_token = instance.token
+        instance._gen_token(
+            store._maica_LoginAcc,
+            store._maica_LoginPw,
+            "",
+            store._maica_LoginEmail if store._maica_LoginEmail != "" else None,
+        )
+        if instance.has_error():
+            result = instance.get_error_result()
+            instance.token = previous_token
+            success = _mtts_verify_token(result)
+        else:
+            success = _mtts_verify_token()
+            if not success and instance.status not in (
+                instance.MttsStatus.TOKEN_CORRUPTED,
+                instance.MttsStatus.TOKEN_INVALID,
+            ):
+                instance.token = previous_token
+        _mtts_clear(save_token=success)
     
     def mtts_try_sync_user_acc_from_blessland():
         """
@@ -266,24 +325,32 @@ screen mtts_workload_stat():
 
             for server in stat:
 
-                use divider_small(server)
+                use divider_small(mtts_escape_display_text(server))
 
                 for card in stat[server]:
                     hbox:
-                        text stat[server][card]["name"]:
+                        text mtts_escape_display_text(stat[server][card].get("name")):
                             size 15
                         text store.mtts.progress_bar(stat[server][card]["mean_utilization"], total=int(stat[server][card]["tflops"]), unit="TFlops"):
                             size 10
                             font maica_confont
 
-                        text "VRAM: " + str(stat[server][card]["mean_memory"]) + " / " + str(stat[server][card]["vram"]):
+                        text mtts_escape_display_text(
+                            "VRAM: {} / {}".format(
+                                stat[server][card]["mean_memory"],
+                                stat[server][card]["vram"]
+                            )
+                        ):
                             size 10
-                        text renpy.substitute(_("平均功耗: ")) + str(stat[server][card]["mean_consumption"]) + "W":
+                        text mtts_escape_display_text(
+                            renpy.substitute(_("Average power consumption: ")) +
+                            "{}W".format(stat[server][card]["mean_consumption"])
+                        ):
                             size 10
                 text ""
 
             hbox:
-                text renpy.substitute(_("下次更新数据")):
+                text renpy.substitute(_("Next data update")):
                     size 15
                 text store.mtts.progress_bar(((store.workload_throttle.remain / store.update_interval)) * 100, bar_length = 78, total=store.update_interval, unit="s"):
                     size 15

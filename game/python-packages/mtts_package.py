@@ -7,40 +7,157 @@ import sys
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 import logging
+from logger_manager import LoggerWrapper
+
+try:
+    string_types = (basestring,)
+except NameError:
+    string_types = (str,)
 
 class TokenRedactionFilter(logging.Filter):
     """Filter that redacts sensitive tokens from log messages."""
     def filter(self, record):
-        # Redact access_token values in log messages
+        # Render %-style arguments first so a token passed separately from the
+        # format string cannot bypass redaction.
+        if record.args:
+            try:
+                record.msg = self._redact_tokens(str(record.msg % record.args))
+                record.args = ()
+                return True
+            except Exception:
+                pass
+
         record.msg = self._redact_tokens(str(record.msg))
         if record.args:
             if isinstance(record.args, dict):
                 record.args = {k: self._redact_tokens(str(v)) for k, v in record.args.items()}
             elif isinstance(record.args, tuple):
-                record.args = tuple(self._redact_tokens(str(arg)) for arg in record.args)
+                token_context = "access_token" in str(record.msg).lower()
+                record.args = tuple(
+                    self._redact_tokens(str(arg))
+                    if not token_context
+                    else "{}***".format(str(arg)[:4])
+                    for arg in record.args
+                )
         return True
 
     def _redact_tokens(self, text):
         """Replace token values with first 4 characters + ***"""
-        # Pattern: access_token=<value> where value is alphanumeric, +, /, or - (URL-safe base64)
-        def replace_token(match):
-            full_match = match.group(0)
-            token_value = match.group(1)
-            prefix = token_value[:4] if len(token_value) >= 4 else token_value
-            return "access_token={}***".format(prefix)
+        # Stop at common JSON/URL/log delimiters so padded or JWT-like tokens
+        # are redacted as one value instead of leaking their suffix.
+        return re.sub(
+            r'(?P<prefix>["\']?access_token["\']?\s*[:=]\s*["\']?)'
+            r'(?P<value>[^,\s}\]"\'&;]+)',
+            lambda match: "{}{}***".format(
+                match.group("prefix"), match.group("value")[:4]
+            ),
+            text,
+        )
 
-        return re.sub(r'access_token=([a-zA-Z0-9+/_-]+)', replace_token, text)
+class TokenRedactingLogger(object):
+    """Apply token redaction before forwarding to the active MAS logger."""
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-BASIC_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
-DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-formatter = logging.Formatter(BASIC_FORMAT, DATE_FORMAT)
-chlr = logging.StreamHandler() # 输出到控制台的handler
-chlr.setFormatter(formatter)
-chlr.setLevel(logging.DEBUG)  # 也可以不设置，不设置就默认用logger的level
-logger.addHandler(chlr)
-logger.addFilter(TokenRedactionFilter())
+    def __init__(self, logger):
+        self._logger = logger
+        self._filter = TokenRedactionFilter()
+
+    def _redact(self, value):
+        if isinstance(value, dict):
+            return dict(
+                (
+                    key,
+                    self._redact_token_value(item)
+                    if self._is_token_key(key)
+                    else self._redact(item)
+                )
+                for key, item in value.items()
+            )
+        if isinstance(value, tuple):
+            return tuple(self._redact(item) for item in value)
+        if isinstance(value, list):
+            return [self._redact(item) for item in value]
+        if isinstance(value, string_types):
+            return self._filter._redact_tokens(value)
+        return value
+
+    @staticmethod
+    def _is_token_key(key):
+        return isinstance(key, string_types) and key.lower() == "access_token"
+
+    def _redact_token_value(self, value):
+        if isinstance(value, string_types):
+            return "{}***".format(value[:4])
+        return self._redact(value)
+
+    def _prepare_call(self, message, args):
+        """Render standard %-style calls before redacting their final text."""
+        if args and isinstance(message, string_types):
+            try:
+                formatted = (
+                    message % args[0]
+                    if len(args) == 1 and isinstance(args[0], dict)
+                    else message % args
+                )
+                return formatted, ()
+            except Exception:
+                # Preserve logging's normal fallback behavior for malformed
+                # format strings, while still redacting likely token values.
+                pass
+
+        token_context = (
+            isinstance(message, string_types)
+            and "access_token" in message.lower()
+        )
+        return message, tuple(
+            self._redact_token_value(arg)
+            if token_context and isinstance(arg, string_types)
+            else self._redact(arg)
+            for arg in args
+        )
+
+    def _call(self, method_name, message, *args, **kwargs):
+        method = getattr(self._logger, method_name)
+        message, args = self._prepare_call(message, args)
+        redacted_message = self._redact(message)
+        redacted_args = tuple(self._redact(arg) for arg in args)
+        return method(redacted_message, *redacted_args, **kwargs)
+
+    def debug(self, message, *args, **kwargs):
+        return self._call("debug", message, *args, **kwargs)
+
+    def info(self, message, *args, **kwargs):
+        return self._call("info", message, *args, **kwargs)
+
+    def warning(self, message, *args, **kwargs):
+        return self._call("warning", message, *args, **kwargs)
+
+    def error(self, message, *args, **kwargs):
+        return self._call("error", message, *args, **kwargs)
+
+    def critical(self, message, *args, **kwargs):
+        return self._call("critical", message, *args, **kwargs)
+
+    def exception(self, message, *args, **kwargs):
+        return self._call("exception", message, *args, **kwargs)
+
+    def log(self, level, message, *args, **kwargs):
+        """Log at an arbitrary level without bypassing token redaction."""
+        method = getattr(self._logger, "log")
+        message, args = self._prepare_call(message, args)
+        return method(
+            level,
+            self._redact(message),
+            *(self._redact(arg) for arg in args),
+            **kwargs
+        )
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
+
+
+# LoggerWrapper resolves the MAS logger after submod initialization and avoids
+# adding a handler to Python's process-wide root logger during import.
+logger = TokenRedactingLogger(LoggerWrapper())
 
 import mtts_provider_manager
 
@@ -77,6 +194,32 @@ class LimitedList(list):
     def __repr__(self):
         # return f"LimitedList(max_size={self.max_size}, {super().__repr__()})"
         return "LimitedList(max_size={}, {})".format(self.max_size, super(LimitedList, self).__repr__())
+
+
+class ExtendTextTracker(object):
+    def __init__(self, default_interjection="{fast}"):
+        self.default_interjection = default_interjection
+        self.pending_raw = None
+
+    def clear(self):
+        self.pending_raw = None
+
+    def begin_extend(self, raw_text):
+        self.pending_raw = raw_text
+
+    def resolve(self, text, previous_text=None, interjection=None):
+        if self.pending_raw is not None:
+            raw_text = self.pending_raw
+            self.pending_raw = None
+            return True, raw_text
+
+        marker = interjection if interjection is not None else self.default_interjection
+        if previous_text:
+            prefix = previous_text + marker
+            if text.startswith(prefix):
+                return True, text[len(prefix):]
+
+        return False, text
 
 class RuleMatcher:
     """缓存规则匹配器，用于根据文本和标签匹配缓存规则"""
@@ -224,7 +367,7 @@ class RuleMatcher:
             min_len = rule.get('min_len', 0)
 
             if self._count_content_chars(text) < min_len:
-                logger.warning("Text length is too short: {}".format(text))
+                logger.debug("Text too short for rule {}: {}".format(rule.get('name', 'UNKNOWN'), text))
                 continue
 
             # 检查 variable 字段
@@ -346,7 +489,17 @@ class MTTSAudio:
     
     def is_success(self):
         return not (self.data[-1] == "}" and self.data[0] == "{")
-    
+
+
+class MTTSRequestError(Exception):
+    """A request failure already normalized into the MTTS status model."""
+
+    def __init__(self, result):
+        self.result = result
+        message = result.get("exception") or result.get("status") or "MTTS request failed"
+        Exception.__init__(self, message)
+
+
 class DataCache:
     def __init__(self, cache_path):
         self.cache_path = cache_path
@@ -402,6 +555,77 @@ class DataCache:
         self._cache_size = self.get_total_cache_size_mb()
 
 class MTTS:
+    HTTP_TIMEOUT = 10
+
+    class MttsStatus(object):
+        STANDING_BY = 10000
+        TOKEN_MISSING = 13400
+        TOKEN_CORRUPTED = 13401
+        TOKEN_INVALID = 13402
+        LOGIN_BLOCKED = 13403
+        ACCOUNT_BANNED = 13404
+        EMAIL_UNVERIFIED = 13405
+        TOS_UNACCEPTED = 13406
+        SERVER_REJECTED = 13408
+        SERVER_ERROR = 13409
+        TOKEN_GENERATION_FAILED = 13410
+        CONNECT_PROBLEM = 13411
+        RESPONSE_INVALID = 13412
+        SERVER_MAINTAIN = 13413
+        FAILED_GET_NODE = 13415
+        GENERATION_FAILED = 13418
+
+        _protocol_error_map = {
+            "client_token_missing": TOKEN_MISSING,
+            "maica_login_token_corrupted": TOKEN_CORRUPTED,
+            "maica_login_token_invalid": TOKEN_INVALID,
+            "client_auth_failed": TOKEN_INVALID,
+            "maica_login_f2b": LOGIN_BLOCKED,
+            "maica_login_banned": ACCOUNT_BANNED,
+            "maica_login_email_unchecked": EMAIL_UNVERIFIED,
+            "maica_login_tos_unaccepted": TOS_UNACCEPTED,
+            "maica_unified_warning": SERVER_REJECTED,
+            "maica_unified_error": SERVER_ERROR,
+            "client_token_generation_failed": TOKEN_GENERATION_FAILED,
+            "client_generation_failed": GENERATION_FAILED,
+            "client_availability_failed": CONNECT_PROBLEM,
+            "client_network_error": CONNECT_PROBLEM,
+            "client_response_timeout": CONNECT_PROBLEM,
+            "client_response_invalid": RESPONSE_INVALID,
+            "client_server_unavailable": SERVER_MAINTAIN,
+            "client_provider_unavailable": FAILED_GET_NODE,
+        }
+
+        _descriptions = {
+            STANDING_BY: u"Standing by",
+            TOKEN_MISSING: u"No token is configured",
+            TOKEN_CORRUPTED: u"The token is corrupted",
+            TOKEN_INVALID: u"The account or password is invalid",
+            LOGIN_BLOCKED: u"Login is temporarily blocked",
+            ACCOUNT_BANNED: u"The account is suspended",
+            EMAIL_UNVERIFIED: u"The account email is not verified",
+            TOS_UNACCEPTED: u"The latest terms are not accepted",
+            SERVER_REJECTED: u"A user-level error occurred",
+            SERVER_ERROR: u"A server-side error occurred",
+            TOKEN_GENERATION_FAILED: u"Token generation failed",
+            GENERATION_FAILED: u"Speech generation failed",
+            CONNECT_PROBLEM: u"Unable to connect to the server",
+            RESPONSE_INVALID: u"The server returned an invalid response",
+            SERVER_MAINTAIN: u"The server is unavailable or under maintenance",
+            FAILED_GET_NODE: u"Failed to retrieve an available service provider",
+        }
+
+        @classmethod
+        def from_protocol_status(cls, status, fallback=None):
+            return cls._protocol_error_map.get(
+                status,
+                cls.SERVER_REJECTED if fallback is None else fallback,
+            )
+
+        @classmethod
+        def get_description(cls, status):
+            return cls._descriptions.get(status, u"Unknown MTTS failure")
+
     def __init__(self, url = "https://maicadev.monika.love/tts/", token = "", cache_path = ""):
         self.baseurl = url
         self.token = token
@@ -413,6 +637,10 @@ class MTTS:
         self.lossless = False
         self.__accessable = False
         self._ignore_accessable = False
+        self.status = self.MttsStatus.STANDING_BY
+        self.error_protocol_status = None
+        self.error_message = None
+        self.error_protocol_code = None
         
         self.enabled = False
         self.volume = 1.0
@@ -477,6 +705,79 @@ class MTTS:
         else:
             self.rule_matcher = None
 
+    def clear_error(self):
+        self.status = self.MttsStatus.STANDING_BY
+        self.error_protocol_status = None
+        self.error_message = None
+        self.error_protocol_code = None
+
+    def set_error(self, status, message=None, code=None, fallback=None):
+        self.error_protocol_status = status
+        self.error_message = message
+        self.error_protocol_code = code
+        self.status = self.MttsStatus.from_protocol_status(status, fallback)
+
+    def has_error(self):
+        return self.error_protocol_status is not None
+
+    def get_error_result(self):
+        return {
+            "success": False,
+            "status": self.error_protocol_status,
+            "exception": self.error_message,
+            "code": self.error_protocol_code,
+        }
+
+    def get_status_description(self):
+        return self.MttsStatus.get_description(self.status)
+
+    def _preserve_or_set_availability_error(self, message):
+        availability_failures = (
+            self.MttsStatus.SERVER_MAINTAIN,
+            self.MttsStatus.FAILED_GET_NODE,
+            self.MttsStatus.CONNECT_PROBLEM,
+            self.MttsStatus.RESPONSE_INVALID,
+        )
+        if self.status not in availability_failures:
+            self.set_error(
+                "client_availability_failed",
+                message,
+                fallback=self.MttsStatus.CONNECT_PROBLEM,
+            )
+
+    @staticmethod
+    def _normalize_failure(data, fallback_status):
+        try:
+            string_types = (basestring,)
+        except NameError:
+            string_types = (str,)
+        if not isinstance(data, dict):
+            data = {"exception": u"{}".format(data)}
+        status = data.get("status")
+        message = data.get("exception")
+        if not status and isinstance(message, string_types) and ":" in message:
+            candidate, detail = message.split(":", 1)
+            if candidate.startswith("maica_"):
+                status = candidate.strip()
+                message = detail.strip()
+        return status or fallback_status, message
+
+    def _set_response_failure(self, data, fallback_status, code=None, fallback=None):
+        status, message = self._normalize_failure(data, fallback_status)
+        self.set_error(status, message, code, fallback)
+        return self.get_error_result()
+
+    def _auth_headers(self):
+        return {"Authorization": "Bearer {}".format(self.token)} if self.token else {}
+
+    @staticmethod
+    def _response_json(response):
+        try:
+            data = response.json()
+        except Exception:
+            return None
+        return data if isinstance(data, dict) else None
+
     def generate(self, text, emotion=u"微笑", label_name="none", player_name="", target_lang="zh", kwargs = {}):
         if self.cache.is_cached(label_name, text) and self.local_cache:
             class FakeReqData:
@@ -489,6 +790,7 @@ class MTTS:
                 def reason(self):
                     return "OK"
             logger.debug("MTTS:load from cache {}".format((label_name, text)))
+            self.clear_error()
             return FakeReqData(self.cache.load(self.cache.get_cachename(label_name, text)))
         if player_name and len(player_name.encode()) >= 3 and player_name in text:
             rc_override = False
@@ -503,21 +805,52 @@ class MTTS:
                 "lossless": self.lossless
             }
         params.update(**kwargs)
-        req = requests.get(self.get_api_url("generate"), params={"access_token": self.token,
-             "content": json.dumps(params)
-        }, timeout=self.generate_timeout)
-        if req.status_code == 200:
-            try:
-                req.json()
-                logger.error("MTTS:generate failed because {}".format(req.json()))
-                raise Exception(req)
-            except Exception as e:
-                self.cache.save(self.cache.get_cachename(label_name, text), req.content)
-                logger.debug("MTTS:generated {}".format((label_name, text)))
-                return MTTSAudio(req.content)
-        else:
-            logger.error("MTTS:generate failed because {} {}".format(req.reason, req.text))
-            raise Exception("{} {}".format(req.status_code, req.reason))
+        if not self.token:
+            self.set_error(
+                "client_token_missing",
+                "Access token is not configured",
+                fallback=self.MttsStatus.TOKEN_MISSING,
+            )
+            raise MTTSRequestError(self.get_error_result())
+
+        try:
+            response = requests.get(
+                self.get_api_url("generate"),
+                params={"content": json.dumps(params)},
+                headers=self._auth_headers(),
+                timeout=self.generate_timeout,
+            )
+        except Exception as e:
+            self.set_error("client_network_error", u"{}".format(e))
+            logger.error("MTTS:generate request failed: {}".format(e))
+            raise MTTSRequestError(self.get_error_result())
+
+        response_data = self._response_json(response)
+        if response_data is not None:
+            fallback = self.MttsStatus.SERVER_ERROR if response.status_code >= 500 else self.MttsStatus.GENERATION_FAILED
+            result = self._set_response_failure(
+                response_data,
+                "client_generation_failed",
+                response.status_code,
+                fallback,
+            )
+            logger.error("MTTS:generate failed because {}".format(response_data))
+            raise MTTSRequestError(result)
+
+        if response.status_code != 200 or not response.content:
+            result = self._set_response_failure(
+                {"exception": getattr(response, "reason", None) or "Empty audio response"},
+                "client_generation_failed",
+                response.status_code,
+                self.MttsStatus.SERVER_ERROR if response.status_code >= 500 else self.MttsStatus.GENERATION_FAILED,
+            )
+            logger.error("MTTS:generate failed with HTTP {}".format(response.status_code))
+            raise MTTSRequestError(result)
+
+        self.clear_error()
+        self.cache.save(self.cache.get_cachename(label_name, text), response.content)
+        logger.debug("MTTS:generated {}".format((label_name, text)))
+        return MTTSAudio(response.content)
     
     def save_audio(self, audio, filename):
         with open(os.path.join(self.cache_path,  filename), "wb") as f:
@@ -527,24 +860,17 @@ class MTTS:
     def get_api_url(self, endpoint):
         return self.baseurl + endpoint
     
-    def get_strategy(self):
-        # 请求服务器负载能力 L/M/H
-        # L: 家用机/边缘服务器 / 强制本地+远程
-        # M: 工作站/个人服务器 / 强制远程缓存
-        # H: 大型服务器
-        req = requests.post(self.get_api_url("strategy"), json={})
-        if req.status_code == 200:
-            return req.json()["strategy"]
-        else:
-            raise Exception("{} {}".format(req.status_code, req.reason))
-
     def _gen_token(self, account, pwd, token = "", email = None):
         if token != "":
             self.token = token
+            self.clear_error()
             return
         if not self.__accessable and token == "":
-            return logger.error("_gen_token:MTTS server not serving.")
-        import requests
+            self._preserve_or_set_availability_error(
+                "MTTS server availability is unknown"
+            )
+            return logger.error("_gen_token: MTTS server is not accessible.")
+        self.token = ""
         data = {
             "username":account,
             "password":pwd
@@ -555,23 +881,36 @@ class MTTS:
             "password":pwd
         }
         try:
-            import json
-            response = requests.get(self.get_api_url("register"), params={"content":json.dumps(data)}, timeout=5)
-            if (response.status_code != 200): 
-                raise Exception("MTTS::_gen_token response process failed because server return {}/{}".format(response.status_code, response.text))
-
+            response = requests.post(
+                self.get_api_url("register"),
+                json={"content": data},
+                timeout=self.HTTP_TIMEOUT,
+            )
         except Exception as e:
-            import traceback
-            logger.error("MTTS::_gen_token requests failed because can't connect to server: {}".format(e))
+            self.set_error("client_network_error", u"{}".format(e))
+            logger.error("MTTS::_gen_token request failed: {}".format(e))
             return
-        if response.status_code == 200:
-            response_data = response.json()
-            if response_data.get("success"):
-                self.token = response_data.get("content")
-            else:
-                logger.error("MTTS::_gen_token response process failed because server response failed: {}".format(response_data))
-        else:
-            logger.error("MTTS::_gen_token response process failed because server return {}".format(response.status_code))
+
+        response_data = self._response_json(response)
+        if response_data is None:
+            self.set_error("client_response_invalid", "Token response was not valid JSON", response.status_code)
+            logger.error("MTTS::_gen_token returned an invalid response")
+            return
+        if response.status_code != 200 or not response_data.get("success", False):
+            self._set_response_failure(
+                response_data,
+                "client_token_generation_failed",
+                response.status_code,
+                self.MttsStatus.TOKEN_GENERATION_FAILED,
+            )
+            logger.error("MTTS::_gen_token failed: {}".format(response_data))
+            return
+
+        self.token = response_data.get("content") or ""
+        if not self.token:
+            self.set_error("client_response_invalid", "Token response did not contain a token", response.status_code)
+            return
+        self.clear_error()
         return
 
     def _verify_token(self):
@@ -582,26 +921,47 @@ class MTTS:
             bool: 验证结果。
         
         """
+        if self.error_protocol_status and not self.token:
+            return self.get_error_result()
+        if not self.token:
+            self.set_error(
+                "client_token_missing",
+                "Access token is not configured",
+                fallback=self.MttsStatus.TOKEN_MISSING,
+            )
+            return self.get_error_result()
         if not self.__accessable:
-            return {"success": False, "exception": "MTTS: not serving"}
-        import requests
+            self._preserve_or_set_availability_error(
+                "MTTS server availability is unknown"
+            )
+            return self.get_error_result()
         try:
-            res = requests.get(self.get_api_url("legality"), params={"access_token": self.token})
-            if res.status_code == 200:
-                res = res.json()
-                if res.get("success", False):
-                    return res
-                else:
-                    logger.warning("MTTS::_verify_token not passed: {}".format(res))
-                    return res
-            else:
-                logger.error("MTTS::_verify_token requests.post failed because can't connect to server: {}".format(res.text))
-                return {"success":False, "exception": "MTTS::_verify_token requests.post failed"}
-
+            response = requests.get(
+                self.get_api_url("legality"),
+                headers=self._auth_headers(),
+                timeout=self.HTTP_TIMEOUT,
+            )
         except Exception as e:
-            import traceback
-            logger.error("MTTS::_verify_token requests.post failed because can't connect to server: {}".format(traceback.format_exc()))
-            return {"success":False, "exception": "MTTS::_verify_token failed"}
+            self.set_error("client_network_error", u"{}".format(e))
+            logger.error("MTTS::_verify_token request failed: {}".format(e))
+            return self.get_error_result()
+
+        result = self._response_json(response)
+        if result is None:
+            self.set_error("client_response_invalid", "Token verification response was not valid JSON", response.status_code)
+            return self.get_error_result()
+        if response.status_code == 200 and result.get("success", False):
+            self.clear_error()
+            return result
+
+        normalized = self._set_response_failure(
+            result,
+            "client_auth_failed",
+            response.status_code,
+            self.MttsStatus.TOKEN_INVALID,
+        )
+        logger.warning("MTTS::_verify_token not passed: {}".format(result))
+        return normalized
     def update_workload(self):
         """
         更新工作负载信息（后台执行）。
@@ -619,16 +979,22 @@ class MTTS:
             return None
 
         def task():
-            res = requests.get(self.get_api_url("workload"))
-            if res.status_code == 200:
-                data = res.json()
-                if data["success"]:
-                    self.workload_raw = data["content"]
-                    #logger.debug("Workload updated successfully.")
+            try:
+                response = requests.get(self.get_api_url("workload"), timeout=self.HTTP_TIMEOUT)
+                data = self._response_json(response)
+                if response.status_code == 200 and data and data.get("success", False):
+                    content = data.get("content")
+                    if isinstance(content, dict):
+                        self.workload_raw = content
+                        return
+                if data is None:
+                    self.set_error("client_response_invalid", "Workload response was not valid JSON", response.status_code)
                 else:
-                    logger.error("Failed to update workload: {}".format(data))
-            else:
-                logger.error("Failed to update workload.")
+                    self._set_response_failure(data, "client_server_unavailable", response.status_code)
+                logger.error("Failed to update workload: {}".format(data))
+            except Exception as e:
+                self.set_error("client_network_error", u"{}".format(e))
+                logger.error("Failed to update workload: {}".format(e))
 
         thread = threading.Thread(target=task)
         thread.daemon = True  # Optional: allow the program to exit even if the thread is running
@@ -721,22 +1087,37 @@ class MTTS:
         import traceback
 
         try:
-            res = requests.get(self.get_api_url("version"))
-            if res.status_code == 200:
-                res = res.json()
-                if res.get("success", False):
-                    return res
-                else:
-                    logger.warning("MTTS: Get version failed: {}".format(res))
-                    return res
-            else:
-                logger.error("MTTS: Get version request failed: Server returned {} - {}".format(res.status_code, res.text))
-                return {"success": False, "exception": "MTTS: Get version request failed"}
+            response = requests.get(self.get_api_url("version"), timeout=self.HTTP_TIMEOUT)
+            result = self._response_json(response)
+            if result is None:
+                logger.error("MTTS: Get version returned an invalid response")
+                return {
+                    "success": False,
+                    "status": "client_response_invalid",
+                    "exception": "Version response was not valid JSON",
+                    "code": response.status_code,
+                }
+            if response.status_code == 200 and result.get("success", False):
+                return result
+
+            status, message = self._normalize_failure(result, "client_server_unavailable")
+            logger.warning("MTTS: Get version failed: {}".format(result))
+            return {
+                "success": False,
+                "status": status,
+                "exception": message,
+                "code": response.status_code,
+            }
             
         except Exception as e:
             error_msg = traceback.format_exc()
             logger.error("MTTS: Get version request encountered an error: {}".format(error_msg))
-            return {"success": False, "exception": "MTTS: Get version request failed"}
+            return {
+                "success": False,
+                "status": "client_network_error",
+                "exception": "Version request failed",
+                "code": None,
+            }
 
     def get_defaults(self):
         """
@@ -753,23 +1134,29 @@ class MTTS:
             return {}
 
         try:
-            res = requests.get(self.get_api_url("defaults"), params={"access_token": self.token})
-            if res.status_code == 200:
-                res = res.json()
-                if res.get("success", False):
-                    content = res.get("content", {})
+            res = requests.get(
+                self.get_api_url("defaults"),
+                headers=self._auth_headers(),
+                timeout=self.HTTP_TIMEOUT,
+            )
+            result = self._response_json(res)
+            if res.status_code == 200 and result and result.get("success", False):
+                content = result.get("content", {})
+                if isinstance(content, dict):
                     self.default_settings = content
                     return content
-                else:
-                    logger.warning("MTTS: Get defaults failed: {}".format(res))
-                    return {}
+                self.set_error("client_response_invalid", "Defaults content was not an object", res.status_code)
+            elif result is None:
+                self.set_error("client_response_invalid", "Defaults response was not valid JSON", res.status_code)
             else:
-                logger.error("MTTS: Get defaults request failed: Server returned {} - {}".format(res.status_code, res.text))
-                return {}
+                self._set_response_failure(result, "client_server_unavailable", res.status_code)
+            logger.warning("MTTS: Get defaults failed: {}".format(result))
+            return {}
 
         except Exception as e:
             error_msg = traceback.format_exc()
             logger.error("MTTS: Get defaults request encountered an error: {}".format(error_msg))
+            self.set_error("client_network_error", u"{}".format(e))
             return {}
 
     @property
@@ -778,49 +1165,82 @@ class MTTS:
 
     @provider_id.setter
     def provider_id(self, value):
-        self.provider_manager.set_provider_id(self.provider_id)
+        self.provider_manager.set_provider_id(value)
     
     def accessable(self):
         if self._ignore_accessable:
             self.__accessable = True
-            return
+            self.clear_error()
+            return True
+
+        self.__accessable = False
+        self.clear_error()
         
         try:
             if not self.provider_manager.get_provider():
                 if self.provider_id != 9999:
-                    self.__accessable = False
-                    return
+                    provider_error = self.provider_manager.last_error or {}
+                    status, message = self._normalize_failure(provider_error, "client_provider_unavailable")
+                    self.set_error(status, message, provider_error.get("code"), self.MttsStatus.FAILED_GET_NODE)
+                    return False
+            self.baseurl = self.provider_manager.get_tts_url()
         except Exception as e:
             logger.error("accessable(): MTTS get Service Provider Error: {}".format(e))
             if self.provider_id != 9999:
-                self.__accessable = False
-                return
+                self.set_error("client_provider_unavailable", u"{}".format(e), fallback=self.MttsStatus.FAILED_GET_NODE)
+                return False
 
 
-        import requests, json
-        res = requests.get(self.get_api_url("accessibility"))
-        logger.debug("accessable(): try get accessibility from {}".format(self.get_api_url("accessibility")))
-        d = res.json()
-        if d.get(u"success", False):
-            self._serving_status = d["content"]
-            if self._serving_status != "serving" and not self._ignore_accessable:
-                self.__accessable = False
-                logger.error("accessable(): Maica is not serving: {}".format(d["content"]))
-            else:
-                self.__accessable = True
-        else:
-            self.__accessable = False
-            logger.error("accessable(): Maica is not serving: request failed: {}".format(d))
+        try:
+            response = requests.get(self.get_api_url("accessibility"), timeout=self.HTTP_TIMEOUT)
+            logger.debug("accessable(): try get accessibility from {}".format(self.get_api_url("accessibility")))
+        except Exception as e:
+            self.set_error("client_network_error", u"{}".format(e))
+            logger.error("accessable(): accessibility request failed: {}".format(e))
+            return False
+
+        data = self._response_json(response)
+        if data is None:
+            self.set_error("client_response_invalid", "Accessibility response was not valid JSON", response.status_code)
+            return False
+        if response.status_code != 200 or not data.get(u"success", False):
+            _, message = self._normalize_failure(
+                data,
+                "client_availability_failed",
+            )
+            self.set_error(
+                "client_availability_failed",
+                message or "Accessibility request failed",
+                response.status_code,
+                self.MttsStatus.CONNECT_PROBLEM,
+            )
+            logger.error("accessable(): accessibility request failed: {}".format(data))
+            return False
+
+        self._serving_status = data.get("content")
+        if self._serving_status != "serving":
+            self.set_error(
+                "client_server_unavailable",
+                u"Server status: {}".format(self._serving_status),
+                response.status_code,
+                self.MttsStatus.SERVER_MAINTAIN,
+            )
+            logger.error("accessable(): server is not serving: {}".format(self._serving_status))
+            return False
+
+        self.__accessable = True
+        self.clear_error()
 
         if self.__accessable:
             self.get_defaults()
+        return self.__accessable
     
     @property
     def is_accessable(self):
         return self.__accessable
 import threading
 
-class AsyncTask(object):
+class MTTSAsyncTask(object):
     def __init__(self, func, *args, **kwargs):
         self._func = func
         self._args = args
@@ -830,6 +1250,9 @@ class AsyncTask(object):
         self.traceback = None
         self.is_finished = False
         self.is_success = False
+        self._done_event = threading.Event()
+        self._callbacks = []
+        self._callback_lock = threading.RLock()
         
         self._thread = threading.Thread(target=self._run)
         self._thread.start()
@@ -843,10 +1266,43 @@ class AsyncTask(object):
             self.exception = e
             self.traceback = traceback.format_exc()
             self.is_success = False
-            logger.error("AsyncTask failed with exception: %s", e)
+            logger.error("MTTSAsyncTask failed with exception: %s", e)
             logger.debug("Traceback: %s", self.traceback)
         finally:
             self.is_finished = True
+            self._run_done_callbacks()
+            self._done_event.set()
+
+    def add_done_callback(self, callback):
+        should_call_now = False
+        self._callback_lock.acquire()
+        try:
+            if self.is_finished:
+                should_call_now = True
+            else:
+                self._callbacks.append(callback)
+        finally:
+            self._callback_lock.release()
+
+        if should_call_now:
+            self._call_done_callback(callback)
+
+    def _run_done_callbacks(self):
+        self._callback_lock.acquire()
+        try:
+            callbacks = self._callbacks
+            self._callbacks = []
+        finally:
+            self._callback_lock.release()
+
+        for callback in callbacks:
+            self._call_done_callback(callback)
+
+    def _call_done_callback(self, callback):
+        try:
+            callback(self)
+        except Exception as e:
+            logger.error("MTTSAsyncTask done callback failed with exception: %s", e)
 
     @property
     def is_alive(self):
@@ -854,6 +1310,4 @@ class AsyncTask(object):
 
     def wait(self, timeout=None):
         """等待任务完成（可选超时时间）"""
-        self._thread.join(timeout=timeout)
-
-
+        self._done_event.wait(timeout)

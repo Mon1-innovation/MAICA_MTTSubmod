@@ -1,24 +1,112 @@
 # -*- coding: utf-8 -*-
 
+import re
+
+from logger_manager import LoggerWrapper
+
+try:
+    string_types = (basestring,)
+except NameError:
+    string_types = (str,)
+
 class DefaultLogger(object):
     """
-    默认日志记录器，用于在没有提供日志记录器的情况下输出日志信息。
+    Compatibility logger that follows the active MAS logger.
     """
-    def debug(self, msg):
-        """输出调试级别的日志"""
-        print("[DEBUG] {}".format(msg))
+    def __init__(self, logger=None):
+        self._logger = logger or LoggerWrapper()
 
-    def info(self, msg):
-        """输出信息级别的日志"""
-        print("[INFO] {}".format(msg))
+    def _log(self, method_name, msg, *args, **kwargs):
+        msg, args = self._prepare_call(msg, args)
+        return getattr(self._logger, method_name)(
+            self._log_value(msg),
+            *(self._log_value(arg) for arg in args),
+            **kwargs
+        )
 
-    def error(self, msg):
-        """输出错误级别的日志"""
-        print("[ERROR] {}".format(msg))
+    @staticmethod
+    def _prepare_call(msg, args):
+        if args and isinstance(msg, string_types):
+            try:
+                formatted = (
+                    msg % args[0]
+                    if len(args) == 1 and isinstance(args[0], dict)
+                    else msg % args
+                )
+                return formatted, ()
+            except Exception:
+                pass
 
-    def warning(self, msg):
-        """输出警告级别的日志"""
-        print("[WARNING] {}".format(msg))
+        token_context = (
+            isinstance(msg, string_types)
+            and "access_token" in msg.lower()
+        )
+        return msg, tuple(
+            "{}***".format(arg[:4])
+            if token_context and isinstance(arg, string_types)
+            else arg
+            for arg in args
+        )
+
+    def debug(self, msg, *args, **kwargs):
+        return self._log("debug", msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        return self._log("info", msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        return self._log("error", msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        return self._log("warning", msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        return self._log("critical", msg, *args, **kwargs)
+
+    def exception(self, msg, *args, **kwargs):
+        return self._log("exception", msg, *args, **kwargs)
+
+    def log(self, level, msg, *args, **kwargs):
+        msg, args = self._prepare_call(msg, args)
+        return self._logger.log(
+            level,
+            self._log_value(msg),
+            *(self._log_value(arg) for arg in args),
+            **kwargs
+        )
+
+    def _log_value(self, value):
+        if isinstance(value, dict):
+            return dict(
+                (
+                    key,
+                    "{}***".format(item[:4])
+                    if self._is_token_key(key) and isinstance(item, string_types)
+                    else self._log_value(item)
+                )
+                for key, item in value.items()
+            )
+        if isinstance(value, tuple):
+            return tuple(self._log_value(item) for item in value)
+        if isinstance(value, list):
+            return [self._log_value(item) for item in value]
+        if isinstance(value, string_types):
+            return re.sub(
+                r'(?P<prefix>["\']?access_token["\']?\s*[:=]\s*["\']?)'
+                r'(?P<value>[^,\s}\]"\'&;]+)',
+                lambda match: "{}{}***".format(
+                    match.group("prefix"), match.group("value")[:4]
+                ),
+                value,
+            )
+        return value
+
+    @staticmethod
+    def _is_token_key(key):
+        return isinstance(key, string_types) and key.lower() == "access_token"
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
 
 
 logger = DefaultLogger()
@@ -26,14 +114,16 @@ logger = DefaultLogger()
 class MTTSProviderManager(object):
     """MTTS服务提供商管理器 - 实例化模式"""
 
+    REQUEST_TIMEOUT = 10
+
     # 类级别的共享数据
     _isfailedresponse = {
         "id": 0,
-        "name": u"ERROR: 无法获取节点信息",
-        "deviceName": u"查看更新日志来获取当前的服务状态, 或者查看submod_log.log获取失败原因",
+        "name": "ERROR: Unable to retrieve node information.",
+        "description": "Check the update log to get the current service status, or check submod_log.log for the cause of the failure.",
         "isOfficial": False,
         "portalPage": "https://forum.monika.love/d/3954",
-        "servingModel": u"查看更新日志来获取当前的服务状态, 或者查看submod_log.log获取失败原因",
+        "servingModel": "Check the update log to get the current service status, or check submod_log.log for the cause of the failure.",
         "modelLink": "",
         # "wsInterface": "wss://maicadev.monika.love/websocket",
         "httpInterface": "https://maicadev.monika.love/api",
@@ -42,15 +132,15 @@ class MTTSProviderManager(object):
 
     _fakelocalprovider = {
         "id": 9999,
-        "name": u"本地部署",
-        "deviceName": u"当你有可用的本地部署时, 选择此节点",
+        "name": "Local Deployment",
+        "description": "When you have an available local deployment, select this node.",
         "isOfficial": False,
-        "portalPage": "https://github.com/PencilMario/MAICA",
+        "portalPage": "https://github.com/Mon1-innovation/MAICA_MTTS",
         "servingModel": "None",
         "modelLink": "",
         # "wsInterface": "ws://127.0.0.1:5000",
         "httpInterface": "http://127.0.0.1:7000",
-        "ttsInterface": "http://127.0.0.1:7000/tts"
+        "ttsInterface": "http://127.0.0.1:7000"
     }
 
     _provider_list = "https://maicadev.monika.love/tts/servers"
@@ -67,44 +157,105 @@ class MTTSProviderManager(object):
         self._last_provider_id = pid
         self._servers = [self._fakelocalprovider]
         self._isMaicaNameServer = None
+        self.last_error = None
+
+    @staticmethod
+    def _normalize_failure(data, fallback_status="client_provider_unavailable"):
+        try:
+            string_types = (basestring,)
+        except NameError:
+            string_types = (str,)
+        if not isinstance(data, dict):
+            data = {"exception": u"{}".format(data)}
+        status = data.get("status")
+        message = data.get("exception")
+        if not status and isinstance(message, string_types) and ":" in message:
+            candidate, detail = message.split(":", 1)
+            if candidate.startswith("maica_"):
+                status = candidate.strip()
+                message = detail.strip()
+        return {
+            "success": False,
+            "status": status or fallback_status,
+            "exception": message or "Failed to retrieve service providers",
+            "code": data.get("code"),
+        }
+
+    def _set_failed_servers(self, error):
+        self.last_error = error
+        failed = dict(self._isfailedresponse)
+        failed["description"] = error.get("exception") or failed["description"]
+        self._servers = [failed, self._fakelocalprovider]
 
     def get_provider(self):
         """获取服务提供商列表"""
         import requests
         try:
-            res = requests.get(self._provider_list, json={})
-            if res.status_code != 200:
-                logger.error("Cannot get providers because server return non 200: {}".format(res.content))
-                self._isfailedresponse["deviceName"] = "Cannot get providers because server {}".format(res.status_code)
-                new_servers = [self._isfailedresponse, self._fakelocalprovider]
-            else:
-                res = res.json()
-                if res["success"]:
-                    self._isMaicaNameServer = res["content"].get("isMaicaNameServer")
-                    new_servers = res["content"].get("servers", [])
-                    new_servers.append(self._fakelocalprovider)
+            response = requests.get(self._provider_list, timeout=self.REQUEST_TIMEOUT)
+            try:
+                data = response.json()
+            except Exception:
+                error = self._normalize_failure(
+                    {"exception": "Provider server returned invalid JSON", "code": response.status_code},
+                    "client_response_invalid",
+                )
+                self._set_failed_servers(error)
+                logger.error("Cannot get providers because the response is invalid")
+                return False
 
-                    if not self._provider_id:
-                        self._provider_id = self._last_provider_id
+            if not isinstance(data, dict):
+                error = self._normalize_failure(
+                    {"exception": "Provider server returned an invalid response"},
+                    "client_response_invalid",
+                )
+                error["code"] = response.status_code
+                self._set_failed_servers(error)
+                logger.error("Cannot get providers because the response is not an object")
+                return False
 
-                    self._servers = new_servers
-                    return True
-                else:
-                    self._isfailedresponse["description"] = res["exception"]
-                    new_servers = [self._isfailedresponse, self._fakelocalprovider]
-                    logger.error("Cannot get providers because server return: {}".format(res))
+            if response.status_code == 200 and data.get("success", False):
+                content = data.get("content")
+                if not isinstance(content, dict) or not isinstance(content.get("servers"), list):
+                    error = self._normalize_failure(
+                        {"exception": "Provider response has no server list"},
+                        "client_response_invalid",
+                    )
+                    self._set_failed_servers(error)
+                    logger.error("Cannot get providers because the response has no server list")
+                    return False
+
+                self._isMaicaNameServer = content.get("isMaicaNameServer")
+                new_servers = list(content.get("servers", []))
+                new_servers.append(self._fakelocalprovider)
+
+                if not self._provider_id:
+                    self._provider_id = self._last_provider_id
+
+                self._servers = new_servers
+                self.last_error = None
+                return True
+
+            error = self._normalize_failure(data)
+            error["code"] = response.status_code
+            self._set_failed_servers(error)
+            logger.error("Cannot get providers because server returned: {}".format(data))
         except Exception as e:
             logger.error("Error getting providers: {}".format(e))
-            new_servers = [self._isfailedresponse, self._fakelocalprovider]
+            self._set_failed_servers(self._normalize_failure(
+                {"exception": u"{}".format(e)},
+                "client_network_error",
+            ))
 
-        self._servers = new_servers
         return False
 
     def _get_server_by_id(self, server_id):
         """根据ID获取服务器信息"""
         for server in self._servers:
-            if int(server["id"]) == server_id:
-                return server
+            try:
+                if int(server["id"]) == int(server_id):
+                    return server
+            except (KeyError, TypeError, ValueError):
+                continue
         logger.error("Cannot find server by id: {}, returning default failed response".format(server_id))
         return self._isfailedresponse
 

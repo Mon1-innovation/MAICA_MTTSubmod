@@ -1,7 +1,10 @@
 init 10 python in mtts:
     import store
     def apply_settings():
-        store.mtts.mtts_instance.enabled = store.persistent.mtts["enabled"]
+        previous_enabled = store.mtts.mtts_instance.enabled
+        enabled = bool(store.persistent.mtts["enabled"])
+        store.mtts.mtts_instance.enabled = enabled
+        store.mtts_set_enabled(enabled, previous_enabled=previous_enabled)
         store.mtts.mtts_instance.volume = store.persistent.mtts["volume"]
         store.mtts.mtts_instance.acs_enabled = store.persistent.mtts["acs_enabled"]
         store.mtts.mtts_instance.ministathud = store.persistent.mtts["ministathud"]
@@ -11,7 +14,11 @@ init 10 python in mtts:
         store.mtts.mtts_instance.generate_timeout = store.persistent.mtts["generate_timeout"]
         
     def discard_settings():
-        store.persistent.mtts["enabled"] = store.mtts.mtts_instance.enabled
+        enabled = bool(store.mtts.mtts_instance.enabled)
+        store.mtts_set_enabled(
+            enabled,
+            previous_enabled=store.persistent.mtts.get("enabled", False),
+        )
         store.persistent.mtts["volume"] = store.mtts.mtts_instance.volume
         store.persistent.mtts["acs_enabled"] = store.mtts.mtts_instance.acs_enabled
         store.persistent.mtts["ministathud"] = store.mtts.mtts_instance.ministathud
@@ -21,7 +28,12 @@ init 10 python in mtts:
         store.persistent.mtts["generate_timeout"] = store.mtts.mtts_instance.generate_timeout
         store.persistent.mtts["use_custom_model_config"] = bool(store.persistent.mtts_advance_params)
     def reset_settings():
+        previous_enabled = store.persistent.mtts.get("enabled", False)
         store.persistent.mtts = store.setting.copy()
+        store.mtts_set_enabled(
+            store.persistent.mtts.get("enabled", False),
+            previous_enabled=previous_enabled,
+        )
 
 
 screen mtts_settings():
@@ -61,60 +73,69 @@ screen mtts_settings():
 
 
             hbox:
-                use divider(_("连接与安全"))
+                use divider(_("Connection and security"))
 
             hbox:
                 style_prefix "maica_check"
-                textbutton _("服务提供节点: [store.mtts.provider_manager.get_server_info().get('name', 'Unknown')]"):
+                $ provider_name = store.mtts.provider_manager.get_server_info().get("name") or "Unknown"
+                textbutton mtts_escape_display_text(renpy.substitute(
+                    _("Current provider: [provider_name]"),
+                    scope={"provider_name": provider_name}
+                )):
                     action Show("mtts_node_setting")
-                    hovered SetField(_tooltip, "value", _("设置服务器节点"))
+                    hovered SetField(_tooltip, "value", _("Set server node"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
             hbox:
                 style_prefix "maica_check_nohover"
-                $ user_disp = store.mtts.mtts_instance.user_acc or renpy.substitute(_("未登录"))
-                textbutton _("当前用户: [user_disp]"):
+                $ user_disp = store.mtts.mtts_instance.user_acc or renpy.substitute(_("Not logged in"))
+                textbutton mtts_escape_display_text(renpy.substitute(
+                    _("Current user: [user_disp]"),
+                    scope={"user_disp": user_disp}
+                )):
                     action NullAction()
-                    hovered SetField(_tooltip, "value", _("如需更换或退出账号, 请在Submods界面退出登录.\n* 要修改账号信息或密码, 请前往注册网站"))
+                    hovered SetField(_tooltip, "value", _("To change or log out of your account, log out from the Submods screen.\n* To change account information or password, visit the registration website"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
 
             hbox:
-                use divider(_("行为与表现"))
+                use divider(_("Behavior and performance"))
 
             if renpy.seen_label("mtts_greeting_end"):
                 hbox:
                     style_prefix "generic_fancy_check"
-                    textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
-                        action [ToggleDict(persistent.mtts, "enabled", True, False), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
-                        hovered SetField(_tooltip, "value", _("启用以生成和播放TTS."))
+                    textbutton _("Enable MTTS: [persistent.mtts.get('enabled')]"):
+                        action [Function(mtts_toggle_enabled), Function(mtts_autoacs), Function(mtts_refresh_status_once)]
+                        selected persistent.mtts.get("enabled", False)
+                        hovered SetField(_tooltip, "value", _("Enable to generate and play TTS audio."))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
 
             else:
                 hbox:
                     style_prefix "maica_check_nohover"
-                    text _("! MTTS未解锁, 启用不会生效"):
+                    text _("! MTTS not unlocked, enabling will not take effect"):
                         color "#FF0000"
                 hbox:
-                    textbutton _("启用MTTS: [persistent.mtts.get('enabled')]"):
+                    textbutton _("Enable MTTS: [persistent.mtts.get('enabled')]"):
                         style "generic_fancy_check_button_disabled"
-                        action ToggleDict(persistent.mtts, "enabled", True, False)
-                        hovered SetField(_tooltip, "value", _("启用以生成和播放TTS.\n! MTTS未解锁, 启用不会生效"))
+                        action Function(mtts_toggle_enabled)
+                        selected persistent.mtts.get("enabled", False)
+                        hovered SetField(_tooltip, "value", _("Enable to generate and play TTS audio.\n! MTTS not unlocked, enabling will not take effect"))
                         unhovered SetField(_tooltip, "value", _tooltip.default)
             
-            $ tooltip_volume = _("TTS的语音音量")
-            use prog_bar(_("语音音量"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
+            $ tooltip_volume = _("TTS audio volume")
+            use prog_bar(_("TTS volume"), 400, tooltip_volume, "volume", 0.0, 1.0, sdict="mtts")
 
-            $ tooltip_generate_timeout = _("若超过指定时间仍未收到响应, 则跳过本句语音.\n* 请不要设置得太短")
-            use prog_bar(_("等待限制(秒)"), 400, tooltip_generate_timeout, "generate_timeout", 1, 120, istime=True, sdict="mtts")
+            $ tooltip_generate_timeout = _("Skip current sentence if response time exceeds.\n* Do not set this too low")
+            use prog_bar(_("Generation timeout (s)"), 400, tooltip_generate_timeout, "generate_timeout", 1, 120, istime=True, sdict="mtts")
 
             hbox:
-                use divider(_("工具与功能"))
+                use divider(_("Tools and features"))
 
             hbox:
                 style_prefix "generic_fancy_check"
-                textbutton _("启用时显示道具: [persistent.mtts.get('acs_enabled')]"):
+                textbutton _("Display props when enabled: [persistent.mtts.get('acs_enabled')]"):
                     action [ToggleDict(persistent.mtts, "acs_enabled", True, False), Function(mtts_autoacs)]
-                    hovered SetField(_tooltip, "value", _("是否在MTTS启用时展示麦克风.\n* MTTS耳机属于普通饰品, 请以常规方式穿戴或取下"))
+                    hovered SetField(_tooltip, "value", _("Enable or disable MTTS microphone when using TTS.\n* MTTS headset not included since it's normal acs"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
@@ -128,16 +149,20 @@ screen mtts_settings():
 
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("替换玩家名称: [persistent.mtts.get('replace_playername')]"):
+                        textbutton _("Replace player name: [persistent.mtts.get('replace_playername')]"):
                             action ToggleDict(persistent.mtts, "replace_playername", True, False)
-                            hovered SetField(_tooltip, "value", _("是否在MTTS生成中替换玩家名称.\n! 该替换直接通过正则实现, 若你的游戏内名称容易在正常词句中出现, 则不要使用"))
+                            hovered SetField(_tooltip, "value", _("Enable or disable player name replacement in speech generation.\n! Implemented directly through regex. Do not use if your in-game name commonly appears in unrelated context"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
                     hbox:
                         style_prefix "maica_check"
-                        textbutton _("替换为: [persistent.mtts.get('playername_replacement') or 'Empty']"):
+                        $ replacement = persistent.mtts.get("playername_replacement") or "Empty"
+                        textbutton mtts_escape_display_text(renpy.substitute(
+                            _("Replace to: [replacement]"),
+                            scope={"replacement": replacement}
+                        )):
                             action Show("mtts_playername_replace_input")
-                            hovered SetField(_tooltip, "value", _("配置你希望使用的配音名称.\n* 设为空以不读名称, 但这更容易引发表现问题"))
+                            hovered SetField(_tooltip, "value", _("Configure your spoken name.\n* Leave empty to not pronounce, but may lead to behaviour issue"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
@@ -150,21 +175,21 @@ screen mtts_settings():
                         xfill True
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("显示状态小窗: [persistent.mtts.get('ministathud')]"):
+                        textbutton _("Show status HUD: [persistent.mtts.get('ministathud')]"):
                             action [ToggleDict(persistent.mtts, "ministathud", True, False), Function(maicatts_syncWorkLoadScreenStatus)]
-                            hovered SetField(_tooltip, "value", _("是否在游戏内显示MTTS状态小窗"))
+                            hovered SetField(_tooltip, "value", _("Enable or disable MTTS status widget"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("左侧屏幕空间避让: [persistent.mtts.get('drift_statshud_l')]"):
+                        textbutton _("Compatible position left: [persistent.mtts.get('drift_statshud_l')]"):
                             action [ToggleDict(persistent.mtts, "drift_statshud_l", True, False), Function(renpy.restart_interaction)]
-                            hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在默认情况下, MTTS状态小窗显示在屏幕左下\n* 如果启用, MTTS小窗会更靠近屏幕左侧中心"))
+                            hovered SetField(_tooltip, "value", _("Enable or disable offseting status HUD to avoid possible conflict with other submods.\n* MTTS status HUD occupies bottom left of screen space by default\n* MTTS status HUD will be closer to central Y on left side if enabled"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("右侧屏幕空间避让: [persistent.mtts.get('drift_statshud_r')]"):
+                        textbutton _("Compatible position right: [persistent.mtts.get('drift_statshud_r')]"):
                             action [ToggleDict(persistent.mtts, "drift_statshud_r", True, False), Function(renpy.restart_interaction)]
-                            hovered SetField(_tooltip, "value", _("是否向Y轴中心偏移小窗以避免子模组冲突.\n* 在控制台显示(如MAICA)的情况下, MTTS状态小窗显示在屏幕右上\n* 如果启用, MTTS小窗会更靠近屏幕右侧中心"))
+                            hovered SetField(_tooltip, "value", _("Enable or disable offseting status HUD to avoid possible conflict with other submods.\n* MTTS status HUD occupies top right of screen space if console (like MAICA) displayed\n* MTTS status HUD will be closer to central Y on right side if enabled"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
 
             hbox:
@@ -175,19 +200,19 @@ screen mtts_settings():
                     has vbox:
                         xmaximum 950
                         xfill True
-                    $ tooltip_tts_cache = _("MTTS本地缓存, 用以降低资源开销和响应延迟.\n* 若模型更换, 需要清除缓存以采用新的表现\n! 请{color=#FF0000}不要{/color}随意清除缓存, 这会产生大量额外开销")
+                    $ tooltip_tts_cache = _("MTTS local cache to reduce resource consumption and latency.\n* Flush cache to apply new performance on model change\n! Do {color=#FF0000}NOT{/color} flush unless you know what you're doing")
 
                     hbox:
                         style_prefix "maica_check_nohover"
                         if not mtts_remove_cache_on_quit:
-                            textbutton _("当前缓存占用：[store.mtts.mtts_instance.cache.cache_size]MB"):
+                            textbutton _("Current cache size: [store.mtts.mtts_instance.cache.cache_size]MB"):
                                 action NullAction()
                                 hovered SetField(_tooltip, "value", tooltip_tts_cache)
                                 unhovered SetField(_tooltip, "value", _tooltip.default)
 
                     hbox:
                         style_prefix "maica_check"
-                        textbutton _("{color=#FF0000}清除缓存{/color}"):
+                        textbutton _("{color=#FF0000}Flush cache{/color}"):
                             action Show("mtts_purge_cache")
                             hovered SetField(_tooltip, "value", tooltip_tts_cache)
                             unhovered SetField(_tooltip, "value", _tooltip.default)
@@ -202,22 +227,22 @@ screen mtts_settings():
                         xfill True
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("使用自定义高级参数: [persistent.mtts.get('use_custom_model_config', False)]"):
+                        textbutton _("Enable customized advanced parameters: [persistent.mtts.get('use_custom_model_config', False)]"):
                             action ToggleDict(persistent.mtts, "use_custom_model_config", True, False)
-                            hovered SetField(_tooltip, "value", _("高级参数可能大幅影响MTTS的表现.\n* 默认的高级参数已经是实践中的普遍最优配置, 不建议启用"))
+                            hovered SetField(_tooltip, "value", _("Advanced parameters could significantly affect the model's performance.\n* The default is already the best field-tested config, so it's not suggested to enable this"))
                             unhovered SetField(_tooltip, "value", _tooltip.default)
                     if persistent.mtts.get('use_custom_model_config', False):
                         hbox:
                             style_prefix "maica_check"
-                            textbutton _("设置高级参数"):
+                            textbutton _("Set advanced parameters"):
                                 style "maica_check_button"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
                         hbox:
-                            text _("! 如果启用并调整了高级参数, 生成结果将无法被远程缓存, 每个请求都需要推理和传输\n! 这可能对服务器和你的数据流量造成大量额外开销, 请慎重考虑\n* 清除你的本地缓存以采用新的表现"):
+                            text _("! Active advanced parameters will disable remote cache, demanding per-request inference and transferring\n! This could cause massive extra cost on both server and client side, do consider carefully\n* Flush local cache to apply new performance"):
                                 color "#FF0000"
                     else:
                         hbox:
-                            textbutton _("设置高级参数"):
+                            textbutton _("Set advanced parameters"):
                                 style "maica_check_button_disabled"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
 
@@ -225,9 +250,9 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "maica_check"
-                textbutton (_("展开性能监控") if nvw_folded else _("收起性能监控")):
+                textbutton (_("Expand performance monitor") if nvw_folded else _("Collapse performance monitor")):
                     action SetScreenVariable("nvw_folded", not nvw_folded)
-                    hovered SetField(_tooltip, "value", _("显示/收起服务器的性能状态指标"))
+                    hovered SetField(_tooltip, "value", _("Show/hide server performance metrics"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             if not nvw_folded:
@@ -242,23 +267,23 @@ screen mtts_settings():
         hbox:
             xpos 10
             style_prefix "confirm"
-            textbutton _("保存设置"):
+            textbutton _("Save settings"):
                 action [
                         Function(store.mtts.apply_settings),
-                        Function(renpy.notify, _("MTTS: 设置已保存")),
+                        Function(renpy.notify, _("MTTS: Settings saved")),
                         Hide("mtts_settings")
                         ]
-            textbutton _("放弃修改"):
+            textbutton _("Discard changes"):
                 action [
                         Function(store.mtts.discard_settings),
-                        Function(renpy.notify, _("MTTS: 已放弃设置修改")),
+                        Function(renpy.notify, _("MTTS: Settings discarded")),
                         Hide("mtts_settings")
                         ]
-            textbutton _("重置设置"):
+            textbutton _("Reset settings"):
                 action [
                         Function(store.mtts.reset_settings),
                         Function(store.mtts.apply_settings),
-                        Function(renpy.notify, _("MTTS: 设置已重置")),
+                        Function(renpy.notify, _("MTTS: Settings reset")),
                         Hide("mtts_settings")
                     ]
 
@@ -274,10 +299,10 @@ screen mtts_purge_cache():
     modal True
     zorder 95
 
-    use maica_setter_small_frame(title=_("清除缓存"), ok_action=[Function(store.mtts.mtts_instance.cache.clear_cache), Hide("mtts_purge_cache")], cancel_action=Hide("mtts_purge_cache")):
+    use maica_setter_small_frame(title=_("Flush cache"), ok_action=[Function(store.mtts.mtts_instance.cache.clear_cache), Hide("mtts_purge_cache")], cancel_action=Hide("mtts_purge_cache")):
         hbox:
-            text _("请{color=#FF0000}不要{/color}随意清除缓存, 这可能对服务器和你的数据流量造成大量额外开销"):
+            text _("Do {color=#FF0000}NOT{/color} flush unless you know what you're doing, which could cause massive extra cost on both server and client side"):
                 size 20
         hbox:
-            text _("请确认你明白自己在做什么, 或者已得到有资质的技术人员的指导"):
+            text _("Please confirm you understand what this means, or instructed by a MAICA technician"):
                 size 20

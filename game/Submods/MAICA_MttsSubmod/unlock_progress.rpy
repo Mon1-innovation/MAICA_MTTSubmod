@@ -1,6 +1,14 @@
 init 999 python:
     @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)
     def mtts_logprogress():
+        # A queued hint can outlive the condition that created it (for
+        # example, when the gift reaction is processed in the same startup).
+        # Remove stale or duplicate MTTS queue entries before the idle loop.
+        if mtts_headset_gift_available() or renpy.seen_label("mtts_greeting_end"):
+            mas_rmallEVL("mtts_hint")
+        if renpy.seen_label("mtts_prepend_1") or renpy.seen_label("mtts_greeting_end"):
+            mas_rmallEVL("mtts_prepend_1")
+
         # Log unlock condition status
         debug_log = store.mas_submod_utils.submod_log.debug
 
@@ -8,20 +16,45 @@ init 999 python:
         debug_log("mas_reaction_gift_mttsheadset label seen: {}".format(renpy.seen_label('mas_reaction_gift_mttsheadset')))
         cond1_seen_gift = renpy.seen_label('mas_gift_giving_instructs')
         cond1_filereacts = persistent._mas_filereacts_historic
-        cond1_seen_greeting = renpy.seen_label('mtts_greeting')
         cond1_seen_prepend = renpy.seen_label('mtts_prepend_1')
-        cond1 = (cond1_seen_gift or cond1_filereacts) and not cond1_seen_greeting and not cond1_seen_prepend
+        cond1_seen_end = renpy.seen_label('mtts_greeting_end')
+        cond1 = (
+            (cond1_seen_gift or cond1_filereacts)
+            and not cond1_seen_prepend
+            and not cond1_seen_end
+        )
 
-        debug_log("mtts_prepend_1 condition: gift instructions seen={}, file reacts history={}, greeting seen={}, prepend seen={}, total condition={}".format(cond1_seen_gift, cond1_filereacts, cond1_seen_greeting, cond1_seen_prepend, cond1))
+        debug_log("mtts_prepend_1 condition: gift instructions seen={}, file reacts history={}, prepend seen={}, greeting end seen={}, total condition={}".format(cond1_seen_gift, cond1_filereacts, cond1_seen_prepend, cond1_seen_end, cond1))
 
         # Condition 2: mtts_hint
         cond2_seen_prepend = renpy.seen_label('mtts_prepend_1')
-        cond2 = cond2_seen_prepend
-        debug_log("mtts_hint condition: prepend seen={}, total condition={}".format(cond2_seen_prepend, cond2))
+        cond2_seen_hint = renpy.seen_label('mtts_hint')
+        cond2_seen_gift = renpy.seen_label('mas_reaction_gift_mttsheadset')
+        cond2_gift_available = mtts_headset_gift_available()
+        cond2_seen_end = renpy.seen_label('mtts_greeting_end')
+        cond2 = (
+            cond2_seen_prepend
+            and not cond2_seen_hint
+            and not cond2_gift_available
+            and not cond2_seen_end
+        )
+        debug_log("mtts_hint condition: prepend seen={}, hint seen={}, gift reaction seen={}, gift available={}, greeting end seen={}, total condition={}".format(cond2_seen_prepend, cond2_seen_hint, cond2_seen_gift, cond2_gift_available, cond2_seen_end, cond2))
 
-        # Condition 3: mtts_greeting unlock condition (from chat.rpy lines 91-93)
+        # Condition 3: keep this in lockstep with mtts_greeting_conditional.
         cond3_seen_gift = renpy.seen_label('mas_reaction_gift_mttsheadset')
-        cond3_seen_greeting = renpy.seen_label('mtts_greeting')
+        cond3_seen_prepend = renpy.seen_label('mtts_prepend_1')
+        cond3_seen_end = renpy.seen_label('mtts_greeting_end')
+        cond3_generic_start = persistent._mas_greeting_type is None
         cond3_special_day = mas_isSpecialDay()
-        cond3 = cond3_seen_gift and not cond3_seen_greeting and not cond3_special_day
-        debug_log("mtts_greeting condition: gift reaction seen={}, greeting seen={}, special day={}, total condition={}".format(cond3_seen_gift, cond3_seen_greeting, cond3_special_day, cond3))
+        cond3_player_bday = mas_isplayer_bday()
+        cond3_affectionate = mas_isMoniAff(higher=True)
+        cond3 = (
+            cond3_generic_start
+            and cond3_seen_prepend
+            and cond3_seen_gift
+            and not cond3_special_day
+            and not cond3_player_bday
+            and not cond3_seen_end
+            and cond3_affectionate
+        )
+        debug_log("mtts_greeting condition: generic start={}, prepend seen={}, gift reaction seen={}, special day={}, player birthday={}, affection threshold={}, greeting end seen={}, total condition={}".format(cond3_generic_start, cond3_seen_prepend, cond3_seen_gift, cond3_special_day, cond3_player_bday, cond3_affectionate, cond3_seen_end, cond3))
