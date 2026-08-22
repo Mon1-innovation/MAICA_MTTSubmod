@@ -4,40 +4,20 @@
 import sys
 
 
-try:
-    string_types = (basestring,)
-except NameError:
-    string_types = (str,)
+string_types = (str,)
 
 
 def to_unicode(value):
     if value is None:
-        return u""
-    try:
-        bytearray_type = bytearray
-    except NameError:
-        bytearray_type = ()
-    if bytearray_type and isinstance(value, bytearray_type):
-        try:
-            return value.decode("utf-8")
-        except (UnicodeDecodeError, TypeError):
-            return value.decode("utf-8", "replace")
-    if sys.version_info[0] >= 3 and isinstance(value, bytes):
+        return ""
+    if isinstance(value, (bytes, bytearray)):
         try:
             return value.decode("utf-8")
         except UnicodeDecodeError:
             return value.decode("utf-8", "replace")
-    if isinstance(value, string_types):
-        if sys.version_info[0] == 2 and not isinstance(value, unicode):
-            try:
-                return value.decode("utf-8")
-            except UnicodeDecodeError:
-                return value.decode("utf-8", "replace")
+    if isinstance(value, str):
         return value
-    try:
-        return unicode(value)
-    except NameError:
-        return str(value)
+    return str(value)
 
 
 RENPY_DIALOGUE_SUBSTITUTIONS = (
