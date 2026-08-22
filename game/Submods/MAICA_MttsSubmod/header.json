@@ -1,0 +1,32 @@
+{
+    "header_version": 1,
+    "name": "MTTS Synbrace",
+    "author": "P",
+    "version": "1.2.17",
+    "description": "MAICA-MTTS Official Submod Frontend",
+    "modules": [
+        "acs",
+        "cache_remover",
+        "chat",
+        "header",
+        "main",
+        "migration",
+        "screen_advanced_setting",
+        "screen_main_setting",
+        "screen_subs",
+        "screen_templates",
+        "status",
+        "styles",
+        "test_match_rule",
+        "unlock_progress"
+    ],
+    "settings_pane": "mtts_settingpane",
+    "dependencies": {},
+    "updater": {
+        "provider": "git",
+        "settings": {
+            "url": "https://github.com/Mon1-innovation/MAICA_MTTS"
+        }
+    },
+    "coauthors": []
+}
