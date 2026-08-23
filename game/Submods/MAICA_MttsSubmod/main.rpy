@@ -515,8 +515,8 @@ init python:
         @property
         def conditions(self):
             _acc = store.mtts._acc
-            if _acc is not None:
-                _acc.wait()
+            if _acc is not None and not _acc.is_finished:
+                pass
             if not renpy.seen_label("mtts_greeting_end"):
                 store.mtts_status = renpy.substitute(_("Not revealed"))
                 return False
@@ -749,33 +749,39 @@ init python:
                     return
                 try:
                     renpy.queue_event("dismiss")
+                    renpy.restart_interaction()
                 except Exception as e:
                     store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed to wake generation wait: {0}".format(e))
 
             task.add_done_callback(wake_generation_wait)
 
-            while True:
-                if task.is_finished:
-                    break
-                elapsed = time.time() - wait_started_at
-                if elapsed >= generate_timeout:
+            if not interact:
+                task.wait(timeout=generate_timeout)
+                if not task.is_finished:
                     generation_timed_out = True
-                    self._generation_wait_id += 1
+            else:
+                while True:
+                    if task.is_finished:
+                        break
+                    elapsed = time.time() - wait_started_at
+                    if elapsed >= generate_timeout:
+                        generation_timed_out = True
+                        self._generation_wait_id += 1
+                        self._active_generation_wait_id = None
+                        store.mas_submod_utils.submod_log.info("[MttsTimeout] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
+                        break
+                    remaining_wait = max(0.1, generate_timeout - elapsed)
+                    self._active_generation_wait_id = generation_wait_id
+                    if task.is_finished:
+                        self._active_generation_wait_id = None
+                        break
+                    restore_afm_scope = self.begin_generation_wait_afm_scope()
+                    try:
+                        self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
+                    finally:
+                        self.end_generation_wait_afm_scope(restore_afm_scope)
                     self._active_generation_wait_id = None
-                    store.mas_submod_utils.submod_log.info("[MttsTimeout] Generation wait exceeded {0}s; continuing dialogue silently. Label: {1}".format(generate_timeout, store.mtts._current_label))
-                    break
-                remaining_wait = max(0.1, generate_timeout - elapsed)
-                self._active_generation_wait_id = generation_wait_id
-                if task.is_finished:
-                    self._active_generation_wait_id = None
-                    break
-                restore_afm_scope = self.begin_generation_wait_afm_scope()
-                try:
-                    self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)
-                finally:
-                    self.end_generation_wait_afm_scope(restore_afm_scope)
-                self._active_generation_wait_id = None
-                _history_list.pop()
+                    _history_list.pop()
 
             self._active_generation_wait_id = None
             if task.is_finished and self._generation_wait_id == generation_wait_id:
