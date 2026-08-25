@@ -170,11 +170,11 @@ init -100 python in mtts:
 
         version = mtts_instance.get_version()
         if version.get("success"):
-            persistent.mtts["_outdated"] = is_mtts_frontend_outdated(version)
+            store.persistent.mtts["_outdated"] = is_mtts_frontend_outdated(version)
         else:
             # A failed check must not preserve a stale outage flag from an
             # older save; the status path reports the actual request failure.
-            persistent.mtts["_outdated"] = False
+            store.persistent.mtts["_outdated"] = False
             store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
 
         if _acc is not None:
