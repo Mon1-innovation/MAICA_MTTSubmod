@@ -421,8 +421,10 @@ init python:
             self._active_generation_wait_id = None
             if had_active_generation_wait:
                 try:
-                    # Wake a pending say interaction so it can observe the
-                    # invalidated session instead of waiting for its timeout.
+                    # SayBehavior only accepts ``dismiss`` while focused. The
+                    # status/settings button may own focus, so use the
+                    # unfocused variant to end the pending say interaction.
+                    renpy.queue_event("dismiss_unfocused")
                     renpy.restart_interaction()
                 except Exception as e:
                     store.mas_submod_utils.submod_log.debug(
@@ -733,7 +735,10 @@ init python:
                 if self._active_generation_wait_id != generation_wait_id:
                     return
                 try:
-                    renpy.queue_event("dismiss")
+                    # The spinner's say behavior may not be focused while an
+                    # overlay button is hovered. ``dismiss_unfocused`` still
+                    # reaches it and wakes the wait interaction.
+                    renpy.queue_event("dismiss_unfocused")
                     renpy.restart_interaction()
                 except Exception as e:
                     store.mas_submod_utils.submod_log.debug("[MttsDebugging] Failed to wake generation wait: {0}".format(e))

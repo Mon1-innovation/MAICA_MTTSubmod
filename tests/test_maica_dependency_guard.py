@@ -295,7 +295,11 @@ def test_main_uses_event_wakeup_for_generation_wait_instead_of_fixed_polling():
     assert "MTTSAsyncTask = mtts_package.MTTSAsyncTask" in text
     assert "task = mtts.MTTSAsyncTask(" in text
     assert "def wake_generation_wait" in text
-    assert 'renpy.queue_event("dismiss")' in text
+    assert 'renpy.queue_event("dismiss_unfocused")' in text
+    assert 'renpy.queue_event("dismiss")' not in text
+    wake_start = text.index("def wake_generation_wait")
+    wake_end = text.index("task.add_done_callback(wake_generation_wait)", wake_start)
+    assert 'renpy.queue_event("dismiss_unfocused")' in text[wake_start:wake_end]
     assert "while not task.is_finished:" not in text
 
 
@@ -359,4 +363,5 @@ def test_reset_session_wakes_an_active_generation_wait():
 
     assert "had_active_generation_wait = self._active_generation_wait_id is not None" in reset_block
     assert "if had_active_generation_wait:" in reset_block
+    assert 'renpy.queue_event("dismiss_unfocused")' in reset_block
     assert "renpy.restart_interaction()" in reset_block
