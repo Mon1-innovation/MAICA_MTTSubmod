@@ -422,12 +422,22 @@ init python:
             self._extend_tracker.begin_extend(what)
 
         def reset_session(self, stop_audio=False):
+            had_active_generation_wait = self._active_generation_wait_id is not None
             self._extend_tracker.clear()
             self._last_raw_text = None
             del self._history[:]
             self._session_id += 1
             self._generation_wait_id += 1
             self._active_generation_wait_id = None
+            if had_active_generation_wait:
+                try:
+                    # Wake a pending say interaction so it can observe the
+                    # invalidated session instead of waiting for its timeout.
+                    renpy.restart_interaction()
+                except Exception as e:
+                    store.mas_submod_utils.submod_log.debug(
+                        "[MttsDebugging] Failed to wake cancelled generation wait: {0}".format(e)
+                    )
             if stop_audio:
                 self.stop_voice()
 
@@ -750,6 +760,13 @@ init python:
             task.add_done_callback(wake_generation_wait)
 
             while True:
+                if not self.is_generation_current(generation_session_id):
+                    self._generation_wait_id += 1
+                    self._active_generation_wait_id = None
+                    store.mas_submod_utils.submod_log.debug(
+                        "[MttsDebugging] Generation wait cancelled because its session expired."
+                    )
+                    break
                 if task.is_finished:
                     break
                 elapsed = time.time() - wait_started_at
