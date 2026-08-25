@@ -65,44 +65,6 @@ def _load_version_helpers(tmp_path, current_version="1.2.15"):
     return namespace
 
 
-def _run_outdated_check(version_result, initial_value=True, outdated_result=False):
-    source = _main_source()
-    start = source.index(
-        '    @store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)'
-    )
-    end = source.index("    _cached_version_result = None", start)
-    function_source = textwrap.dedent(source[start:end])
-
-    logs = []
-    logger = SimpleNamespace(
-        error=lambda message: logs.append(("error", message)),
-        warning=lambda message: logs.append(("warning", message)),
-    )
-    persistent = SimpleNamespace(mtts={"_outdated": initial_value})
-    store = SimpleNamespace(
-        mas_submod_utils=SimpleNamespace(
-            functionplugin=lambda *args, **kwargs: lambda function: function,
-            submod_log=logger,
-        ),
-        persistent=persistent,
-    )
-    instance = SimpleNamespace(
-        get_version=lambda: version_result,
-        is_accessable=False,
-        has_error=lambda: True,
-    )
-    namespace = {
-        "store": store,
-        "mtts_instance": instance,
-        "refresh_setting_pane_cache": lambda **kwargs: None,
-        "is_mtts_frontend_outdated": lambda result: outdated_result,
-        "_acc": None,
-    }
-    exec(function_source, namespace)
-    namespace["mtts_check_outdated"]()
-    return persistent.mtts["_outdated"], logs
-
-
 def test_cp936_decoder_handles_python3_bytes_and_bytearray():
     encoded = "中文".encode("gbk")
 
@@ -165,6 +127,10 @@ def test_version_parts_are_numeric_and_outdated_check_uses_them(tmp_path):
         "content": {"fe_synbrace_version": "1.2.11"},
     }) is True
     assert namespace["is_mtts_frontend_outdated"]({
+        "success": True,
+        "content": {"fe_synbrace_version": "1.2.10.0"},
+    }) is False
+    assert namespace["is_mtts_frontend_outdated"]({
         "success": False,
         "content": {"fe_synbrace_version": "99.0.0"},
     }) is False
@@ -182,22 +148,37 @@ def test_version_parts_are_numeric_and_outdated_check_uses_them(tmp_path):
     }) is False
     assert namespace["mtts_version_parts"]("1.2.x") is None
     assert namespace["mtts_version_parts"]("foo") is None
+    assert namespace["mtts_version_parts"]([]) is None
+    assert namespace["mtts_version_parts"](None) is None
 
-
-def test_outdated_check_clears_a_stale_flag_for_current_and_failed_checks():
-    current, _logs = _run_outdated_check(
-        {"success": True, "content": {"fe_synbrace_version": "1.2.16"}},
-        initial_value=True,
-        outdated_result=False,
+    namespace["store"].mtts = SimpleNamespace(
+        mtts_instance=SimpleNamespace(
+            version_info={
+                "success": True,
+                "content": {"fe_synbrace_version": "1.2.11"},
+            },
+        ),
     )
-    failed, logs = _run_outdated_check(
-        {"success": False, "status": "client_network_error"},
-        initial_value=True,
-    )
+    assert namespace["is_mtts_frontend_outdated"]() is True
 
-    assert current is False
-    assert failed is False
-    assert ("error", "Failed to check MaicaTTS version.") in logs
+
+def test_outdated_policy_uses_transient_version_cache_only():
+    main = _main_source()
+    header = (
+        ROOT / "game" / "Submods" / "MAICA_MttsSubmod" / "header.rpy"
+    ).read_text(encoding="utf-8")
+    check_start = main.index("    def mtts_check_outdated():")
+    check_end = main.index("    _cached_version_result = None", check_start)
+    check_source = main[check_start:check_end]
+
+    assert main.count('"_outdated"') == 1
+    assert 'setting.pop("_outdated", None)' in main
+    assert 'persistent.mtts["_outdated"]' not in header
+    assert 'persistent.mtts.get("_outdated"' not in header
+    assert '@store.mas_submod_utils.functionplugin("ch30_preloop", priority=-100)' in main
+    assert "mtts_instance.get_version(" not in check_source
+    assert "store.persistent" not in check_source
+    assert 'getattr(mtts_instance, "version_info", {})' in check_source
 
 
 @pytest.mark.parametrize(

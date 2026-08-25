@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 
@@ -76,9 +77,17 @@ def test_mtts_dynamic_ui_uses_explicit_scope_and_display_escape():
 def test_mtts_persistent_repairs_use_builtin_container_guards():
     main = read_source("game/Submods/MAICA_MttsSubmod/main.rpy")
     migration = read_source("game/Submods/MAICA_MttsSubmod/migration.rpy")
+    named_store = main.split("init -100 python in mtts:", 1)[1].split(
+        "\ninit 10 python in mtts:", 1
+    )[0]
+    provider_sync = named_store.split("    def sync_provider_id", 1)[1].split(
+        "\n    @store.mas_submod_utils.functionplugin", 1
+    )[0]
 
     assert "if not mtts_is_builtin_dict(getattr(persistent, \"mtts\", None)):" in main
     assert "persistent.mtts_advance_params = {}" in main
+    assert "store.mtts_is_builtin_dict(store.persistent.maica_setting_dict)" in provider_sync
+    assert not re.search(r"(?<![\w.])persistent\b", named_store)
     assert "mtts_is_builtin_sequence(item)" in migration
     assert "mtts_is_builtin_sequence(migration_result)" in migration
 

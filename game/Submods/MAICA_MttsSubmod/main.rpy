@@ -53,7 +53,6 @@ init -990 python:
         "_chat_installed": False,
         "volume": 1.0,
         "acs_enabled": True,
-        "_outdated": False,
         "ministathud": True,
         "provider_id": 1 if renpy.windows else 2,
         "drift_statshud_l": False,
@@ -68,6 +67,7 @@ init -990 python:
     import copy
     setting = copy.deepcopy(mtts_defaultsettings)
     setting.update(persistent.mtts)
+    setting.pop("_outdated", None)
     persistent.mtts = setting
 
     # Initialize MTTS advanced settings
@@ -149,7 +149,7 @@ init -100 python in mtts:
         store.persistent.mtts["provider_id"] = pid
         # Keep MAICA_CHAT setting in sync if installed
         try:
-            if store.persistent.mtts.get("_chat_installed", False) and hasattr(store.persistent, "maica_setting_dict") and mtts_is_builtin_dict(store.persistent.maica_setting_dict):
+            if store.persistent.mtts.get("_chat_installed", False) and hasattr(store.persistent, "maica_setting_dict") and store.mtts_is_builtin_dict(store.persistent.maica_setting_dict):
                 store.persistent.maica_setting_dict["provider_id"] = pid
         except Exception:
             pass
@@ -171,30 +171,22 @@ init -100 python in mtts:
     def mtts_check_outdated():
         refresh_setting_pane_cache(force_version=True)
 
-        version = mtts_instance.get_version()
-        if version.get("success"):
-            store.persistent.mtts["_outdated"] = is_mtts_frontend_outdated(version)
-        else:
-            # A failed check must not preserve a stale outage flag from an
-            # older save; the status path reports the actual request failure.
-            store.persistent.mtts["_outdated"] = False
-            store.mas_submod_utils.submod_log.error("Failed to check MaicaTTS version.")
-
         if _acc is not None:
             _acc.wait()
-            if _acc.is_finished:
-                if _acc.exception:
-                    store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
+            if _acc.is_finished and _acc.exception:
+                store.mas_submod_utils.submod_log.error("Failed to access MaicaTTS server: {}".format(_acc.exception))
         else:
-            store.mas_submod_utils.submod_log.warning("")
+            store.mas_submod_utils.submod_log.warning("MTTS accessibility task is unavailable.")
 
-        if not version.get("success") and mtts_instance.is_accessable and not mtts_instance.has_error():
-            mtts_instance.set_error(
-                version.get("status") or "client_server_unavailable",
-                version.get("exception"),
-                version.get("code"),
-            )
-            store.mtts_status = store.mtts_failure_status_text()
+        version_info = getattr(mtts_instance, "version_info", {})
+        if (
+                mtts_instance.is_accessable
+                and not (
+                    _mtts_is_version_dict(version_info)
+                    and version_info.get("success", False)
+                )
+            ):
+            store.mas_submod_utils.submod_log.warning("Failed to check MaicaTTS version.")
 
     _cached_version_result = None
     try:
@@ -255,7 +247,9 @@ init -100 python in mtts:
         right_parts.extend([0] * (width - len(right_parts)))
         return (left_parts > right_parts) - (left_parts < right_parts)
 
-    def is_mtts_frontend_outdated(version_info):
+    def is_mtts_frontend_outdated(version_info=None):
+        if version_info is None:
+            version_info = store.mtts.mtts_instance.version_info
         if not _mtts_is_version_dict(version_info) or not version_info.get("success", False):
             return False
 
@@ -523,7 +517,7 @@ init python:
             elif not persistent.mtts["enabled"]:
                 store.mtts_status = renpy.substitute(_("Not enabled"))
                 return False
-            elif persistent.mtts["_outdated"]:
+            elif store.mtts.is_mtts_frontend_outdated():
                 store.mtts_status = renpy.substitute(_("Outdated"))
                 return False
             elif not store.mtts.mtts_instance.is_accessable:
@@ -862,7 +856,7 @@ init python:
             store.mtts_status = renpy.substitute(_("Not enabled"))
             return
 
-        if persistent.mtts.get("_outdated", False):
+        if store.mtts.is_mtts_frontend_outdated():
             store.mtts_status = renpy.substitute(_("Outdated"))
             return
 

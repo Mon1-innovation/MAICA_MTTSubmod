@@ -637,6 +637,7 @@ class MTTS:
         self.lossless = False
         self.__accessable = False
         self._ignore_accessable = False
+        self.version_info = {"success": False, "content": {}}
         self.status = self.MttsStatus.STANDING_BY
         self.error_protocol_status = None
         self.error_message = None
@@ -1168,6 +1169,7 @@ class MTTS:
         self.provider_manager.set_provider_id(value)
     
     def accessable(self):
+        self.version_info = {"success": False, "content": {}}
         if self._ignore_accessable:
             self.__accessable = True
             self.clear_error()
@@ -1232,6 +1234,7 @@ class MTTS:
         self.clear_error()
 
         if self.__accessable:
+            self.version_info = self.get_version()
             self.get_defaults()
         return self.__accessable
     

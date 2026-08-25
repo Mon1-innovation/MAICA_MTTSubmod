@@ -52,7 +52,7 @@ screen mtts_settingpane():
                     text _("> Warning: this is a {color=#ff0000}development build{/color} copy. {color=#ff0000}Stop using immediately{/color} if you're not MAICA official staff"):
                         style "main_menu_version_l"
 
-            if persistent.mtts["_outdated"]:
+            if store.mtts.is_mtts_frontend_outdated():
                 hbox:
                     text _("> Support for this version has ended, please update to the latest version"):
                         style "main_menu_version_l"
