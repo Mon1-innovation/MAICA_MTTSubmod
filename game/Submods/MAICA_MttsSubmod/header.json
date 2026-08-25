@@ -2,7 +2,7 @@
     "header_version": 1,
     "name": "MTTS Synbrace",
     "author": "P",
-    "version": "1.2.17",
+    "version": "1.2.18",
     "description": "MAICA-MTTS Official Submod Frontend",
     "modules": [
         "acs",

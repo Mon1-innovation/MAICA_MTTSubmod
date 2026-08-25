@@ -333,3 +333,30 @@ def test_generation_wait_uses_remaining_timeout_not_spinner_period():
     assert "def build_generation_wait_text(self, is_extend, wait_seconds):" in text
     assert 'u" {image=mtts_spinner}{fast}{w=%s}{nw}" % wait_seconds' in text
     assert "remaining_wait = max(0.1, generate_timeout - elapsed)" in text
+
+
+def test_generation_wait_exits_immediately_when_session_is_invalidated():
+    text = MAIN.read_text(encoding="utf-8")
+    wait_anchor = text.index("task.add_done_callback(wake_generation_wait)")
+    wait_start = text.index("            while True:", wait_anchor)
+    cancel_guard = text.index(
+        "if not self.is_generation_current(generation_session_id):",
+        wait_start,
+    )
+    task_check = text.index("if task.is_finished:", wait_start)
+    timeout_check = text.index("if elapsed >= generate_timeout:", wait_start)
+
+    assert wait_start < cancel_guard < task_check < timeout_check
+    assert "self._active_generation_wait_id = None" in text[cancel_guard:task_check]
+    assert "break" in text[cancel_guard:task_check]
+
+
+def test_reset_session_wakes_an_active_generation_wait():
+    text = MAIN.read_text(encoding="utf-8")
+    reset_start = text.index("def reset_session(self, stop_audio=False):")
+    reset_end = text.index("        @staticmethod\n        def stop_voice", reset_start)
+    reset_block = text[reset_start:reset_end]
+
+    assert "had_active_generation_wait = self._active_generation_wait_id is not None" in reset_block
+    assert "if had_active_generation_wait:" in reset_block
+    assert "renpy.restart_interaction()" in reset_block
