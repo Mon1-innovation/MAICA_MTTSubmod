@@ -87,8 +87,17 @@ def instance(tmp_path):
 
 def test_verify_token_uses_bearer_auth_and_normalizes_protocol_status(monkeypatch, instance):
     calls = []
+    version_info = {
+        "success": True,
+        "content": {"fe_synbrace_version": "1.2.0"},
+    }
 
     def fake_get(url, **kwargs):
+        calls.append((url, kwargs))
+        if url.endswith("accessibility"):
+            return ResponseStub(200, {"success": True, "exception": None, "content": "serving"})
+        if url.endswith("version"):
+            return ResponseStub(200, version_info)
         calls.append((url, kwargs))
         return ResponseStub(
             401,
@@ -199,8 +208,17 @@ def test_unknown_token_generation_unavailability_is_connection_problem(tmp_path)
 
 def test_generation_json_failure_sets_stable_failure_status(monkeypatch, instance):
     calls = []
+    version_info = {
+        "success": True,
+        "content": {"fe_synbrace_version": "1.2.0"},
+    }
 
     def fake_get(url, **kwargs):
+        calls.append((url, kwargs))
+        if url.endswith("accessibility"):
+            return ResponseStub(200, {"success": True, "exception": None, "content": "serving"})
+        if url.endswith("version"):
+            return ResponseStub(200, version_info)
         calls.append((url, kwargs))
         return ResponseStub(
             403,
@@ -252,6 +270,36 @@ def test_version_failure_result_is_normalized(monkeypatch, instance):
     }
 
 
+def test_version_invalid_response_and_network_failure_are_normalized(
+    monkeypatch, instance
+):
+    monkeypatch.setattr(
+        mtts_package.requests,
+        "get",
+        lambda *args, **kwargs: ResponseStub(502, None),
+    )
+
+    assert instance.get_version() == {
+        "success": False,
+        "status": "client_response_invalid",
+        "exception": "Version response was not valid JSON",
+        "code": 502,
+    }
+
+    monkeypatch.setattr(
+        mtts_package.requests,
+        "get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(IOError("offline")),
+    )
+
+    assert instance.get_version() == {
+        "success": False,
+        "status": "client_network_error",
+        "exception": "Version request failed",
+        "code": None,
+    }
+
+
 def test_provider_failure_preserves_protocol_status(monkeypatch):
     manager = mtts_provider_manager.MTTSProviderManager(1)
 
@@ -292,11 +340,17 @@ def test_accessibility_refreshes_provider_url_and_clears_failure(monkeypatch, in
             return "https://new-provider.test/tts/"
 
     calls = []
+    version_info = {
+        "success": True,
+        "content": {"fe_synbrace_version": "1.2.0"},
+    }
 
     def fake_get(url, **kwargs):
         calls.append((url, kwargs))
         if url.endswith("accessibility"):
             return ResponseStub(200, {"success": True, "exception": None, "content": "serving"})
+        if url.endswith("version"):
+            return ResponseStub(200, version_info)
         if url.endswith("defaults"):
             return ResponseStub(200, {"success": True, "exception": None, "content": {}})
         raise AssertionError("unexpected URL: {}".format(url))
@@ -307,8 +361,75 @@ def test_accessibility_refreshes_provider_url_and_clears_failure(monkeypatch, in
 
     assert instance.accessable() is True
     assert instance.baseurl == "https://new-provider.test/tts/"
+    assert instance.version_info is version_info
     assert not instance.has_error()
-    assert calls[0][0] == "https://new-provider.test/tts/accessibility"
+    assert [call[0] for call in calls] == [
+        "https://new-provider.test/tts/accessibility",
+        "https://new-provider.test/tts/version",
+        "https://new-provider.test/tts/defaults",
+    ]
+
+
+def test_accessibility_keeps_version_failure_separate_and_clears_stale_cache(
+    monkeypatch, instance
+):
+    class ProviderStub(object):
+        last_error = None
+
+        def get_provider(self):
+            return True
+
+        def get_provider_id(self):
+            return 2
+
+        def get_tts_url(self):
+            return "https://provider.test/tts/"
+
+    version_failure = {
+        "success": False,
+        "status": "client_server_unavailable",
+        "exception": "version unavailable",
+    }
+
+    def successful_access_get(url, **kwargs):
+        if url.endswith("accessibility"):
+            return ResponseStub(
+                200,
+                {"success": True, "exception": None, "content": "serving"},
+            )
+        if url.endswith("version"):
+            return ResponseStub(200, version_failure)
+        if url.endswith("defaults"):
+            return ResponseStub(
+                200,
+                {"success": True, "exception": None, "content": {}},
+            )
+        raise AssertionError("unexpected URL: {}".format(url))
+
+    instance.provider_manager = ProviderStub()
+    monkeypatch.setattr(mtts_package.requests, "get", successful_access_get)
+
+    assert instance.accessable() is True
+    assert instance.version_info == {
+        "success": False,
+        "status": "client_server_unavailable",
+        "exception": "version unavailable",
+        "code": 200,
+    }
+    assert not instance.has_error()
+
+    monkeypatch.setattr(
+        mtts_package.requests,
+        "get",
+        lambda *args, **kwargs: ResponseStub(
+            200,
+            {"success": True, "content": "maintenance"},
+        ),
+    )
+
+    assert instance.accessable() is False
+    assert instance.version_info == {"success": False, "content": {}}
+    assert instance.status == instance.MttsStatus.SERVER_MAINTAIN
 
 
 def test_accessibility_only_uses_maintenance_for_explicit_non_serving(monkeypatch, instance):
@@ -367,8 +488,10 @@ def test_renpy_status_flow_keeps_failures_visible():
     assert "store.mtts_status = mtts_failure_status_text()" in main_text
     assert "if not generation_timed_out and task.is_success and task.result.is_success():" in main_text
     assert "if instance.has_error() or not instance.is_accessable:" in main_text
-    assert 'if not version.get("success") and mtts_instance.is_accessable' in main_text
-    assert "store.mtts_status = store.mtts_failure_status_text()" in main_text
+    assert 'getattr(mtts_instance, "version_info", {})' in main_text
+    assert "mtts_instance.get_version()" not in main_text
+    assert "store.mtts.is_mtts_frontend_outdated()" in main_text
+    assert 'store.persistent.mtts["_outdated"]' not in main_text
     assert "def mtts_failure_status_text():" in status_text
     assert 'response = requests.post(\n                self.get_api_url("register")' in package_text
     assert "def get_strategy(" not in package_text
