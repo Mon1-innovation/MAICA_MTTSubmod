@@ -309,7 +309,7 @@ def test_programmatic_generation_wakeup_preserves_auto_forward_during_wait():
     assert "prefs.afm_enable = True" in text
 
     wait_start = text.index("restore_afm_scope = self.begin_generation_wait_afm_scope()")
-    wait_call = text.index("self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait), interact, args, kwargs)")
+    wait_call = text.index("self.call_old_say(who, self.build_generation_wait_text(is_extend, remaining_wait)")
     wait_end = text.index("self.end_generation_wait_afm_scope(restore_afm_scope)")
     assert wait_start < wait_call < wait_end
     assert "finally:" in text[wait_call:wait_end]
