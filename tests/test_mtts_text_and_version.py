@@ -78,13 +78,14 @@ def _run_outdated_check(version_result, initial_value=True, outdated_result=Fals
         error=lambda message: logs.append(("error", message)),
         warning=lambda message: logs.append(("warning", message)),
     )
+    persistent = SimpleNamespace(mtts={"_outdated": initial_value})
     store = SimpleNamespace(
         mas_submod_utils=SimpleNamespace(
             functionplugin=lambda *args, **kwargs: lambda function: function,
             submod_log=logger,
         ),
+        persistent=persistent,
     )
-    persistent = SimpleNamespace(mtts={"_outdated": initial_value})
     instance = SimpleNamespace(
         get_version=lambda: version_result,
         is_accessable=False,
@@ -92,7 +93,6 @@ def _run_outdated_check(version_result, initial_value=True, outdated_result=Fals
     )
     namespace = {
         "store": store,
-        "persistent": persistent,
         "mtts_instance": instance,
         "refresh_setting_pane_cache": lambda **kwargs: None,
         "is_mtts_frontend_outdated": lambda result: outdated_result,
