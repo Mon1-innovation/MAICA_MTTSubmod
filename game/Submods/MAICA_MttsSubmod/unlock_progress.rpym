@@ -15,16 +15,16 @@ init 999 python:
         # Log key label status
         debug_log("mas_reaction_gift_mttsheadset label seen: {}".format(renpy.seen_label('mas_reaction_gift_mttsheadset')))
         cond1_seen_gift = renpy.seen_label('mas_gift_giving_instructs')
-        cond1_filereacts = persistent._mas_filereacts_historic
+        cond1_has_filereacts = bool(persistent._mas_filereacts_historic)
         cond1_seen_prepend = renpy.seen_label('mtts_prepend_1')
         cond1_seen_end = renpy.seen_label('mtts_greeting_end')
         cond1 = (
-            (cond1_seen_gift or cond1_filereacts)
+            (cond1_seen_gift or cond1_has_filereacts)
             and not cond1_seen_prepend
             and not cond1_seen_end
         )
 
-        debug_log("mtts_prepend_1 condition: gift instructions seen={}, file reacts history={}, prepend seen={}, greeting end seen={}, total condition={}".format(cond1_seen_gift, cond1_filereacts, cond1_seen_prepend, cond1_seen_end, cond1))
+        debug_log("mtts_prepend_1 condition: gift instructions seen={}, file reacts history present={}, prepend seen={}, greeting end seen={}, total condition={}".format(cond1_seen_gift, cond1_has_filereacts, cond1_seen_prepend, cond1_seen_end, cond1))
 
         # Condition 2: mtts_hint
         cond2_seen_prepend = renpy.seen_label('mtts_prepend_1')
