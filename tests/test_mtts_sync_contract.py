@@ -85,6 +85,9 @@ def test_migration_repairs_legacy_events_and_only_advances_after_success():
 def test_progress_diagnostics_use_the_same_end_markers_and_greeting_guards():
     text = UNLOCK_PROGRESS.read_text(encoding="utf-8")
 
+    assert "cond1_has_filereacts = bool(persistent._mas_filereacts_historic)" in text
+    assert "file reacts history present={}" in text
+    assert "cond1_filereacts" not in text
     assert "cond1_seen_end" in text
     assert "cond2_seen_gift" in text
     assert "cond2_gift_available" in text
