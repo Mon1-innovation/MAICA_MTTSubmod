@@ -65,7 +65,7 @@ def test_mtts_source_contains_english_defaults_and_preserves_language_routing():
     assert 'eventlabel="mtts_greeting"' in chat
     assert 'prompt=_("MTTS knock")' in chat
     assert 'config.language = "english"' in main
-    assert 'target_lang = "zh" if config.language == \'chinese\' else \'en\'' in main
+    assert 'target_lang = "zh" if config.language == \'chinese\' else (\'es\' if config.language == \'spanish\' else \'en\')' in main
     assert '"name": "ERROR: Unable to retrieve node information."' in provider
     assert '"description": "Check the update log to get the current service status' in provider
     assert '"name": "Local Deployment"' in provider
@@ -83,3 +83,28 @@ def test_mtts_source_covers_shared_template_strings_in_english():
         'Cancel',
     ):
         assert value in template
+
+
+def test_mtts_determ_lang_supports_multilingual_routing():
+    pattern_zh = re.compile(r'[\u4e00-\u9fff]')
+
+    def determ_lang(input_text, suppose='zh'):
+        input_len = len(input_text)
+        zh_search = pattern_zh.search(input_text)
+        if suppose == 'zh':
+            if input_len >= 5 and not zh_search:
+                return 'en'
+            else:
+                return 'zh'
+        else:
+            if zh_search:
+                return 'zh'
+            else:
+                return suppose
+
+    assert determ_lang("Hola, [player]! Como estas?", suppose="es") == "es"
+    assert determ_lang("Hello, [player]!", suppose="en") == "en"
+    assert determ_lang("你好，莫妮卡！", suppose="en") == "zh"
+    assert determ_lang("你好，莫妮卡！", suppose="es") == "zh"
+    assert determ_lang("Hello world here", suppose="zh") == "en"
+    assert determ_lang("你好", suppose="zh") == "zh"

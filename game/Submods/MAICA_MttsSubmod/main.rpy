@@ -658,7 +658,7 @@ init python:
                 if zh_search:
                     return 'zh'
                 else:
-                    return 'en'
+                    return suppose
 
         def __call__(self, who, what, interact=True, *args, **kwargs):
             if not self.conditions:
@@ -718,7 +718,7 @@ init python:
             if rule['name'] == 'MAICA_Chat' and mtts_has_maica_instance():
                 target_lang = store.maica.maica_instance.target_lang
             else:
-                target_lang = "zh" if config.language == 'chinese' else 'en'
+                target_lang = "zh" if config.language == 'chinese' else ('es' if config.language == 'spanish' else 'en')
 
             target_lang = self.determ_lang(text, suppose=target_lang)
 
