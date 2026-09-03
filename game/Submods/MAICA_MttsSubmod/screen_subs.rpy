@@ -22,15 +22,15 @@ screen mtts_login():
                     action Show("mtts_login_input",message = _("Please enter DCC account username") ,returnto = "_maica_LoginAcc")
 
         hbox:
-            style_prefix "maica_check"
+            style_prefix "small_expl"
             if use_email:
-                textbutton _("> Switch to username login"):
+                textbutton _("> Use username instead"):
                     text_size 15
                     action [ToggleVariable("use_email"), Function(_mtts_clear)]
                     selected False
 
             else:
-                textbutton _("> Switch to email login"):
+                textbutton _("> Use email instead"):
                     text_size 15
                     action [ToggleVariable("use_email"), Function(_mtts_clear)]
                     selected False

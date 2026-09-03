@@ -18,11 +18,11 @@ translate chinese strings:
     new "请输入DCC账号用户名"
 
     # game/Submods/MAICA_MttsSubmod/screen_subs.rpy:29
-    old "> Switch to username login"
+    old "> Use username instead"
     new "> 改为用户名登录"
 
     # game/Submods/MAICA_MttsSubmod/screen_subs.rpy:35
-    old "> Switch to email login"
+    old "> Use email instead"
     new "> 改为邮箱登录"
 
     # game/Submods/MAICA_MttsSubmod/screen_subs.rpy:41
