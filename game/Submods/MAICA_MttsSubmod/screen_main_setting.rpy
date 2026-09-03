@@ -73,7 +73,7 @@ screen mtts_settings():
 
 
             hbox:
-                use divider(_("Connection and security"))
+                use divider(_("Connection and Safety"))
 
             hbox:
                 style_prefix "maica_check"
@@ -83,7 +83,7 @@ screen mtts_settings():
                     scope={"provider_name": provider_name}
                 )):
                     action Show("mtts_node_setting")
-                    hovered SetField(_tooltip, "value", _("Set server node"))
+                    hovered SetField(_tooltip, "value", _("Choose provider"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
             hbox:
                 style_prefix "maica_check_nohover"
@@ -93,12 +93,12 @@ screen mtts_settings():
                     scope={"user_disp": user_disp}
                 )):
                     action NullAction()
-                    hovered SetField(_tooltip, "value", _("To change or log out of your account, log out from the Submods screen.\n* To change account information or password, visit the registration website"))
+                    hovered SetField(_tooltip, "value", _("To change account or logout, navigate to Submods menu.\n* To change account properties or password, navigate to registration site"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
 
             hbox:
-                use divider(_("Behavior and performance"))
+                use divider(_("Performance and Behavior"))
 
             if renpy.seen_label("mtts_greeting_end"):
                 hbox:
@@ -129,7 +129,7 @@ screen mtts_settings():
             use prog_bar(_("Generation timeout (s)"), 400, tooltip_generate_timeout, "generate_timeout", 1, 120, istime=True, sdict="mtts")
 
             hbox:
-                use divider(_("Tools and features"))
+                use divider(_("Tools and Functions"))
 
             hbox:
                 style_prefix "generic_fancy_check"
@@ -234,7 +234,7 @@ screen mtts_settings():
                     if persistent.mtts.get('use_custom_model_config', False):
                         hbox:
                             style_prefix "maica_check"
-                            textbutton _("Set advanced parameters"):
+                            textbutton _("Adjust advanced params"):
                                 style "maica_check_button"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
                         hbox:
@@ -242,7 +242,7 @@ screen mtts_settings():
                                 color "#FF0000"
                     else:
                         hbox:
-                            textbutton _("Set advanced parameters"):
+                            textbutton _("Adjust advanced params"):
                                 style "maica_check_button_disabled"
                                 action [Function(mtts_backup_advanced_setting), Show("mtts_advance_setting")]
 
@@ -250,9 +250,9 @@ screen mtts_settings():
 
             hbox:
                 style_prefix "maica_check"
-                textbutton (_("Expand performance monitor") if nvw_folded else _("Collapse performance monitor")):
+                textbutton (_("Expand performance monitor") if nvw_folded else _("Retract performance monitor")):
                     action SetScreenVariable("nvw_folded", not nvw_folded)
-                    hovered SetField(_tooltip, "value", _("Show/hide server performance metrics"))
+                    hovered SetField(_tooltip, "value", _("Expand/retract server performance monitor"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
             if not nvw_folded:
@@ -273,13 +273,13 @@ screen mtts_settings():
                         Function(renpy.notify, _("MTTS: Settings saved")),
                         Hide("mtts_settings")
                         ]
-            textbutton _("Discard changes"):
+            textbutton _("Discard modifications"):
                 action [
                         Function(store.mtts.discard_settings),
                         Function(renpy.notify, _("MTTS: Settings discarded")),
                         Hide("mtts_settings")
                         ]
-            textbutton _("Reset settings"):
+            textbutton _("Reset defaults"):
                 action [
                         Function(store.mtts.reset_settings),
                         Function(store.mtts.apply_settings),

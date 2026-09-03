@@ -2,7 +2,7 @@
 translate chinese strings:
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:64
-    old "Connection and security"
+    old "Connection and Safety"
     new "连接与安全"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:68
@@ -10,7 +10,7 @@ translate chinese strings:
     new "服务提供节点: [provider_name]"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:70
-    old "Set server node"
+    old "Choose provider"
     new "设置服务器节点"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:74
@@ -22,11 +22,11 @@ translate chinese strings:
     new "当前用户: [user_disp]"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:77
-    old "To change or log out of your account, log out from the Submods screen.\n* To change account information or password, visit the registration website"
+    old "To change account or logout, navigate to Submods menu.\n* To change account properties or password, navigate to registration site"
     new "如需更换或退出账号, 请在Submods界面退出登录.\n* 要修改账号信息或密码, 请前往注册网站"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:82
-    old "Behavior and performance"
+    old "Performance and Behavior"
     new "行为与表现"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:87
@@ -62,7 +62,7 @@ translate chinese strings:
     new "等待限制(秒)"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:111
-    old "Tools and features"
+    old "Tools and Functions"
     new "工具与功能"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:115
@@ -134,7 +134,7 @@ translate chinese strings:
     new "高级参数可能大幅影响MTTS的表现.\n* 默认的高级参数已经是实践中的普遍最优配置, 不建议启用"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:212
-    old "Set advanced parameters"
+    old "Adjust advanced params"
     new "设置高级参数"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:216
@@ -146,11 +146,11 @@ translate chinese strings:
     new "展开性能监控"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:228
-    old "Collapse performance monitor"
+    old "Retract performance monitor"
     new "收起性能监控"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:230
-    old "Show/hide server performance metrics"
+    old "Expand/retract server performance monitor"
     new "显示/收起服务器的性能状态指标"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:246
@@ -158,7 +158,7 @@ translate chinese strings:
     new "MTTS: 设置已保存"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:251
-    old "Discard changes"
+    old "Discard modifications"
     new "放弃修改"
 
     # game/Submods/MAICA_MttsSubmod/screen_main_setting.rpy:252

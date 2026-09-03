@@ -132,7 +132,7 @@ init python:
                 instance.user_acc = c
 
             store.mtts_status = renpy.substitute(_("Standing by"))
-            renpy.show_screen("maica_message", message=_("Verification successful"))
+            renpy.show_screen("maica_message", message=_("Authentication passed"))
             return True
         else:
             if instance.status in (
@@ -143,7 +143,7 @@ init python:
                 instance.token = ""
                 store.mas_api_keys.save_keys()
             store.mtts_status = mtts_failure_status_text()
-            message = renpy.substitute(_("Verification failed: ")) + store.mtts_status
+            message = renpy.substitute(_("Authentication failed: ")) + store.mtts_status
             detail = u"{}".format(res.get("exception") or "")
             if detail:
                 message += "\n" + renpy.substitute(_("Reason: ")) + detail
@@ -343,14 +343,14 @@ screen mtts_workload_stat():
                         ):
                             size 10
                         text mtts_escape_display_text(
-                            renpy.substitute(_("Average power consumption: ")) +
+                            renpy.substitute(_("Mean power consumption: ")) +
                             "{}W".format(stat[server][card]["mean_consumption"])
                         ):
                             size 10
                 text ""
 
             hbox:
-                text renpy.substitute(_("Next data update")):
+                text renpy.substitute(_("Analytics refresh")):
                     size 15
                 text store.mtts.progress_bar(((store.workload_throttle.remain / store.update_interval)) * 100, bar_length = 78, total=store.update_interval, unit="s"):
                     size 15

@@ -2,7 +2,7 @@
 translate chinese strings:
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:48
-    old "For detailed explanations of these parameters, see "
+    old "For detailed explainations of these params, refer to "
     new "关于这些参数的详细解释, 参见 "
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:50
@@ -18,11 +18,11 @@ translate chinese strings:
     new "{u}GPT-SoVITS 文档{/u}"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:59
-    old "{size=-10}Only checked advanced parameters will be used; unchecked parameters use server defaults"
+    old "{size=-10}Caution: only checked params will take effect, others will remain server default"
     new "{size=-10}注意: 只有被勾选的高级参数才会被使用, 未勾选的参数将使用服务端默认设置"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:62
-    old "{size=-10}You have not enabled 'Use advanced parameters'; none of the settings on this page will take effect!"
+    old "{size=-10}You have not enabled advanced parameters, thus settings on this page will not take effect!"
     new "{size=-10}你当前未启用'使用高级参数', 该页的所有设置都不会生效!"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:78
@@ -42,11 +42,11 @@ translate chinese strings:
     new "速度因子, 在推理过程中控制生成的语速.\n* 该数值与实际语速并非线性相关"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:111
-    old "Hyperparameters"
+    old "Super params"
     new "超参数"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:120
-    old "Token sampling randomness. Higher values make the model output less like the generally optimal result"
+    old "The randomness tokens are chosen. Higher this value, larger the offset between model performance and generally best performance"
     new "token选择的随机程度. 数值越高, 模型输出会越偏离普遍最佳情况"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:133
@@ -54,7 +54,7 @@ translate chinese strings:
     new "token权重过滤数量. 非常不建议动这个"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:146
-    old "Token weight filter range. Seriously do not touch this"
+    old "Token weight filter percentage. Seriously do not touch this"
     new "token权重过滤范围. 非常不建议动这个"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:159
@@ -62,7 +62,7 @@ translate chinese strings:
     new "token重复惩罚. 数值越高, token越不可能反复出现"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:172
-    old "Generation seed. Usually has little and random impact"
+    old "Generation seed. Normally a minor and random factor"
     new "生成种子. 一般而言影响很小且随机"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:182
@@ -74,7 +74,7 @@ translate chinese strings:
     new "MTTS: 已保存高级设置"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:188
-    old "Reset settings"
+    old "Reset defaults"
     new "重置设置"
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:189

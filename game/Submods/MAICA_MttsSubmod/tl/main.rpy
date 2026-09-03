@@ -46,7 +46,7 @@ translate chinese strings:
     old "Failed to retrieve an available service provider"
     new "获取服务节点失败, 服务器可能正在维护或离线"
 
-    old "Verification failed: "
+    old "Authentication failed: "
     new "验证失败: "
 
     # game/Submods/MAICA_MttsSubmod/main.rpy:142

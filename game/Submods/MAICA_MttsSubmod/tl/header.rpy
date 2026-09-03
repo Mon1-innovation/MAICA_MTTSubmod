@@ -38,7 +38,7 @@ translate chinese strings:
     new "> 向 MAICA 捐赠"
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:113
-    old "Verification successful"
+    old "Authentication passed"
     new "验证成功"
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:116
@@ -50,10 +50,10 @@ translate chinese strings:
     new "失败原因: "
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:283
-    old "Average power consumption: "
+    old "Mean power consumption: "
     new "平均功耗: "
 
     # game/Submods/MAICA_MttsSubmod/header.rpy:288
-    old "Next data update"
+    old "Analytics refresh"
     new "下次更新数据"
 

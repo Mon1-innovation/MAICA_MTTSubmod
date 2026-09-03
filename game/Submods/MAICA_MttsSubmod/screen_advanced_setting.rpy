@@ -45,7 +45,7 @@ screen mtts_advance_setting():
             style_prefix "generic_fancy_check"
             hbox:
                 style_prefix "maica_check"
-                text _("For detailed explanations of these parameters, see "):
+                text _("For detailed explainations of these params, refer to "):
                     size 20
                 textbutton _("{u}MTTS official documents{/u}"):
                     action OpenURL("https://github.com/Mon1-innovation/MAICA_MTTS/blob/main/document/API%20Document.txt")
@@ -56,10 +56,10 @@ screen mtts_advance_setting():
                     action OpenURL("https://github.com/RVC-Boss/GPT-SoVITS/blob/main/api_v2.py")
                     text_size 20
             hbox:
-                text _("{size=-10}Only checked advanced parameters will be used; unchecked parameters use server defaults")
+                text _("{size=-10}Caution: only checked params will take effect, others will remain server default")
             hbox:
                 if not persistent.mtts.get('use_custom_model_config'):
-                    text _("{size=-10}You have not enabled 'Use advanced parameters'; none of the settings on this page will take effect!")
+                    text _("{size=-10}You have not enabled advanced parameters, thus settings on this page will not take effect!")
 
             # Basic Parameters (基础参数)
             #use divider_small(_("基础参数"))
@@ -112,7 +112,7 @@ screen mtts_advance_setting():
                 if persistent.mtts_advanced_setting_status.get("speed_factor", False):
                     use prog_bar("speed_factor", 400, _("Speed factor, affects speaking speed in inference phrase.\n* Is not linear correlative with actual speaking speed"), "speed_factor", 0.5, 2.0, sdict="mtts_advanced_setting")
 
-            use divider_small(_("Hyperparameters"))
+            use divider_small(_("Super params"))
 
             # temperature - Float slider 0-2
             hbox:
@@ -121,11 +121,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "temperature":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "temperature")
-                    hovered SetField(_tooltip, "value", _("Token sampling randomness. Higher values make the model output less like the generally optimal result"))
+                    hovered SetField(_tooltip, "value", _("The randomness tokens are chosen. Higher this value, larger the offset between model performance and generally best performance"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("temperature", False):
-                    use prog_bar("temperature", 400, _("Token sampling randomness. Higher values make the model output less like the generally optimal result"), "temperature", 0.0, 2.0, sdict="mtts_advanced_setting")
+                    use prog_bar("temperature", 400, _("The randomness tokens are chosen. Higher this value, larger the offset between model performance and generally best performance"), "temperature", 0.0, 2.0, sdict="mtts_advanced_setting")
 
             # top_k - Integer slider 1-20
             hbox:
@@ -147,11 +147,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "top_p":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "top_p")
-                    hovered SetField(_tooltip, "value", _("Token weight filter range. Seriously do not touch this"))
+                    hovered SetField(_tooltip, "value", _("Token weight filter percentage. Seriously do not touch this"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("top_p", False):
-                    use prog_bar("top_p", 400, _("Token weight filter range. Seriously do not touch this"), "top_p", 0.0, 1.0, sdict="mtts_advanced_setting")
+                    use prog_bar("top_p", 400, _("Token weight filter percentage. Seriously do not touch this"), "top_p", 0.0, 1.0, sdict="mtts_advanced_setting")
 
             # repetition_penalty - Float slider 0-1
             hbox:
@@ -173,11 +173,11 @@ screen mtts_advance_setting():
                 style_prefix "generic_fancy_check"
                 textbutton "seed":
                     action ToggleDict(persistent.mtts_advanced_setting_status, "seed")
-                    hovered SetField(_tooltip, "value", _("Generation seed. Usually has little and random impact"))
+                    hovered SetField(_tooltip, "value", _("Generation seed. Normally a minor and random factor"))
                     unhovered SetField(_tooltip, "value", _tooltip.default)
 
                 if persistent.mtts_advanced_setting_status.get("seed", False):
-                    use num_bar("seed", 200, _("Generation seed. Usually has little and random impact"), "seed", -2147483648, 2147483647, sdict="mtts_advanced_setting")
+                    use num_bar("seed", 200, _("Generation seed. Normally a minor and random factor"), "seed", -2147483648, 2147483647, sdict="mtts_advanced_setting")
 
 
         hbox:
@@ -189,7 +189,7 @@ screen mtts_advance_setting():
                     Hide("mtts_advance_setting"),
                     Function(renpy.notify, _("MTTS: Advanced settings saved"))
                 ]
-            textbutton _("Reset settings"):
+            textbutton _("Reset defaults"):
                 action [
                     Function(mtts_reset_advanced_setting),
                     Hide("mtts_advance_setting"),

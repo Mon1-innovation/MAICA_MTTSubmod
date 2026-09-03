@@ -15,11 +15,11 @@ screen mtts_login():
             if use_email:
                 textbutton _("Enter DCC account email"):
                     style "confirm_button"
-                    action Show("mtts_login_input",message = _("Please enter DCC account email"),returnto = "_maica_LoginEmail")
+                    action Show("mtts_login_input",message = _("Enter DCC account email{#maica_login_prompt}"),returnto = "_maica_LoginEmail")
             else:
                 textbutton _("Enter DCC account username"):
                     style "confirm_button"
-                    action Show("mtts_login_input",message = _("Please enter DCC account username") ,returnto = "_maica_LoginAcc")
+                    action Show("mtts_login_input",message = _("Enter DCC account username{#maica_login_prompt}") ,returnto = "_maica_LoginAcc")
 
         hbox:
             style_prefix "small_expl"
@@ -38,7 +38,7 @@ screen mtts_login():
         hbox:
             textbutton _("Enter password"):
                 style "confirm_button"
-                action Show("mtts_login_input",message = _("Please enter password"),returnto = "_maica_LoginPw")
+                action Show("mtts_login_input",message = _("Enter password{#maica_login_prompt}"),returnto = "_maica_LoginPw")
         hbox:
             text ""
 
@@ -46,15 +46,15 @@ screen mtts_login():
             style_prefix "small_expl"
             text _("※ By using MAICA-MTTS Synbrace, you agree to "):
                 size 15
-            textbutton _("{u}MAICA Terms of Service{/u}"):
+            textbutton _("{u}MAICA ToS{/u}"):
                 action OpenURL("https://maica.monika.love/tos")
                 yalign 1.0
 
         hbox:
             style_prefix "small_expl"
-            text _("※ Don't have a DCC account? "):
+            text _("※ No DCC account yet? "):
                 size 15
-            textbutton _("{u}Register one{/u}"):
+            textbutton _("{u}Register now{/u}"):
                 action OpenURL("https://maica.monika.love/tos")
                 yalign 1.0
 
@@ -101,12 +101,12 @@ screen mtts_node_setting():
 
                     hbox:
                         text mtts_escape_display_text(
-                            renpy.substitute(_("Description: ")) +
+                            renpy.substitute(_("Intro: ")) +
                             u"{}".format(provider_description)
                         )
                     hbox:
                         text mtts_escape_display_text(
-                            renpy.substitute(_("Current model: ")) +
+                            renpy.substitute(_("Model: ")) +
                             u"{}".format(provider_model)
                         )
 
@@ -114,7 +114,7 @@ screen mtts_node_setting():
                 hbox:
                     hbox:
                         style_prefix "generic_fancy_check"
-                        textbutton _("Use this provider"):
+                        textbutton _("Use this server"):
                             action [
                                 # Function(set_provider, provider.get('id')),
                                 Function(store.mtts.sync_provider_id, provider.get('id')),
@@ -124,7 +124,7 @@ screen mtts_node_setting():
                     hbox:
                         style_prefix "maica_check"
                         textbutton mtts_escape_display_text(
-                            renpy.substitute(_("> Open website")) +
+                            renpy.substitute(_("> Go to portal page")) +
                             " (" + u"{}".format(provider_url) + ")"
                         ):
                             action OpenURL(provider_url)
@@ -132,18 +132,18 @@ screen mtts_node_setting():
                     if provider.get("isOfficial", False):
                         hbox:
                             style_prefix "maica_check_nohover"
-                            textbutton _(" <Official service>")
+                            textbutton _(" <Official>")
                         
         hbox:
             xpos 10
             style_prefix "confirm"
-            textbutton _("Refresh provider list"):
+            textbutton _("Refresh servers list"):
                 action Function(store.mtts.provider_manager.get_provider)
 
             textbutton _("Close"):
                 action Hide("mtts_node_setting")
             
-            textbutton _("Test current provider availability"):
+            textbutton _("Test current node avaliability"):
                 action Function(store.mtts.mtts_instance.accessable)
 
 screen mtts_support():
@@ -153,11 +153,11 @@ screen mtts_support():
 
     use maica_setter_medium_frame(title=_("Donate to MAICA"), ok_action=Hide("mtts_support")):
         hbox:
-            text _("First of all, thank you for considering a donation.\nWe are very unlikely to recover the costs of running MAICA, but please do not feel pressured."):
+            text _("We're grateful for your being willing to donate.\nThe donate will likely never cover our cost, but that's okay anyway."):
                 size 20
         hbox:
             style_prefix "maica_check_nohover"
-            text _("Please note that donating to MAICA provides no privileges, except for a name on the forum donation page and a donor badge."):
+            text _("Please note that donating to MAICA doesn't give you any actual privilege. It's simply donation."):
                 size 15
             text "\n":
                 size 15
