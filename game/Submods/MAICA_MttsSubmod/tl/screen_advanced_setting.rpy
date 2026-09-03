@@ -2,7 +2,7 @@
 translate chinese strings:
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:48
-    old "For detailed explainations of these params, refer to "
+    old "For detailed explanations of these params, refer to "
     new "关于这些参数的详细解释, 参见 "
 
     # game/Submods/MAICA_MttsSubmod/screen_advanced_setting.rpy:50
