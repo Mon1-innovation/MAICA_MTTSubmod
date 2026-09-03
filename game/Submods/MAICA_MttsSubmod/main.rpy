@@ -24,7 +24,9 @@ init -1500 python:
 image mtts_spinner = mtts_build_spinner_animation()
 
 init -1500 python:
-    if not config.language:
+    if _preferences.language:
+        config.language = _preferences.language
+    elif not config.language:
         config.language = "english"
 
 init -990 python:
