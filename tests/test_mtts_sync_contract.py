@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import subprocess
+import textwrap
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +46,8 @@ def test_event_registration_matches_the_runtime_contract():
 
     greeting = text[text.index("    mtts_greeting_conditional ="):text.index("label mas_reaction_gift_mttsheadset:")]
     assert "unlocked=True" in greeting
-    assert "MASGreetingRule.create_rule(skip_visual=False)" in greeting
+    assert "mtts_greeting_type_allows_override()" in greeting
+    assert "override_type=True" in greeting
     assert "MASPriorityRule.create_rule(11)" in greeting
     assert "mas_isplayer_bday()" in greeting
     assert "not renpy.seen_label('mtts_greeting_end')" in greeting
@@ -70,6 +72,8 @@ def test_migration_repairs_legacy_events_and_only_advances_after_success():
 
     assert text.startswith("init 980 python:\n    import os")
     assert "def m_1_2_16()" in text
+    assert "def m_1_2_20()" in text
+    assert '("1.2.20", m_1_2_20)' in text
     migration_1_2_16 = text[text.index("        def m_1_2_16():"):]
     assert 'persistent._seen_ever["mtts_greeting_end"] = True' not in migration_1_2_16
     assert "mas_rebuildEventLists()" in text
@@ -92,9 +96,39 @@ def test_progress_diagnostics_use_the_same_end_markers_and_greeting_guards():
     assert "cond2_seen_gift" in text
     assert "cond2_gift_available" in text
     assert "cond2_seen_end" in text
-    assert "persistent._mas_greeting_type is None" in text
+    assert "mtts_greeting_type_allows_override()" in text
+    assert "persistent._mas_greeting_type is None" not in text
     assert "cond3_player_bday = mas_isplayer_bday()" in text
     assert "cond3_affectionate = mas_isMoniAff(higher=True)" in text
+
+
+def test_mtts_greeting_type_override_skips_only_recovery_types():
+    text = CHAT.read_text(encoding="utf-8")
+    start = text.index("    def mtts_greeting_type_allows_override")
+    end = text.index("\n\n    mtts_prepend_conditional", start)
+    source = textwrap.dedent(text[start:end])
+
+    class PersistentStub(object):
+        _mas_greeting_type = None
+
+    class GreetingsStub(object):
+        TYPE_CRASHED = "generic_crash"
+        TYPE_RELOAD = "reload_dlg"
+
+    namespace = {
+        "persistent": PersistentStub(),
+        "store": type("StoreStub", (), {"mas_greetings": GreetingsStub})(),
+    }
+    exec(source, namespace)
+    allows_override = namespace["mtts_greeting_type_allows_override"]
+
+    for greeting_type in (None, "sleep", "work", "school"):
+        namespace["persistent"]._mas_greeting_type = greeting_type
+        assert allows_override() is True
+
+    for greeting_type in ("generic_crash", "reload_dlg"):
+        namespace["persistent"]._mas_greeting_type = greeting_type
+        assert allows_override() is False
 
 
 def test_migration_supports_missing_segments_and_reports_completion():

@@ -29,6 +29,22 @@ init 5 python:
                 return True
         return False
 
+    def mtts_greeting_type_allows_override():
+        """Allow MTTS greetings to outrank ordinary typed greetings.
+
+        Keep crash/reload recovery greetings authoritative while allowing
+        sleep/work/etc. to participate in the normal priority comparison.
+        """
+        greeting_type = getattr(persistent, "_mas_greeting_type", None)
+        blocked_types = ("generic_crash", "reload_dlg")
+        mas_greetings = getattr(store, "mas_greetings", None)
+        if mas_greetings is not None:
+            for type_name in ("TYPE_CRASHED", "TYPE_RELOAD"):
+                type_value = getattr(mas_greetings, type_name, None)
+                if type_value is not None:
+                    blocked_types += (type_value,)
+        return greeting_type not in blocked_types
+
     mtts_prepend_conditional = (
         "(renpy.seen_label('mas_gift_giving_instructs') "
         "or persistent._mas_filereacts_historic) "
@@ -158,7 +174,7 @@ init 5 python:
         addReaction("mas_reaction_gift_mttsheadset", "mttsheadset", is_good=True)
 
     mtts_greeting_conditional = (
-        "persistent._mas_greeting_type is None "
+        "mtts_greeting_type_allows_override() "
         "and renpy.seen_label('mtts_prepend_1') "
         "and renpy.seen_label('mas_reaction_gift_mttsheadset') "
         "and not mas_isSpecialDay() "
@@ -167,7 +183,12 @@ init 5 python:
     )
     mtts_greeting_rules = dict()
     # This label relies on MAS to render the spaceroom before dispatch.
-    mtts_greeting_rules.update(MASGreetingRule.create_rule(skip_visual=False))
+    mtts_greeting_rules.update(
+        MASGreetingRule.create_rule(
+            skip_visual=False,
+            override_type=True
+        )
+    )
     # Lower values win in MAS. Keep MAS/Chat priority-0/10 recovery greetings
     # first, while the device-specific greeting precedes Chat's priority-20 intro.
     mtts_greeting_rules.update(MASPriorityRule.create_rule(11))

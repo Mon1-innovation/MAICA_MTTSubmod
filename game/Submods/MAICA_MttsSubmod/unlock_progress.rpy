@@ -44,12 +44,12 @@ init 999 python:
         cond3_seen_gift = renpy.seen_label('mas_reaction_gift_mttsheadset')
         cond3_seen_prepend = renpy.seen_label('mtts_prepend_1')
         cond3_seen_end = renpy.seen_label('mtts_greeting_end')
-        cond3_generic_start = persistent._mas_greeting_type is None
+        cond3_greeting_type_allows_override = mtts_greeting_type_allows_override()
         cond3_special_day = mas_isSpecialDay()
         cond3_player_bday = mas_isplayer_bday()
         cond3_affectionate = mas_isMoniAff(higher=True)
         cond3 = (
-            cond3_generic_start
+            cond3_greeting_type_allows_override
             and cond3_seen_prepend
             and cond3_seen_gift
             and not cond3_special_day
@@ -57,4 +57,4 @@ init 999 python:
             and not cond3_seen_end
             and cond3_affectionate
         )
-        debug_log("mtts_greeting condition: generic start={}, prepend seen={}, gift reaction seen={}, special day={}, player birthday={}, affection threshold={}, greeting end seen={}, total condition={}".format(cond3_generic_start, cond3_seen_prepend, cond3_seen_gift, cond3_special_day, cond3_player_bday, cond3_affectionate, cond3_seen_end, cond3))
+        debug_log("mtts_greeting condition: greeting type allows override={}, prepend seen={}, gift reaction seen={}, special day={}, player birthday={}, affection threshold={}, greeting end seen={}, total condition={}".format(cond3_greeting_type_allows_override, cond3_seen_prepend, cond3_seen_gift, cond3_special_day, cond3_player_bday, cond3_affectionate, cond3_seen_end, cond3))

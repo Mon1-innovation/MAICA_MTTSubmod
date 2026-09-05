@@ -54,7 +54,7 @@ init 980 python:
                 greeting_ev.unlocked = True
                 greeting_ev.unlock_date = None
                 greeting_ev.conditional = (
-                    "persistent._mas_greeting_type is None "
+                    "mtts_greeting_type_allows_override() "
                     "and renpy.seen_label('mtts_prepend_1') "
                     "and renpy.seen_label('mas_reaction_gift_mttsheadset') "
                     "and not mas_isSpecialDay() "
@@ -64,7 +64,10 @@ init 980 python:
                 greeting_ev.action = None
                 greeting_ev.aff_range = (mas_aff.AFFECTIONATE, None)
                 greeting_ev.rules.update(
-                    MASGreetingRule.create_rule(skip_visual=False)
+                    MASGreetingRule.create_rule(
+                        skip_visual=False,
+                        override_type=True,
+                    )
                 )
                 greeting_ev.rules.update(MASPriorityRule.create_rule(11))
 
@@ -106,6 +109,33 @@ init 980 python:
 
             mas_rebuildEventLists()
 
+        def m_1_2_20():
+            # MAS preserves existing persistent Event objects, including their
+            # old greeting conditional and type override rule.
+            greeting_ev = evhand.greeting_database.get("mtts_greeting")
+            if greeting_ev is not None:
+                greeting_ev.unlocked = True
+                greeting_ev.unlock_date = None
+                greeting_ev.conditional = (
+                    "mtts_greeting_type_allows_override() "
+                    "and renpy.seen_label('mtts_prepend_1') "
+                    "and renpy.seen_label('mas_reaction_gift_mttsheadset') "
+                    "and not mas_isSpecialDay() "
+                    "and not mas_isplayer_bday() "
+                    "and not renpy.seen_label('mtts_greeting_end')"
+                )
+                greeting_ev.action = None
+                greeting_ev.aff_range = (mas_aff.AFFECTIONATE, None)
+                greeting_ev.rules.update(
+                    MASGreetingRule.create_rule(
+                        skip_visual=False,
+                        override_type=True,
+                    )
+                )
+                greeting_ev.rules.update(MASPriorityRule.create_rule(11))
+
+            mas_rebuildEventLists()
+
         import migrations
         migration = migrations.migration_instance(
             persistent._mtts_last_version,
@@ -117,6 +147,7 @@ init 980 python:
             ("1.0.4", m_1_0_4),
             ("1.2.10", m_1_2_10),
             ("1.2.16", m_1_2_16),
+            ("1.2.20", m_1_2_20),
         ]
         migration_result = migration.migrate()
         # Chat's shared migrations.py historically returned None on success;

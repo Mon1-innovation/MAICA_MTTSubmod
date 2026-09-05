@@ -2,8 +2,8 @@ init -990 python:
     store._maica_LoginAcc = ""
     store._maica_LoginPw = ""
     store._maica_LoginEmail = ""
-    mtts_version = "1.2.19"
-    maica_is_dev = False
+    mtts_version = "1.2.20"
+    maica_is_dev = True
     # Development builds rerun the current migration, show a warning, and
     # are excluded from the release workflow.
     # dependencies - dictionary in the following structure: {"name": ("minimum_version", "maximum_version")}
